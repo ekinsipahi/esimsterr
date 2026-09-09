@@ -23,9 +23,11 @@
         </div>
         <div class="plan-price-row">
           <span class="plan-price">${{ plan.price }}</span>
-          {% if plan.compare_at_usd %}<span class="plan-was">${{ plan.compare_at_usd }}</span>{% endif %}
         </div>
-        <div class="plan-meta"><span><b>${{ plan.per_day_usd }}</b> / day</span></div>
+        <div class="plan-meta">
+          <span><b>${{ plan.per_day_usd }}</b> / day</span>
+          {% if plan.savings_pct %}<span class="savings">~{{ plan.savings_pct }}% cheaper</span>{% endif %}
+        </div>
         <a class="btn btn-ghost btn-block" href="{% url 'checkout' plan.pk %}">Buy now</a>
       </div>
       {% empty %}

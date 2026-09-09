@@ -105,13 +105,11 @@
         <hr class="divider">
         <div class="row-between">
           <span class="bold">Total</span>
-          <div class="row" style="gap:8px">
-            {% if plan.compare_at_usd %}<span class="plan-was">${{ plan.compare_at_usd }}</span>{% endif %}
-            <span style="font-size:1.6rem;font-weight:800">${{ plan.price }}</span>
-          </div>
+          <span style="font-size:1.6rem;font-weight:800">${{ plan.price }}</span>
         </div>
         {% if plan.savings_pct %}
-        <div class="mt-2"><span class="savings">You save about {{ plan.savings_pct }}% versus typical eSIM app pricing</span></div>
+        <p class="xs muted-3 mt-2">Comparable plans on the well-known eSIM apps typically run around
+          ${{ plan.compare_at_usd }} for this much data.</p>
         {% endif %}
 
         <hr class="divider">

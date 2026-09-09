@@ -118,8 +118,12 @@ class Plan(models.Model):
     price_usd = models.DecimalField(max_digits=10, decimal_places=2, help_text="Computed retail price")
     price_override_usd = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
                                              help_text="Manual retail price; wins over the formula")
-    compare_at_usd = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
-                                         help_text="Typical competitor price for the strike-through")
+    compare_at_usd = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Estimated typical price on competing eSIM apps. Shown as an explicit "
+                  "comparison ('the big apps typically charge ~$X'), never as a "
+                  "strike-through of our own price — that would imply a former price we "
+                  "never charged.")
 
     is_active = models.BooleanField(default=True, db_index=True)
     provider_active = models.BooleanField(default=True, db_index=True,

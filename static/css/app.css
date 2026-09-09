@@ -530,7 +530,10 @@ html[data-theme="dark"] .dest-card .from b { color: var(--b-300); }
 .plan-days { font-size: .88rem; color: var(--text-2); font-weight: 600; }
 .plan-price-row { display: flex; align-items: baseline; gap: 9px; margin-top: auto; }
 .plan-price { font-size: 1.75rem; font-weight: 800; letter-spacing: -.03em; }
+/* Reserved for a genuine former OWN price. A competitor estimate must never be
+   rendered as a strike-through — that reads as "our old price" and is misleading. */
 .plan-was { font-size: .95rem; color: var(--text-3); text-decoration: line-through; }
+.plan-compare { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 .plan-unit { font-size: .8rem; color: var(--text-2); }
 .plan-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: .78rem; color: var(--text-3); }
 .plan-meta b { color: var(--text-2); font-weight: 650; }

@@ -11,7 +11,6 @@
 
   <div class="plan-price-row">
     <span class="plan-price">${{ plan.price }}</span>
-    {% if plan.compare_at_usd %}<span class="plan-was">${{ plan.compare_at_usd }}</span>{% endif %}
   </div>
 
   <div class="plan-meta">
@@ -19,11 +18,14 @@
     <span><b>${{ plan.per_day_usd }}</b> / day</span>
   </div>
 
-  {% if plan.savings_pct %}
-  <div><span class="savings">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:13px;height:13px"><path d="m19 12-7 7-7-7M12 5v14"/></svg>
-    {{ plan.savings_pct }}% under typical eSIM app pricing
-  </span></div>
+  {% if plan.compare_at_usd and plan.savings_pct %}
+  <div class="plan-compare">
+    <span class="savings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:13px;height:13px"><path d="m19 12-7 7-7-7M12 5v14"/></svg>
+      about {{ plan.savings_pct }}% cheaper
+    </span>
+    <span class="xs muted-3">than the ~${{ plan.compare_at_usd }} the big eSIM apps typically charge for this much data</span>
+  </div>
   {% endif %}
 
   <a class="btn {% if plan.badge == 'Most popular' %}btn-primary{% else %}btn-ghost{% endif %} btn-block"
