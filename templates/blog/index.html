@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">Guides</span>
+      <h2>Staying connected, explained</h2>
+      <p class="h-sub">Practical writing about travel data: what things cost, what actually works, and
+        the settings nobody mentions until you are already abroad.</p>
+    </div>
+
+    {% if posts %}
+    <div class="grid g3">
+      {% for post in posts %}
+      <a class="card card-hover reveal" href="{{ post.get_absolute_url }}">
+        {% if post.cover_url %}<img src="{{ post.cover_url }}" alt="" loading="lazy" style="border-radius:12px;margin-bottom:14px;aspect-ratio:16/9;object-fit:cover">{% endif %}
+        <div class="xs muted-3">{{ post.published_at|date:"j F Y" }}</div>
+        <h3 class="mt-1">{{ post.title }}</h3>
+        <p class="small muted mt-1">{{ post.excerpt|truncatechars:140 }}</p>
+        <span class="link small mt-2" style="display:inline-block">Read →</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty card">
+      <div class="ico">✍️</div>
+      <h3>Guides are on the way</h3>
+      <p>In the meantime, the <a class="link" href="{% url 'how_it_works' %}">how-it-works page</a>
+        covers everything you need for a first eSIM.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% include "partials/cta_band.html" %}
+{% endblock %}

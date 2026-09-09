@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="shell">{% include "partials/breadcrumbs.html" %}</div>
+
+<section class="section" style="padding-top:26px">
+  <div class="shell">
+    <div class="grid g2" style="gap:44px;align-items:start">
+      <div>
+        <div class="row" style="gap:14px">
+          <span style="font-size:3rem;line-height:1">{{ region.icon }}</span>
+          <div>
+            <h1 style="font-size:clamp(1.9rem,4vw,2.8rem)">{{ region.name }} eSIM</h1>
+            <div class="row small muted mt-1" style="gap:14px">
+              {% if region.min_price_usd %}<span>from <b style="color:var(--text)">${{ region.min_price_usd }}</b></span>{% endif %}
+              <span>{{ region.country_count }} countries</span>
+              {% if region.has_unlimited %}<span class="badge badge-hot">Unlimited available</span>{% endif %}
+            </div>
+          </div>
+        </div>
+        <p class="h-sub mt-3">
+          {{ region.description|default:"One profile that follows you across every country in the region — cross a border and it reconnects to the next local network on its own." }}
+        </p>
+        <div class="row mt-3" style="gap:10px">
+          <a class="btn btn-primary" href="#plans">See {{ region.name }} plans</a>
+          <a class="btn btn-ghost" href="{% url 'destinations' %}">Single-country plans</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Countries included</h3>
+        <div class="chips mt-2">
+          {% for name in region.country_name_list|slice:":40" %}<span class="chip">{{ name }}</span>{% endfor %}
+        </div>
+        {% if region.country_name_list|length > 40 %}
+        <p class="small muted mt-2">…and {{ region.country_name_list|length|add:"-40" }} more.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="shell">
+    <div class="section-head">
+      <span class="eyebrow">Plans</span>
+      <h2>{{ region.name }} data plans</h2>
+    </div>
+    {% include "partials/plan_tabs.html" %}
+  </div>
+</section>
+
+{% if covered %}
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head">
+      <h2>Or buy just one country</h2>
+      <p class="h-sub">Staying in a single destination? A local plan is usually cheaper than the regional one.</p>
+    </div>
+    <div class="grid g4">
+      {% for c in covered|slice:":16" %}{% include "partials/dest_card.html" %}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">FAQ</span>
+      <h2>{{ region.name }} eSIM questions</h2>
+    </div>
+    {% include "partials/faq.html" %}
+  </div>
+</section>
+
+{% if other_regions %}
+<section class="section-sm">
+  <div class="shell">
+    <h3 class="mb-2">Other regions</h3>
+    <div class="chips">
+      {% for r in other_regions %}<a class="chip" href="{{ r.get_absolute_url }}">{{ r.icon }} {{ r.name }}</a>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% include "partials/cta_band.html" %}
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <h1 style="font-size:clamp(1.8rem,3.4vw,2.4rem)">Terms of Service</h1>
+    <p class="muted mt-1">Last updated {% now "j F Y" %}</p>
+    <div class="prose mt-3">
+      <p>These terms govern your use of {{ site_name }} and the prepaid mobile data plans ("eSIM plans")
+        sold through it. By buying or using a plan you accept them.</p>
+
+      <h2>1. What we sell</h2>
+      <p>We resell prepaid mobile data delivered as an eSIM profile. Plans are <strong>data only</strong>:
+        they do not include GSM voice calls or SMS. You can make calls and send messages over the data
+        connection using apps such as WhatsApp, FaceTime or Telegram.</p>
+      <p>Coverage, available radio technology (4G/5G) and speed depend on the local carriers at your
+        destination and on your device. We publish the partner operators for each destination, but we
+        cannot guarantee a specific operator, a specific speed, or coverage in every location.</p>
+
+      <h2>2. Validity and activation</h2>
+      <p>A plan's validity period starts when the eSIM first connects to a mobile network in a covered
+        country, not when you buy or install it. Once started, the period runs continuously in calendar
+        days and cannot be paused. Unused data and unused days expire at the end of the period and are
+        not refundable or transferable.</p>
+
+      <h2>3. Your device</h2>
+      <p>You are responsible for checking that your device supports eSIM and is not locked to another
+        carrier before buying. Our compatibility page lists supported models. An eSIM profile can
+        normally be installed on only one device and cannot be moved afterwards.</p>
+
+      <h2>4. Prices and payment</h2>
+      <p>Prices are shown in US dollars and include our margin. Payment is taken at checkout by card
+        (through Stripe) or in cryptocurrency (through NOWPayments). Crypto payments are credited at the
+        amount actually received; if less than the invoice arrives, nothing is provisioned until the
+        difference is paid or the payment is refunded.</p>
+      <p>All purchases are one-off. Nothing on this site is a subscription and nothing renews
+        automatically.</p>
+
+      <h2>5. Delivery</h2>
+      <p>eSIM profiles are delivered electronically, immediately after payment clears, to the email
+        address you enter at checkout and to your account if you have one. It is your responsibility to
+        enter a working email address. If a provisioning failure occurs on our side, we either deliver
+        the plan or refund it in full.</p>
+
+      <h2>6. Refunds</h2>
+      <p>Refund terms are set out in our <a href="{% url 'refund' %}">refund policy</a>, which forms
+        part of these terms.</p>
+
+      <h2>7. Acceptable use</h2>
+      <p>You may not use our plans to send spam, to run automated abuse against third parties, for
+        unlawful activity, or to resell the connection commercially without our written agreement.
+        Unlimited plans are for normal personal use: local networks may shape extreme continuous
+        consumption, in particular sustained tethering, under their fair-use rules.</p>
+      <p>We may suspend a line that is being used in breach of this section, without refund.</p>
+
+      <h2>8. Liability</h2>
+      <p>We provide the connectivity service with reasonable care but do not warrant uninterrupted or
+        error-free service. To the extent permitted by law our total liability for any claim relating
+        to a plan is limited to the amount you paid for that plan. We are not liable for indirect or
+        consequential loss, including missed bookings, lost work or data charges incurred on another
+        network.</p>
+
+      <h2>9. Accounts</h2>
+      <p>You may buy as a guest or create an account. Keep your credentials safe; you are responsible
+        for activity under your account. We may suspend accounts used fraudulently, including for
+        payment fraud or chargeback abuse.</p>
+
+      <h2>10. Changes</h2>
+      <p>We may update these terms. The version in force is the one published here when you buy. Material
+        changes will be noted by the "last updated" date above.</p>
+
+      <h2>11. Contact</h2>
+      <p>{{ company_legal_name|default:"" }} — <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

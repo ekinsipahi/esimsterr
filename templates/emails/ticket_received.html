@@ -1,0 +1,16 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}We received your message — reference {{ ticket.ref }}.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:20px;font-weight:800;color:#171a3c">We got your message</h1>
+<p style="margin:0 0 14px">Reference <b>{{ ticket.ref }}</b>. A person reads every one of these, usually
+within a couple of hours during the working day.</p>
+<table role="presentation" width="100%" style="background:#f7f8fc;border:1px solid #e6e8f4;border-radius:14px">
+  <tr><td style="padding:16px">
+    <div style="font-size:13px;font-weight:700;color:#171a3c">{{ ticket.subject }}</div>
+    <div style="font-size:13px;color:#575c86;margin-top:8px;white-space:pre-wrap">{{ ticket.body }}</div>
+  </td></tr>
+</table>
+<p style="margin:16px 0 0;font-size:13px;color:#575c86">If it is urgent and your data is not working,
+check that Data Roaming is ON for the eSIM line — that is the fix in most cases.</p>
+{% endblock %}
+{% block footer_note %}You are receiving this because you contacted {{ site_name }} support.{% endblock %}

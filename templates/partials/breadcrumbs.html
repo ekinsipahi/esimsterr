@@ -1,0 +1,9 @@
+{# Context: breadcrumbs = [(label, url|None), ...] #}
+{% if breadcrumbs %}
+<nav aria-label="Breadcrumb" class="small muted" style="padding-top:20px">
+  {% for label, url in breadcrumbs %}
+    {% if url %}<a href="{{ url }}" class="link" style="text-decoration:none;color:inherit;font-weight:500">{{ label }}</a>
+    <span class="muted-3"> / </span>{% else %}<span>{{ label }}</span>{% endif %}
+  {% endfor %}
+</nav>
+{% endif %}

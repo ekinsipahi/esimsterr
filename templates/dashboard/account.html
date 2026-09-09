@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="dash-head"><div><h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">Account</h1></div></div>
+    {% include "partials/dash_tabs.html" %}
+
+    <div class="grid g2" style="align-items:start">
+      <div class="card">
+        <h3>Profile</h3>
+        <form method="post" class="stack mt-3">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="profile">
+          <div class="field">
+            <label>Email</label>
+            <input class="input" value="{{ user.email }}" readonly>
+            <span class="hint">Email changes go through support so we can keep your eSIMs attached.</span>
+          </div>
+          <div class="field">
+            <label for="display_name">Display name</label>
+            <input class="input" id="display_name" name="display_name" value="{{ user.display_name }}" maxlength="80">
+          </div>
+          <label class="checkbox">
+            <input type="checkbox" name="marketing_opt_in" {% if user.marketing_opt_in %}checked{% endif %}>
+            <span>Send me occasional travel-data tips and discounts. Order emails always arrive regardless.</span>
+          </label>
+          <button class="btn btn-primary" type="submit">Save profile</button>
+        </form>
+      </div>
+
+      <div class="stack" style="gap:22px">
+        <div class="card">
+          <h3>Password</h3>
+          <form method="post" class="stack mt-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="password">
+            {% if user.has_usable_password %}
+            <div class="field">
+              <label for="current_password">Current password</label>
+              <input class="input" type="password" id="current_password" name="current_password" autocomplete="current-password">
+            </div>
+            {% else %}
+            <p class="small muted">You signed in with Google. Set a password to also sign in with email.</p>
+            {% endif %}
+            <div class="field">
+              <label for="new_password">New password</label>
+              <input class="input" type="password" id="new_password" name="new_password" minlength="8" required autocomplete="new-password">
+            </div>
+            {% if pw_form.errors %}<div class="err">{{ pw_form.errors.as_text }}</div>{% endif %}
+            <button class="btn btn-ghost" type="submit">Update password</button>
+          </form>
+        </div>
+
+        <div class="card" style="border-color:color-mix(in srgb,#ef4444 30%,transparent)">
+          <h3>Delete account</h3>
+          <p class="small muted mt-1">This deactivates your account and unlinks your email. Active eSIMs
+            keep working until their plan expires, but you lose access to their QR codes here.</p>
+          <form method="post" class="row mt-3" style="gap:10px;align-items:flex-end">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete">
+            <div class="field flex-1">
+              <label for="confirm">Type DELETE to confirm</label>
+              <input class="input" id="confirm" name="confirm" placeholder="DELETE">
+            </div>
+            <button class="btn btn-ghost" type="submit" style="color:#dc2626">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

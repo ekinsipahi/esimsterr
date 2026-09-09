@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <span class="eyebrow">{{ countries|length }} destinations</span>
+      <h2>Find your eSIM</h2>
+      <p class="h-sub">Every plan runs on the destination's own networks, so you get local speeds and
+        local prices instead of a roaming surcharge.</p>
+    </div>
+
+    <form method="get" class="row mb-3" style="gap:10px">
+      <div class="search" style="margin-top:0;flex:1;min-width:260px;box-shadow:var(--sh-sm)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" name="q" value="{{ q }}" placeholder="Search a country" aria-label="Search countries">
+      </div>
+      <select class="select" name="continent" style="max-width:220px" onchange="this.form.submit()">
+        <option value="">Every region</option>
+        {% for c in continents %}<option value="{{ c }}" {% if c == continent %}selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-primary" type="submit">Search</button>
+      {% if q or continent %}<a class="btn btn-ghost" href="{% url 'destinations' %}">Clear</a>{% endif %}
+    </form>
+
+    {% if not countries %}
+      <div class="empty card">
+        <div class="ico">🔍</div>
+        <h3>Nothing matches that search</h3>
+        <p>Try the country's English name, or browse a region below.</p>
+        <a class="btn btn-primary mt-3" href="{% url 'regions' %}">See regional plans</a>
+      </div>
+    {% else %}
+      {% for continent_name, group in grouped %}
+      <h3 class="mt-4 mb-2">{{ continent_name }} <span class="small muted">· {{ group|length }}</span></h3>
+      <div class="grid g4">
+        {% for c in group %}{% include "partials/dest_card.html" %}{% endfor %}
+      </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="mt-5">
+      <h3 class="mb-2">Travelling through several countries?</h3>
+      <div class="chips">
+        {% for r in regions %}<a class="chip" href="{{ r.get_absolute_url }}">{{ r.icon }} {{ r.name }} · from ${{ r.min_price_usd|default:"—" }}</a>{% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% include "partials/cta_band.html" %}
+{% endblock %}

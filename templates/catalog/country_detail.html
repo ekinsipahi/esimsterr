@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="shell">{% include "partials/breadcrumbs.html" %}</div>
+
+<section class="section" style="padding-top:26px">
+  <div class="shell">
+    <div class="grid g2" style="gap:44px;align-items:start">
+      <div>
+        <div class="row" style="gap:14px">
+          <span style="font-size:3rem;line-height:1">{% if country.flag_url %}<img src="{{ country.flag_url }}" alt="{{ country.name }} flag" width="56" height="42" style="border-radius:7px">{% else %}{{ country.flag_emoji }}{% endif %}</span>
+          <div>
+            <h1 style="font-size:clamp(1.9rem,4vw,2.8rem)">{{ country.name }} eSIM</h1>
+            <div class="row small muted mt-1" style="gap:14px">
+              {% if country.min_price_usd %}<span>from <b style="color:var(--text)">${{ country.min_price_usd }}</b></span>{% endif %}
+              <span>{{ country.plan_count }} plan{{ country.plan_count|pluralize }}</span>
+              {% if country.has_unlimited %}<span class="badge badge-hot">Unlimited available</span>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <p class="h-sub mt-3">
+          {% if country.intro %}{{ country.intro }}{% else %}
+          Prepaid data for {{ country.name }} on the local networks, delivered as a QR code the moment
+          you pay. Install it before you fly and the plan only starts when you land.
+          {% endif %}
+        </p>
+
+        <div class="row mt-3" style="gap:10px">
+          <a class="btn btn-primary" href="#plans">See {{ country.name }} plans</a>
+          <a class="btn btn-ghost" href="{% url 'compatible_devices' %}">Check my device</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Networks in {{ country.name }}</h3>
+        <p class="small muted mt-1">Your eSIM picks the strongest available partner network automatically.</p>
+        {% if country.operator_list %}
+        <div class="chips mt-2">
+          {% for op in country.operator_list|slice:":8" %}<span class="chip">{{ op }}</span>{% endfor %}
+        </div>
+        {% endif %}
+        <hr class="divider">
+        <div class="stack" style="gap:10px">
+          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Data-only plan, hotspot allowed</span>
+          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Your physical SIM stays active</span>
+          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> No passport, no contract, no auto-renewal</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="shell">
+    <div class="section-head">
+      <span class="eyebrow">Plans</span>
+      <h2>{{ country.name }} data plans</h2>
+      <p class="h-sub">Every card shows the price per GB and per day, so the cheapest option is
+        obvious rather than buried.</p>
+    </div>
+    {% include "partials/plan_tabs.html" %}
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="grid g2" style="gap:56px;align-items:center">
+      <div>
+        <span class="eyebrow">Setup</span>
+        <h2 class="mt-2">Installing your {{ country.name }} eSIM</h2>
+        <p class="h-sub">Do this at home on Wi-Fi. It takes about two minutes and nothing starts
+          counting until you arrive.</p>
+      </div>
+      {% include "partials/steps.html" %}
+    </div>
+  </div>
+</section>
+
+{% if regions %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <h2>Visiting more than {{ country.name }}?</h2>
+      <p class="h-sub">These regional plans include {{ country.name }} and its neighbours on one profile.</p>
+    </div>
+    <div class="grid g3">
+      {% for r in regions %}
+      <a class="region-card" href="{{ r.get_absolute_url }}">
+        <div class="ico">{{ r.icon }}</div>
+        <h3>{{ r.name }}</h3>
+        <p>{{ r.country_count }} countries on a single eSIM</p>
+        <div class="foot"><span class="price">${{ r.min_price_usd|default:"—" }}</span><span class="small muted">from</span></div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section {% if not regions %}section-alt{% endif %}">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">FAQ</span>
+      <h2>{{ country.name }} eSIM questions</h2>
+    </div>
+    {% include "partials/faq.html" %}
+  </div>
+</section>
+
+{% if nearby %}
+<section class="section-sm">
+  <div class="shell">
+    <h3 class="mb-2">Nearby destinations</h3>
+    <div class="chips">
+      {% for c in nearby %}<a class="chip" href="{{ c.get_absolute_url }}">{{ c.flag_emoji }} {{ c.name }}{% if c.min_price_usd %} · ${{ c.min_price_usd }}{% endif %}</a>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% include "partials/cta_band.html" %}
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <span class="eyebrow">About</span>
+      <h2>Travel data should cost what it costs</h2>
+    </div>
+    <div class="prose">
+      <p>{{ site_name }} sells prepaid travel eSIMs. We buy wholesale data from the same carrier
+        aggregators the well-known eSIM apps use, add a thin margin, and pass the rest to you. That is
+        the entire business model.</p>
+
+      <h2>Why we exist</h2>
+      <p>Roaming is the obvious villain, but the eSIM apps that replaced it are quietly expensive too.
+        A 10 GB plan that costs a few dollars wholesale routinely retails for four or five times that,
+        because the money goes into app-install ads rather than into the data.</p>
+      <p>We took the opposite approach: no ad budget, no influencer codes, no artificial "sale" prices
+        that are really the normal price. Every plan page shows the cost per gigabyte and per day, so
+        you can compare us with anyone else in ten seconds.</p>
+
+      <h2>What you actually get</h2>
+      <ul>
+        <li><strong>Local networks.</strong> Your eSIM connects to real carriers at your destination,
+          not to a slow reseller pipe.</li>
+        <li><strong>Instant delivery.</strong> The QR code appears as soon as the payment clears, day
+          or night.</li>
+        <li><strong>No identity checks.</strong> An email address is all we need. No passport upload,
+          no KYC.</li>
+        <li><strong>No subscriptions.</strong> Every plan is one-off. Nothing renews behind your back.</li>
+      </ul>
+
+      <h2>How we handle your data</h2>
+      <p>We never see your traffic. What we store is what selling and supporting an eSIM requires: your
+        email, your orders, and the usage counter the network reports back to us. There is no tracking
+        pixel farm on this site.</p>
+
+      <h2>Talk to us</h2>
+      <p>Support is email, answered by the people who built this:
+        <a href="mailto:{{ support_email }}">{{ support_email }}</a>. If an eSIM does not work, we fix
+        it or refund it.</p>
+    </div>
+  </div>
+</section>
+{% include "partials/cta_band.html" %}
+{% endblock %}

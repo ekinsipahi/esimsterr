@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <a class="link small" href="{{ esim.get_absolute_url }}">← Back to {{ esim.display_name }}</a>
+    <div class="section-head mt-2">
+      <span class="eyebrow">Top up</span>
+      <h2>Add data to {{ esim.display_name }}</h2>
+      <p class="h-sub">The new plan attaches to this same eSIM. Nothing to reinstall, no second QR code.
+        {% if target %}Plans below are for <b>{{ target.name }}</b>.{% endif %}</p>
+    </div>
+
+    {% if data_plans or unlimited_plans %}
+      {% include "partials/plan_tabs.html" with topup_esim=esim %}
+    {% else %}
+      <div class="empty card">
+        <div class="ico">🤔</div>
+        <h3>No top-up plans found for this eSIM</h3>
+        <p>Buy a fresh eSIM for your next destination instead — it takes the same two minutes.</p>
+        <a class="btn btn-primary mt-3" href="{% url 'destinations' %}">Browse destinations</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

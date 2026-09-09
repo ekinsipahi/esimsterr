@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">No caps</span>
+      <h2>Unlimited data eSIMs</h2>
+      <p class="h-sub">Pick a duration instead of a data bucket. Stream, navigate and tether without
+        watching a counter, for 7, 15 or 30 days.</p>
+    </div>
+
+    <div class="grid g4">
+      {% for plan in plans %}
+      <div class="plan">
+        <div class="row" style="gap:8px">
+          <span style="font-size:1.35rem">{% if plan.country %}{{ plan.country.flag_emoji }}{% else %}{{ plan.region.icon }}{% endif %}</span>
+          <b class="truncate">{{ plan.target_name }}</b>
+        </div>
+        <div>
+          <div class="plan-data">∞<span class="unit"> Unlimited</span></div>
+          <div class="plan-days">{{ plan.days }} days</div>
+        </div>
+        <div class="plan-price-row">
+          <span class="plan-price">${{ plan.price }}</span>
+          {% if plan.compare_at_usd %}<span class="plan-was">${{ plan.compare_at_usd }}</span>{% endif %}
+        </div>
+        <div class="plan-meta"><span><b>${{ plan.per_day_usd }}</b> / day</span></div>
+        <a class="btn btn-ghost btn-block" href="{% url 'checkout' plan.pk %}">Buy now</a>
+      </div>
+      {% empty %}
+      <p class="muted">Unlimited plans are syncing. Check back in a minute.</p>
+      {% endfor %}
+    </div>
+
+    <div class="alert alert-info mt-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <div>
+        <b>What "unlimited" honestly means.</b> There is no data cap and no overage bill. Local
+        networks apply fair-use shaping to extreme continuous use, mostly heavy tethering, so unlimited
+        is the right pick for streaming and daily use rather than replacing home broadband.
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if countries %}
+<section class="section section-alt">
+  <div class="shell">
+    <h3 class="mb-2">Countries with unlimited plans</h3>
+    <div class="chips">
+      {% for c in countries|slice:":60" %}<a class="chip" href="{{ c.get_absolute_url }}">{{ c.flag_emoji }} {{ c.name }}</a>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% include "partials/cta_band.html" %}
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+  <div class="shell center" style="max-width:640px">
+    <div style="font-size:3rem">🧭</div>
+    <h1 class="mt-2">This page went travelling</h1>
+    <p class="h-sub mx-auto">The link is wrong or the page has moved. The destinations list is the
+      fastest way back to what you were looking for.</p>
+    <div class="row mt-4" style="justify-content:center;gap:10px">
+      <a class="btn btn-primary" href="{% url 'destinations' %}">Browse destinations</a>
+      <a class="btn btn-ghost" href="{% url 'home' %}">Home</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

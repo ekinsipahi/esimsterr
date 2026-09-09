@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <h1 style="font-size:clamp(1.8rem,3.4vw,2.4rem)">Privacy Policy</h1>
+    <p class="muted mt-1">Last updated {% now "j F Y" %}</p>
+    <div class="prose mt-3">
+      <p>This policy explains what {{ site_name }} collects, why, and what we never touch. The short
+        version: we need an email address to deliver an eSIM, and we do not look at your traffic.</p>
+
+      <h2>What we collect</h2>
+      <ul>
+        <li><strong>Your email address.</strong> Required — it is how the QR code and receipt reach you.</li>
+        <li><strong>Order records.</strong> Which plan you bought, when, how much you paid, and the
+          reference from the payment provider.</li>
+        <li><strong>eSIM technical data.</strong> The ICCID we issued you, its activation status, the
+          data counter the network reports, and the radio technology last seen. This comes from our
+          connectivity partner, not from your device.</li>
+        <li><strong>Basic security data.</strong> The IP address used to place an order, kept to detect
+          payment fraud.</li>
+        <li><strong>Optional profile data.</strong> A display name, if you enter one.</li>
+      </ul>
+
+      <h2>What we never collect</h2>
+      <ul>
+        <li>The content of your traffic — the sites you visit, your messages, your calls. We are a
+          reseller of connectivity, and none of that reaches us.</li>
+        <li>Card numbers. Card payments are handled entirely by Stripe; we receive only a token and the
+          outcome.</li>
+        <li>Identity documents. There is no KYC, no passport upload, no ID check.</li>
+      </ul>
+
+      <h2>Why we process it</h2>
+      <p>To sell and deliver the eSIM you asked for (contract), to keep records for accounting and to
+        prevent fraud (legal obligation and legitimate interest), and — only if you opt in — to send
+        occasional product emails (consent). Transactional emails about your own orders are sent
+        regardless of marketing preferences, because you need them.</p>
+
+      <h2>Who we share it with</h2>
+      <ul>
+        <li><strong>Our connectivity partner</strong>, to issue and manage the eSIM. They receive your
+          email address and the plan you bought.</li>
+        <li><strong>Stripe</strong> and <strong>NOWPayments</strong>, to take payment.</li>
+        <li><strong>Our email provider</strong>, to deliver order and support email.</li>
+        <li><strong>Our hosting and error-monitoring providers</strong>, which process data incidentally
+          while running the site.</li>
+      </ul>
+      <p>We do not sell personal data, and we do not share it with advertisers.</p>
+
+      <h2>Cookies and analytics</h2>
+      <p>We set a session cookie so the site can keep you signed in and remember a guest order, and a
+        preference cookie for light or dark mode. If analytics is enabled, it runs with advertising
+        signals switched off and IP anonymisation on.</p>
+
+      <h2>How long we keep it</h2>
+      <p>Order and payment records are kept as long as accounting law requires. eSIM technical records
+        are kept while the line is live and for a short period afterwards for support. If you delete
+        your account we deactivate it and unlink your email; records required for accounting remain.</p>
+
+      <h2>Your rights</h2>
+      <p>You can ask for a copy of your data, correction, deletion, or an export, and you can withdraw
+        marketing consent at any time from the unsubscribe link or your account page. Email
+        <a href="mailto:{{ support_email }}">{{ support_email }}</a> and we will action it.</p>
+
+      <h2>Contact</h2>
+      <p><a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

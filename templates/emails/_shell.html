@@ -1,0 +1,26 @@
+{% load static %}<!doctype html>
+<html><body style="margin:0;padding:0;background:#f4f5fb;font-family:Inter,-apple-system,Segoe UI,Roboto,Arial,sans-serif">
+<span style="display:none!important;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden">{% block preheader %}{% endblock %}</span>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5fb;padding:28px 12px">
+<tr><td align="center">
+  <table role="presentation" width="560" cellpadding="0" cellspacing="0"
+         style="max-width:560px;width:100%;background:#fff;border-radius:18px;overflow:hidden;border:1px solid #e6e8f4">
+    <tr><td style="background:linear-gradient(135deg,#4f46e5 0%,#a855f7 58%,#ec4899 120%);padding:22px 28px">
+      <a href="{{ site_url }}" style="text-decoration:none;color:#fff;font-size:20px;font-weight:800;letter-spacing:.3px">{{ site_name }}</a>
+    </td></tr>
+    <tr><td style="padding:30px 28px 10px;color:#171a3c;font-size:15px;line-height:1.65">
+      {% block body %}{% endblock %}
+    </td></tr>
+    <tr><td style="padding:20px 28px 26px">
+      <p style="margin:0;font-size:11px;line-height:1.65;color:#8a8fb4">
+        {% block footer_note %}You are receiving this because you bought or created an account at {{ site_name }}.{% endblock %}<br>
+        Need a human? <a href="mailto:{{ support_email }}" style="color:#8a8fb4">{{ support_email }}</a><br>
+        © {{ site_name }} ·
+        <a href="{{ site_url }}/privacy/" style="color:#8a8fb4">Privacy</a> ·
+        <a href="{{ site_url }}/terms/" style="color:#8a8fb4">Terms</a> ·
+        <a href="{{ site_url }}/refund-policy/" style="color:#8a8fb4">Refunds</a>
+      </p>
+    </td></tr>
+  </table>
+</td></tr></table>
+</body></html>

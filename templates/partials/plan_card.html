@@ -1,0 +1,33 @@
+{# A single sellable plan. Context: plan #}
+<div class="plan {% if plan.badge == 'Most popular' %}plan-featured{% endif %}">
+  {% if plan.badge %}<span class="plan-badge badge {% if plan.badge == 'Best value' %}badge-mint{% else %}badge-hot{% endif %}">{{ plan.badge }}</span>{% endif %}
+
+  <div>
+    <div class="plan-data">
+      {% if plan.is_unlimited %}∞<span class="unit"> Unlimited</span>{% else %}{{ plan.data_label }}{% endif %}
+    </div>
+    <div class="plan-days">{{ plan.days }} day{{ plan.days|pluralize }} of validity</div>
+  </div>
+
+  <div class="plan-price-row">
+    <span class="plan-price">${{ plan.price }}</span>
+    {% if plan.compare_at_usd %}<span class="plan-was">${{ plan.compare_at_usd }}</span>{% endif %}
+  </div>
+
+  <div class="plan-meta">
+    {% if plan.per_gb_usd %}<span><b>${{ plan.per_gb_usd }}</b> / GB</span>{% endif %}
+    <span><b>${{ plan.per_day_usd }}</b> / day</span>
+  </div>
+
+  {% if plan.savings_pct %}
+  <div><span class="savings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:13px;height:13px"><path d="m19 12-7 7-7-7M12 5v14"/></svg>
+    {{ plan.savings_pct }}% under typical eSIM app pricing
+  </span></div>
+  {% endif %}
+
+  <a class="btn {% if plan.badge == 'Most popular' %}btn-primary{% else %}btn-ghost{% endif %} btn-block"
+     href="{% url 'checkout' plan.pk %}{% if topup_esim %}?esim={{ topup_esim.pk }}{% endif %}">
+    {% if topup_esim %}Top up{% else %}Buy now{% endif %}
+  </a>
+</div>

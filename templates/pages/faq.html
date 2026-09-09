@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">FAQ</span>
+      <h2>Questions, answered plainly</h2>
+      <p class="h-sub">If something is missing, <a class="link" href="{% url 'support' %}">ask us</a> —
+        we answer by email, usually within a couple of hours.</p>
+    </div>
+    {% include "partials/faq.html" %}
+  </div>
+</section>
+{% include "partials/cta_band.html" %}
+{% endblock %}

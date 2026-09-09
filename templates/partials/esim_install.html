@@ -1,0 +1,70 @@
+{# Install instructions + QR. Context: esim #}
+<div class="grid g2" style="gap:30px;align-items:start">
+  <div class="card card-solid">
+    <h3>Scan this QR code</h3>
+    <p class="small muted mt-1">On the phone you are travelling with, on Wi-Fi, before you fly.</p>
+    <div class="qr-box mt-3">
+      <img src="{% url 'esim_qr' esim.pk %}" alt="eSIM activation QR code" width="232" height="232">
+    </div>
+    {% if esim.ios_tap_link %}
+    <a class="btn btn-primary btn-block mt-3" href="{{ esim.ios_tap_link }}">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 12.5c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.7 1.1 8.9.8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.8-2.2.9-1.3 1.2-2.5 1.2-2.6 0 0-2.4-.9-2.4-3.3z"/></svg>
+      iPhone: install in one tap
+    </a>
+    <p class="xs muted-3 mt-1 center">Open this page on the iPhone itself for the tap link to work.</p>
+    {% endif %}
+  </div>
+
+  <div class="stack" style="gap:18px">
+    <div class="card">
+      <h3>iPhone</h3>
+      <ol class="small muted mt-2" style="padding-left:18px;display:flex;flex-direction:column;gap:6px">
+        <li>Settings → Cellular (or Mobile Service) → Add eSIM</li>
+        <li>Use QR Code → scan the code, or tap the button on the left</li>
+        <li>Label it "{{ esim.plan_title|default:'Travel' }}" and keep your primary line as default for calls</li>
+        <li>Turn on <b>Data Roaming</b> for this line — that is how it reaches the local network</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Android</h3>
+      <ol class="small muted mt-2" style="padding-left:18px;display:flex;flex-direction:column;gap:6px">
+        <li>Settings → Network & internet → SIMs → Add eSIM / Download a SIM</li>
+        <li>Scan the QR code, then confirm the download</li>
+        <li>Set mobile data to this eSIM and turn on roaming for it</li>
+      </ol>
+      {% if esim.android_manual %}
+      <details class="mt-2">
+        <summary class="small link" style="cursor:pointer">Enter it manually instead</summary>
+        <div class="stack mt-2" style="gap:8px">
+          <div>
+            <div class="xs muted-3">SM-DP+ address</div>
+            <div class="mono-block">{{ esim.android_manual.smdp }}</div>
+          </div>
+          <div>
+            <div class="xs muted-3">Activation code</div>
+            <div class="mono-block">{{ esim.android_manual.code }}</div>
+          </div>
+        </div>
+      </details>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="row-between">
+        <div>
+          <div class="xs muted-3">ICCID</div>
+          <div class="mono-block mt-1">{{ esim.iccid }}</div>
+        </div>
+      </div>
+      {% if esim.apn %}<p class="small muted mt-2">APN (only if your phone asks): <b>{{ esim.apn }}</b></p>{% endif %}
+      <button class="btn btn-ghost btn-sm mt-2" data-copy="{{ esim.lpa_code }}">Copy activation code</button>
+    </div>
+
+    <div class="alert alert-warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <div><b>Install once.</b> An eSIM profile can only be downloaded to one device, and most phones
+        cannot move it afterwards. Install it on the phone you are actually taking.</div>
+    </div>
+  </div>
+</div>

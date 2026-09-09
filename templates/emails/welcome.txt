@@ -1,0 +1,11 @@
+Welcome to {{ site_name }}.
+
+Your account is ready. From here you can buy travel eSIMs, see how much data is
+left on each one, and top them up without reinstalling anything.
+
+Browse destinations: {{ site_url }}/destinations/
+
+One tip: install the eSIM at home on Wi-Fi, and turn Data Roaming ON for that
+line. The plan only starts counting when you land.
+
+-- {{ site_name }} · {{ support_email }}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell auth-side">
+    <div class="auth-wrap w-full">
+      <div class="center mb-3">
+        <h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">Create your account</h1>
+        <p class="muted mt-1">Free, and it takes one field. No card until you buy something.</p>
+      </div>
+
+      <div class="card card-solid">
+        {% if GOOGLE_CLIENT_ID %}
+        <div id="g_id_onload" data-client_id="{{ GOOGLE_CLIENT_ID }}"
+             data-callback="esimsterrGoogle" data-auto_prompt="false"></div>
+        <div class="g_id_signin" data-type="standard" data-theme="outline" data-size="large"
+             data-text="signup_with" data-shape="pill" data-logo_alignment="left" data-width="360"></div>
+        <form method="post" action="{% url 'google_finish' %}" id="google-form" hidden>
+          {% csrf_token %}
+          <input type="hidden" name="credential">
+          <input type="hidden" name="next" value="{{ next }}">
+        </form>
+        <div class="divider-or mt-3 mb-3">or with email</div>
+        {% endif %}
+
+        <form method="post" class="stack">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next }}">
+          <div class="field">
+            <label for="email">Email</label>
+            <input class="input" type="email" id="email" name="email" required autocomplete="email"
+                   value="{{ form.email.value|default:'' }}">
+            {% if form.email.errors %}<span class="err">{{ form.email.errors.0 }}</span>{% endif %}
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input class="input" type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
+            <span class="hint">At least 8 characters.</span>
+            {% if form.password.errors %}<span class="err">{{ form.password.errors.0 }}</span>{% endif %}
+          </div>
+          <label class="checkbox">
+            <input type="checkbox" name="marketing_opt_in" checked>
+            <span>Send me occasional travel-data tips and discounts.</span>
+          </label>
+          <button class="btn btn-primary btn-block" type="submit">Create account</button>
+          <p class="xs muted-3 center">
+            By continuing you accept our <a class="link" href="{% url 'terms' %}">terms</a> and
+            <a class="link" href="{% url 'privacy' %}">privacy policy</a>.
+          </p>
+        </form>
+      </div>
+
+      <p class="center small muted mt-3">Already have an account? <a class="link" href="{% url 'login' %}">Sign in</a></p>
+    </div>
+
+    <div class="aside">
+      <span class="eyebrow">Why an account helps</span>
+      <h2 class="mt-2">Your eSIMs, wherever you are</h2>
+      <p class="h-sub">You can buy as a guest, but an account keeps every QR code and usage counter in
+        one place, and lets you top up an existing eSIM instead of buying a new one.</p>
+      <div class="stack mt-3" style="gap:14px">
+        <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Reinstall a QR code if you switch phones</span>
+        <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> See data left before it runs out</span>
+        <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Faster checkout next trip</span>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}{% if GOOGLE_CLIENT_ID %}<script src="https://accounts.google.com/gsi/client" async defer></script>{% endif %}{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}Your eSIM QR code for {{ order.plan_title }} is ready to install.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">Your eSIM is ready 🎉</h1>
+<p style="margin:0 0 18px">Order <b>{{ order.ref }}</b> — {{ order.plan_title }}.
+Install it at home on Wi-Fi; the plan only starts counting when you connect at your destination.</p>
+
+<table role="presentation" width="100%" style="background:#f7f8fc;border:1px solid #e6e8f4;border-radius:14px;margin:0 0 18px">
+  <tr><td style="padding:18px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8a8fb4;text-transform:uppercase">Activation code (LPA)</div>
+    <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#171a3c;word-break:break-all;margin-top:6px">{{ esim.lpa_code }}</div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8a8fb4;text-transform:uppercase;margin-top:14px">ICCID</div>
+    <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#171a3c;margin-top:4px">{{ esim.iccid }}</div>
+  </td></tr>
+</table>
+
+<a href="{{ site_url }}/order/{{ order.ref }}/"
+   style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#a855f7 58%,#ec4899);color:#fff;
+          text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:15px">Open the QR code</a>
+
+{% if esim.ios_tap_link %}
+<p style="margin:18px 0 0;font-size:14px">
+  On an iPhone, you can skip the QR code entirely:
+  <a href="{{ esim.ios_tap_link }}" style="color:#4f46e5;font-weight:600">install in one tap</a>
+  (open this email on the iPhone itself).
+</p>
+{% endif %}
+
+<h2 style="margin:26px 0 10px;font-size:16px;font-weight:700;color:#171a3c">Three things that matter</h2>
+<ol style="margin:0 0 0 18px;padding:0;font-size:14px;color:#575c86;line-height:1.75">
+  <li>Install on the phone you are actually travelling with — a profile downloads to one device only.</li>
+  <li>Turn <b>Data Roaming ON</b> for the eSIM line. Without it you get bars and no data.</li>
+  <li>Keep your normal SIM as the default line for calls and SMS, so your own number keeps working.</li>
+</ol>
+{% endblock %}
+{% block footer_note %}You are receiving this because you bought order {{ order.ref }} at {{ site_name }}.{% endblock %}

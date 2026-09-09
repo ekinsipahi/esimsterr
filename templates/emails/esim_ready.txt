@@ -1,0 +1,22 @@
+Your eSIM is ready.
+
+Order {{ order.ref }} — {{ order.plan_title }}
+
+Activation code (LPA):
+{{ esim.lpa_code }}
+
+ICCID: {{ esim.iccid }}
+
+Open the QR code: {{ site_url }}/order/{{ order.ref }}/
+{% if esim.ios_tap_link %}iPhone one-tap install: {{ esim.ios_tap_link }}{% endif %}
+
+Three things that matter:
+1. Install on the phone you are actually travelling with. A profile downloads to
+   one device only.
+2. Turn Data Roaming ON for the eSIM line, or you get bars and no data.
+3. Keep your normal SIM as the default for calls and SMS so your own number
+   keeps working.
+
+The plan starts counting when the eSIM first connects at your destination.
+
+-- {{ site_name }} · {{ support_email }}

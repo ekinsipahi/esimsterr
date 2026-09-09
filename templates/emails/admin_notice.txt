@@ -1,0 +1,5 @@
+{{ subject }}
+
+{% for line in lines %}{{ line }}
+{% endfor %}
+Admin: {{ site_url }}/admin/

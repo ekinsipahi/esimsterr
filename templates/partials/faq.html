@@ -1,0 +1,9 @@
+{# Context: faq (list of (question, answer)) #}
+<div class="mx-auto" style="max-width:820px">
+  {% for q, a in faq %}
+  <details class="faq-item"{% if forloop.first %} open{% endif %}>
+    <summary>{{ q }}</summary>
+    <div class="answer">{{ a }}</div>
+  </details>
+  {% endfor %}
+</div>

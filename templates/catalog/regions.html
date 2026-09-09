@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">Multi-country</span>
+      <h2>One eSIM for the whole trip</h2>
+      <p class="h-sub">Regional plans cover a group of countries on a single profile. You install it once,
+        cross borders freely, and never reinstall anything at a checkpoint.</p>
+    </div>
+    <div class="grid g3">
+      {% for r in regions %}
+      <a class="region-card reveal" href="{{ r.get_absolute_url }}">
+        <div class="ico">{{ r.icon }}</div>
+        <h3>{{ r.name }}</h3>
+        <p>{{ r.description|default:"Multi-country coverage on one eSIM." }}</p>
+        <div class="foot">
+          <span class="price">${{ r.min_price_usd|default:"—" }}</span>
+          <span class="small muted">from · {{ r.country_count }} countries{% if r.has_unlimited %} · unlimited{% endif %}</span>
+        </div>
+      </a>
+      {% empty %}
+      <p class="muted">The regional catalogue is syncing. Check back in a minute.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% include "partials/cta_band.html" %}
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">Compatibility</span>
+      <h2>Does my phone support eSIM?</h2>
+      <p class="h-sub">Two things have to be true: the device supports eSIM, and it is carrier-unlocked.
+        Here is how to check in ten seconds, plus the full list of {{ device_count }} supported models.</p>
+    </div>
+
+    <div class="grid g3 mb-4">
+      <div class="card">
+        <span class="icon-tile"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 12.5c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.7 1.1 8.9.8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.8-2.2.9-1.3 1.2-2.5 1.2-2.6 0 0-2.4-.9-2.4-3.3z"/></svg></span>
+        <h3 class="mt-2">On iPhone</h3>
+        <p class="muted small mt-1">Dial <b>*#06#</b>. If an <b>EID</b> number appears, the phone supports
+          eSIM. Or check Settings → Cellular for an "Add eSIM" option. iPhone XS and newer, except
+          mainland-China models.</p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect width="14" height="20" x="5" y="2" rx="2.5"/><path d="M12 18h.01"/></svg></span>
+        <h3 class="mt-2">On Android</h3>
+        <p class="muted small mt-1">Settings → Network & internet → SIMs. If you see "Download a SIM"
+          or "Add eSIM", you are set. Pixel 3 and newer, Galaxy S20 and newer, plus many Xiaomi,
+          Motorola, Oppo and Huawei models.</p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+        <h3 class="mt-2">Carrier lock</h3>
+        <p class="muted small mt-1">A phone locked to your home operator will refuse any other network,
+          eSIM included. Ask your operator to unlock it — usually free once the device is paid off.</p>
+      </div>
+    </div>
+
+    {% if brands %}
+    <h3 class="mb-2">Full supported list</h3>
+    <div class="stack" style="gap:10px">
+      {% for brand, models in brands %}
+      <details class="card" style="padding:16px 20px">
+        <summary style="cursor:pointer;font-weight:650;display:flex;justify-content:space-between;gap:12px">
+          <span>{{ brand }}</span><span class="small muted">{{ models|length }} model{{ models|length|pluralize }}</span>
+        </summary>
+        <div class="chips mt-3">
+          {% for m in models %}<span class="chip">{{ m }}</span>{% endfor %}
+        </div>
+      </details>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <div>The device list is syncing from our network partner. Use the *#06# check above in the meantime —
+        it is the reliable answer for any phone.</div>
+    </div>
+    {% endif %}
+
+    <p class="small muted mt-4">Not sure about your exact model? Email
+      <a class="link" href="mailto:{{ support_email }}">{{ support_email }}</a> with the model number
+      and we will confirm before you buy.</p>
+  </div>
+</section>
+{% include "partials/cta_band.html" %}
+{% endblock %}

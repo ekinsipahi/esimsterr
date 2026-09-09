@@ -1,0 +1,6 @@
+<div class="dash-tabs">
+  <a class="dash-tab {% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}" href="{% url 'dashboard' %}">My eSIMs</a>
+  <a class="dash-tab {% if request.resolver_match.url_name == 'orders_list' %}is-active{% endif %}" href="{% url 'orders_list' %}">Orders</a>
+  <a class="dash-tab {% if request.resolver_match.url_name == 'account' %}is-active{% endif %}" href="{% url 'account' %}">Account</a>
+  <a class="dash-tab" href="{% url 'support' %}">Support</a>
+</div>

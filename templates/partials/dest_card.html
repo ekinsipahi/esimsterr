@@ -1,0 +1,9 @@
+{# Context: c (Country) #}
+<a class="dest-card" href="{{ c.get_absolute_url }}">
+  <span class="flag">{% if c.flag_url %}<img src="{{ c.flag_url }}" alt="" loading="lazy" width="34" height="26">{% else %}{{ c.flag_emoji }}{% endif %}</span>
+  <span>
+    <span class="name">{{ c.name }}</span>
+    <span class="from">{% if c.min_price_usd %}from <b>${{ c.min_price_usd }}</b>{% else %}View plans{% endif %}{% if c.has_unlimited %} · unlimited{% endif %}</span>
+  </span>
+  <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+</a>

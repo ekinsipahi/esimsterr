@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /checkout/
+Disallow: /order/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /webhooks/
+Disallow: /login/
+Disallow: /signup/
+Disallow: /password-reset/
+
+Sitemap: {{ site_url }}/sitemap.xml

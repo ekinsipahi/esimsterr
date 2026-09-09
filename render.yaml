@@ -1,0 +1,163 @@
+# Render Blueprint — Django web service + two cron jobs.
+# In Render: New → Blueprint → connect this repo, then fill the `sync: false`
+# secrets in the dashboard. The database is external (Supabase), so do NOT add a
+# Render Postgres here: it would inject DATABASE_URL and override the DB_* vars.
+
+services:
+  - type: web
+    name: esimsterr
+    runtime: python
+    plan: free
+    buildCommand: "bash build.sh"
+    startCommand: "gunicorn core.wsgi:application --timeout 120 --graceful-timeout 30 --workers 2 --bind 0.0.0.0:$PORT"
+    healthCheckPath: /health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.3"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+
+      # --- Supabase Postgres (session pooler, port 5432) ---
+      # DB_USER is "postgres.<project-ref>" — copy it from Supabase → Connect.
+      - key: DB_HOST
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: "postgres"
+      - key: DB_PORT
+        value: "5432"
+
+      # --- Site identity / SEO ---
+      - key: SITE_URL              # https://esimsterr.com
+        sync: false
+      - key: CANONICAL_HOST        # esimsterr.com
+        sync: false
+      - key: ALLOWED_HOSTS         # esimsterr.com,www.esimsterr.com,esimsterr.onrender.com
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS  # https://esimsterr.com,https://www.esimsterr.com
+        sync: false
+      - key: REDIRECT_HOSTS        # www.esimsterr.com,esimsterr.onrender.com
+        sync: false
+
+      # --- eSIM provider ---
+      - key: YESIM_API_TOKEN
+        sync: false
+      - key: YESIM_WEBHOOK_SECRET
+        generateValue: true
+
+      # --- Pricing strategy ---
+      - key: EUR_USD_RATE
+        value: "1.10"
+      - key: PRICING_MARKUP
+        value: "1.65"
+      - key: PRICING_MIN_MARGIN_USD
+        value: "0.60"
+      - key: PRICING_MIN_PRICE_USD
+        value: "1.49"
+
+      # --- Payments ---
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: NOWPAYMENTS_API_KEY
+        sync: false
+      - key: NOWPAYMENTS_IPN_SECRET
+        sync: false
+
+      # --- Email / auth / analytics ---
+      - key: RESEND_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL    # eSIMsterr <noreply@esimsterr.com>
+        sync: false
+      - key: SUPPORT_EMAIL         # support@esimsterr.com
+        sync: false
+      - key: ADMIN_NOTIFY_EMAILS   # your address, comma-separated
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GA_MEASUREMENT_ID
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true
+
+  # Refresh eSIM usage + retry any order stuck after a provider hiccup.
+  - type: cron
+    name: esimsterr-usage-sync
+    runtime: python
+    plan: free
+    schedule: "*/20 * * * *"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py sync_usage && python manage.py retry_orders"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.3"
+      - key: DB_HOST
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: "postgres"
+      - key: DB_PORT
+        value: "5432"
+      - key: YESIM_API_TOKEN
+        sync: false
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          type: web
+          name: esimsterr
+          envVarKey: DJANGO_SECRET_KEY
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ADMIN_NOTIFY_EMAILS
+        sync: false
+
+  # Re-mirror the provider catalogue and re-price nightly.
+  - type: cron
+    name: esimsterr-catalogue-sync
+    runtime: python
+    plan: free
+    schedule: "30 3 * * *"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py sync_plans"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.3"
+      - key: DB_HOST
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: "postgres"
+      - key: DB_PORT
+        value: "5432"
+      - key: YESIM_API_TOKEN
+        sync: false
+      - key: EUR_USD_RATE
+        value: "1.10"
+      - key: PRICING_MARKUP
+        value: "1.65"
+      - key: PRICING_MIN_MARGIN_USD
+        value: "0.60"
+      - key: PRICING_MIN_PRICE_USD
+        value: "1.49"
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          type: web
+          name: esimsterr
+          envVarKey: DJANGO_SECRET_KEY
