@@ -23,7 +23,7 @@
         {% with cheapest=data_plans|dictsort:"price"|first %}
         {% if cheapest.savings_pct and cheapest.compare_at_usd %}
         <div class="row mt-3" style="gap:12px">
-          <span class="off-badge off-badge-lg">{% icon "percent" size=15 %}{% blocktrans with pct=cheapest.savings_pct %}{{ pct }}% OFF{% endblocktrans %}</span>
+          <span class="off-badge off-badge-lg">{% icon "arrow-down" size=15 %}{% blocktrans with pct=cheapest.savings_pct %}{{ pct }}% OFF{% endblocktrans %}</span>
           <span class="small muted">
             {% blocktrans with data=cheapest.data_label price=cheapest.price|usd was=cheapest.compare_at_usd|usd %}{{ data }} for {{ price }}, against a typical market price of {{ was }} for the same wholesale data.{% endblocktrans %}
           </span>

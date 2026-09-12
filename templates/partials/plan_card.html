@@ -19,7 +19,7 @@
     <span class="plan-price">{{ plan.price|usd }}</span>
     {% if plan.compare_at_usd and plan.savings_pct %}
       <span class="price-was">{{ plan.compare_at_usd|usd }}</span>
-      <span class="off-badge">{% icon "percent" size=13 %}{% blocktrans with pct=plan.savings_pct %}{{ pct }}% OFF{% endblocktrans %}</span>
+      <span class="off-badge">{% icon "arrow-down" size=13 %}{% blocktrans with pct=plan.savings_pct %}{{ pct }}% OFF{% endblocktrans %}</span>
     {% endif %}
   </div>
 

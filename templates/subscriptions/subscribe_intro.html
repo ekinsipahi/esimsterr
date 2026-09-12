@@ -69,7 +69,7 @@
           </span>
           {% if saving_pct %}
           <span class="price-was">{{ plan.price|usd }}</span>
-          <span class="off-badge">{% icon "percent" size=13 %}{% blocktrans with pct=saving_pct %}{{ pct }}% OFF{% endblocktrans %}</span>
+          <span class="off-badge">{% icon "arrow-down" size=13 %}{% blocktrans with pct=saving_pct %}{{ pct }}% OFF{% endblocktrans %}</span>
           {% endif %}
         </div>
         {% if saving_pct %}

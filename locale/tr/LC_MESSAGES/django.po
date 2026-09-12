@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-12 07:58+0000\n"
+"POT-Creation-Date: 2026-09-12 12:33+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,58 +33,65 @@ msgstr ""
 msgid "recent redemptions"
 msgstr ""
 
-#: apps/coupons/admin.py:49 apps/coupons/admin.py:63
+#: apps/coupons/admin.py:51
+msgid ""
+"The description is campaign copy shown on the public coupons page. Write it "
+"in the site's default language: it is edited here rather than translated, "
+"and the page labels it as such."
+msgstr ""
+
+#: apps/coupons/admin.py:56 apps/coupons/admin.py:70
 msgid "Discount"
 msgstr ""
 
-#: apps/coupons/admin.py:51
+#: apps/coupons/admin.py:58
 msgid "Set a percentage or a fixed amount, never both."
 msgstr ""
 
-#: apps/coupons/admin.py:53
+#: apps/coupons/admin.py:60
 msgid "Conditions"
 msgstr ""
 
-#: apps/coupons/admin.py:57
+#: apps/coupons/admin.py:64
 msgid "Window and limits"
 msgstr ""
 
-#: apps/coupons/admin.py:60
+#: apps/coupons/admin.py:67
 msgid "Record"
 msgstr ""
 
-#: apps/coupons/admin.py:67
+#: apps/coupons/admin.py:74
 msgid "Window"
 msgstr ""
 
-#: apps/coupons/admin.py:69
+#: apps/coupons/admin.py:76
 msgid "now"
 msgstr ""
 
-#: apps/coupons/admin.py:70
+#: apps/coupons/admin.py:77
 msgid "open ended"
 msgstr ""
 
-#: apps/coupons/admin.py:73
+#: apps/coupons/admin.py:80
 msgid "Used"
 msgstr ""
 
-#: apps/coupons/admin.py:78
+#: apps/coupons/admin.py:85
 msgid "Live"
 msgstr ""
 
-#: apps/coupons/admin.py:82
+#: apps/coupons/admin.py:89
 msgid "Duplicate (inactive, counter reset)"
 msgstr ""
 
-#: apps/coupons/admin.py:99
+#: apps/coupons/admin.py:106
 #, python-format
 msgid ""
 "Duplicated %(count)s coupon(s). The copies are inactive until you switch "
 "them on."
 msgstr ""
 
-#: apps/coupons/apps.py:8 apps/coupons/views.py:94
+#: apps/coupons/apps.py:8 apps/coupons/views.py:108
 #: templates/coupons/index.html:10
 msgid "Coupons"
 msgstr ""
@@ -295,8 +302,8 @@ msgstr ""
 msgid "order"
 msgstr ""
 
-#: apps/coupons/models.py:311 apps/support/admin.py:61
-#: apps/support/models.py:61 apps/support/models.py:163
+#: apps/coupons/models.py:311 apps/support/admin.py:62
+#: apps/support/models.py:61 apps/support/models.py:168
 msgid "account"
 msgstr ""
 
@@ -305,7 +312,7 @@ msgid "email"
 msgstr ""
 
 #: apps/coupons/models.py:314 apps/support/models.py:70
-#: apps/support/models.py:172
+#: apps/support/models.py:177
 msgid "IP address"
 msgstr ""
 
@@ -325,144 +332,144 @@ msgstr ""
 msgid "coupon redemptions"
 msgstr ""
 
-#: apps/coupons/services.py:43
+#: apps/coupons/services.py:64
 msgid "Enter a coupon code."
 msgstr ""
 
-#: apps/coupons/services.py:47
+#: apps/coupons/services.py:68
 msgid "We do not recognise that code."
 msgstr ""
 
-#: apps/coupons/services.py:51
+#: apps/coupons/services.py:72 apps/coupons/services.py:152
 msgid "That code is no longer available."
 msgstr ""
 
-#: apps/coupons/services.py:53
+#: apps/coupons/services.py:74 apps/coupons/services.py:154
 msgid "That code is not open yet."
 msgstr ""
 
-#: apps/coupons/services.py:55
+#: apps/coupons/services.py:76 apps/coupons/services.py:156
 msgid "That code has expired."
 msgstr ""
 
-#: apps/coupons/services.py:57
+#: apps/coupons/services.py:78
 msgid "That code has been fully claimed."
 msgstr ""
 
-#: apps/coupons/services.py:61
+#: apps/coupons/services.py:82
 msgid "There is nothing to discount on this order."
 msgstr ""
 
-#: apps/coupons/services.py:64
+#: apps/coupons/services.py:85 apps/coupons/services.py:163
 #, python-format
 msgid "This code needs an order of $%(amount)s or more."
 msgstr ""
 
-#: apps/coupons/services.py:69
+#: apps/coupons/services.py:91 apps/coupons/services.py:169
 #, python-format
 msgid "This code only works on %(scope)s."
 msgstr ""
 
-#: apps/coupons/services.py:75 apps/coupons/services.py:81
+#: apps/coupons/services.py:100 apps/coupons/services.py:109
 msgid "Add your email address first, then apply the code."
 msgstr ""
 
-#: apps/coupons/services.py:77 apps/coupons/services.py:116
+#: apps/coupons/services.py:104 apps/coupons/services.py:178
 msgid "You have already used this code."
 msgstr ""
 
-#: apps/coupons/services.py:86
+#: apps/coupons/services.py:116 apps/coupons/services.py:182
 msgid "This code is for a first order only."
 msgstr ""
 
-#: apps/coupons/services.py:90
+#: apps/coupons/services.py:120
 msgid "This code does not apply to this order."
 msgstr ""
 
-#: apps/coupons/services.py:109
+#: apps/coupons/services.py:145
 msgid "That code has just been fully claimed."
 msgstr ""
 
-#: apps/coupons/views.py:26
+#: apps/coupons/views.py:30
 msgid "How do I use an eSIMsterr coupon code?"
 msgstr ""
 
-#: apps/coupons/views.py:27
+#: apps/coupons/views.py:31
 msgid ""
 "Choose your plan, then paste the code into the coupon box on the checkout "
 "page and apply it. The new total is shown before you pay, so you never have "
 "to take the discount on trust."
 msgstr ""
 
-#: apps/coupons/views.py:30
+#: apps/coupons/views.py:34
 msgid "Does every code work on every plan?"
 msgstr ""
 
-#: apps/coupons/views.py:31
+#: apps/coupons/views.py:35
 msgid ""
 "Each code carries its own conditions and they are printed on the card above. "
 "Most work on any country or regional plan; some ask for a minimum order or "
 "are limited to a first purchase."
 msgstr ""
 
-#: apps/coupons/views.py:34
+#: apps/coupons/views.py:38
 msgid "Can I use two codes on one order?"
 msgstr ""
 
-#: apps/coupons/views.py:35
+#: apps/coupons/views.py:39
 msgid ""
 "No. One code per order. If you are buying several eSIMs, use the code on "
 "each order separately where its conditions allow it."
 msgstr ""
 
-#: apps/coupons/views.py:37
+#: apps/coupons/views.py:41
 msgid "Why are the prices already lower than the big eSIM apps?"
 msgstr ""
 
-#: apps/coupons/views.py:38
+#: apps/coupons/views.py:42
 msgid ""
 "Because we do not buy app-install ads, and on the well-known apps that "
 "marketing spend is a large part of what you pay for. The coupon comes off a "
 "price that is already cut close."
 msgstr ""
 
-#: apps/coupons/views.py:41
+#: apps/coupons/views.py:45
 msgid "Do these codes expire?"
 msgstr ""
 
-#: apps/coupons/views.py:42
+#: apps/coupons/views.py:46
 msgid ""
 "Some do. Any end date is printed on the coupon card. An expired code is "
 "refused at checkout with a clear message rather than quietly ignored."
 msgstr ""
 
-#: apps/coupons/views.py:44
+#: apps/coupons/views.py:48
 msgid "My code was refused. What should I check?"
 msgstr ""
 
-#: apps/coupons/views.py:45
+#: apps/coupons/views.py:49
 msgid ""
 "Read the conditions on the card: a minimum order, first order only, or one "
 "use per customer. If the code still will not apply, contact support with the "
 "code and your email address and we will make it right."
 msgstr ""
 
-#: apps/coupons/views.py:48
+#: apps/coupons/views.py:52
 msgid "Do I need an account to use a coupon?"
 msgstr ""
 
-#: apps/coupons/views.py:49
+#: apps/coupons/views.py:53
 msgid ""
 "No. Guest checkout accepts codes too. We only need an email address to send "
 "the QR code to, which is also how a one-per-customer code is counted."
 msgstr ""
 
-#: apps/coupons/views.py:74
+#: apps/coupons/views.py:81
 #, python-format
 msgid "eSIM coupon codes — %(pct)s%% off travel data | %(site)s"
 msgstr ""
 
-#: apps/coupons/views.py:78
+#: apps/coupons/views.py:85
 #, python-format
 msgid ""
 "Working eSIM discount codes for %(site)s: up to %(pct)s%% off prepaid travel "
@@ -470,31 +477,31 @@ msgid ""
 "before you pay."
 msgstr ""
 
-#: apps/coupons/views.py:83
+#: apps/coupons/views.py:90
 #, python-format
 msgid "eSIM coupon codes and discounts | %(site)s"
 msgstr ""
 
-#: apps/coupons/views.py:85
+#: apps/coupons/views.py:92
 #, python-format
 msgid ""
 "Current eSIM discount codes for %(site)s, plus how to apply one at checkout. "
 "Prepaid travel data in 150+ countries, cheaper than roaming."
 msgstr ""
 
-#: apps/coupons/views.py:94 apps/orders/views.py:197 apps/seo/views.py:236
-#: apps/seo/views.py:267 apps/seo/views.py:298 apps/seo/views.py:326
-#: apps/seo/views.py:349 apps/seo/views.py:386 apps/seo/views.py:424
-#: apps/seo/views.py:426 apps/subscriptions/views.py:133
-#: apps/support/views.py:142
+#: apps/coupons/views.py:108 apps/orders/views.py:197 apps/seo/views.py:233
+#: apps/seo/views.py:264 apps/seo/views.py:295 apps/seo/views.py:323
+#: apps/seo/views.py:346 apps/seo/views.py:383 apps/seo/views.py:421
+#: apps/seo/views.py:423 apps/subscriptions/views.py:133
+#: apps/support/views.py:96
 msgid "Home"
 msgstr ""
 
-#: apps/coupons/views.py:131
+#: apps/coupons/views.py:157
 msgid "We could not find that plan. Please reload the page."
 msgstr ""
 
-#: apps/coupons/views.py:152
+#: apps/coupons/views.py:194
 #, python-format
 msgid "%(label)s applied. You save $%(amount)s."
 msgstr ""
@@ -2422,8 +2429,8 @@ msgstr ""
 msgid "Pay for days rather than gigabytes when your usage is unpredictable."
 msgstr ""
 
-#: apps/seo/data.py:835 apps/seo/views.py:180 templates/partials/footer.html:34
-#: templates/seo/prices.html:82 templates/seo/prices.html:127
+#: apps/seo/data.py:835 apps/seo/views.py:180 templates/partials/footer.html:36
+#: templates/seo/prices.html:82 templates/seo/prices.html:129
 msgid "Regional plans"
 msgstr ""
 
@@ -2494,7 +2501,7 @@ msgstr ""
 #, python-format
 msgid ""
 "Land in your university city with working data. No local contract, no credit "
-"check, no deposit - a month of data on your existing phone from $%(price)s."
+"check, no deposit — a month of data on your existing phone from $%(price)s."
 msgstr ""
 
 #: apps/seo/data.py:864
@@ -3447,39 +3454,39 @@ msgid ""
 msgstr ""
 
 #: apps/seo/views.py:178 templates/catalog/home.html:66
-#: templates/partials/header.html:117
+#: templates/partials/header.html:119
 msgid "All destinations"
 msgstr ""
 
-#: apps/seo/views.py:179 templates/partials/footer.html:55
+#: apps/seo/views.py:179
 msgid "Price list"
 msgstr ""
 
-#: apps/seo/views.py:181 templates/seo/prices.html:126
+#: apps/seo/views.py:181 templates/seo/prices.html:128
 msgid "Unlimited plans"
 msgstr ""
 
 #: apps/seo/views.py:182 templates/partials/cta_band.html:12
-#: templates/partials/footer.html:45 templates/partials/header.html:40
-#: templates/partials/header.html:122 templates/seo/payment_method.html:20
+#: templates/partials/footer.html:55 templates/partials/header.html:41
+#: templates/partials/header.html:124 templates/seo/payment_method.html:20
 msgid "How it works"
 msgstr ""
 
-#: apps/seo/views.py:202 templates/seo/alternative.html:144
+#: apps/seo/views.py:199 templates/seo/alternative.html:146
 #, python-format
 msgid "%(brand)s alternative"
 msgstr ""
 
-#: apps/seo/views.py:236
+#: apps/seo/views.py:233
 msgid "Cheap eSIM"
 msgstr ""
 
-#: apps/seo/views.py:248
+#: apps/seo/views.py:245
 #, python-format
 msgid "Cheap eSIM plans — travel data from just $%(price)s"
 msgstr ""
 
-#: apps/seo/views.py:250
+#: apps/seo/views.py:247
 #, python-format
 msgid ""
 "Cheap travel eSIM deals with the price per GB printed on every plan. Live "
@@ -3487,20 +3494,20 @@ msgid ""
 "needed."
 msgstr ""
 
-#: apps/seo/views.py:267
+#: apps/seo/views.py:264
 msgid "Payment methods"
 msgstr ""
 
-#: apps/seo/views.py:298
+#: apps/seo/views.py:295
 msgid "Alternatives"
 msgstr ""
 
-#: apps/seo/views.py:311
+#: apps/seo/views.py:308
 #, python-format
 msgid "%(brand)s alternative — the same networks from just $%(price)s"
 msgstr ""
 
-#: apps/seo/views.py:314
+#: apps/seo/views.py:311
 #, python-format
 msgid ""
 "Looking for an alternative to %(brand)s? Compare on what can be checked: "
@@ -3508,66 +3515,66 @@ msgid ""
 "renew. From $%(price)s."
 msgstr ""
 
-#: apps/seo/views.py:326 templates/partials/footer.html:44
-#: templates/seo/prices.html:128
+#: apps/seo/views.py:323 templates/partials/footer.html:54
+#: templates/seo/prices.html:130
 msgid "What is an eSIM"
 msgstr ""
 
-#: apps/seo/views.py:336
+#: apps/seo/views.py:333
 msgid "What is an eSIM? How it works, and eSIM vs SIM explained"
 msgstr ""
 
-#: apps/seo/views.py:338
+#: apps/seo/views.py:335
 msgid ""
 "An eSIM is a SIM built into your phone that downloads a plan over the "
 "internet. How it works, eSIM vs physical SIM, and which phones support it."
 msgstr ""
 
-#: apps/seo/views.py:349 templates/partials/footer.html:47
+#: apps/seo/views.py:346 templates/partials/footer.html:57
 msgid "eSIM not working"
 msgstr ""
 
-#: apps/seo/views.py:355
+#: apps/seo/views.py:352
 msgid "eSIM not working? Fix it in order, starting with data roaming"
 msgstr ""
 
-#: apps/seo/views.py:357
+#: apps/seo/views.py:354
 msgid ""
 "A travel eSIM with no service or no data is almost always one setting. Work "
 "through the checks in order, starting with data roaming."
 msgstr ""
 
-#: apps/seo/views.py:386
+#: apps/seo/views.py:383
 msgid "eSIM by use case"
 msgstr ""
 
-#: apps/seo/views.py:421
+#: apps/seo/views.py:418
 msgid "Other"
 msgstr ""
 
-#: apps/seo/views.py:424 apps/seo/views.py:426
+#: apps/seo/views.py:421 apps/seo/views.py:423
 msgid "eSIM prices"
 msgstr ""
 
-#: apps/seo/views.py:443
+#: apps/seo/views.py:440
 #, python-format
 msgid ""
 "%(continent)s eSIM prices — every country, starting from just $%(price)s"
 msgstr ""
 
-#: apps/seo/views.py:446
+#: apps/seo/views.py:443
 #, python-format
 msgid "eSIM prices — every country, starting from just $%(price)s"
 msgstr ""
 
-#: apps/seo/views.py:449
+#: apps/seo/views.py:446
 msgid ""
 "The full eSIM price list: the from price for every destination we sell and "
 "which ones have unlimited plans. Live from our catalogue, in USD."
 msgstr ""
 
-#: apps/subscriptions/admin.py:39 apps/support/admin.py:56
-#: apps/support/models.py:127 apps/support/models.py:199
+#: apps/subscriptions/admin.py:39 apps/support/admin.py:57
+#: apps/support/models.py:132 apps/support/models.py:204
 msgid "Customer"
 msgstr ""
 
@@ -3632,7 +3639,7 @@ msgid "plan"
 msgstr ""
 
 #: apps/subscriptions/models.py:52 apps/subscriptions/models.py:137
-#: apps/support/models.py:66 apps/support/models.py:164
+#: apps/support/models.py:66 apps/support/models.py:169
 msgid "status"
 msgstr ""
 
@@ -3736,62 +3743,62 @@ msgid ""
 "sort it out for you."
 msgstr ""
 
-#: apps/support/admin.py:57
+#: apps/support/admin.py:58
 msgid "Trace"
 msgstr ""
 
-#: apps/support/admin.py:65
+#: apps/support/admin.py:66
 msgid "customer link"
 msgstr ""
 
-#: apps/support/admin.py:104
+#: apps/support/admin.py:106
 #, python-format
 msgid "Reply emailed to %(email)s."
 msgstr ""
 
-#: apps/support/admin.py:111 apps/support/models.py:208
+#: apps/support/admin.py:113 apps/support/models.py:213
 msgid "intent"
 msgstr ""
 
-#: apps/support/admin.py:153
+#: apps/support/admin.py:155
 msgid "chat"
 msgstr ""
 
-#: apps/support/admin.py:157
+#: apps/support/admin.py:159
 msgid "Toggle operator takeover (silences the AI)"
 msgstr ""
 
-#: apps/support/admin.py:169
+#: apps/support/admin.py:171
 #, python-format
 msgid "%(n)d conversation taken over."
 msgid_plural "%(n)d conversations taken over."
 msgstr[0] ""
 msgstr[1] ""
 
-#: apps/support/admin.py:171
+#: apps/support/admin.py:173
 #, python-format
 msgid "%(n)d handed back to the assistant."
 msgid_plural "%(n)d handed back to the assistant."
 msgstr[0] ""
 msgstr[1] ""
 
-#: apps/support/admin.py:175
+#: apps/support/admin.py:177
 msgid "Close selected conversations"
 msgstr ""
 
-#: apps/support/admin.py:178
+#: apps/support/admin.py:180
 #, python-format
 msgid "%(n)d closed."
 msgstr ""
 
-#: apps/support/apps.py:8 apps/support/views.py:142 apps/support/views.py:201
+#: apps/support/apps.py:8 apps/support/views.py:96 apps/support/views.py:223
 #: templates/pages/support.html:10 templates/partials/dash_tabs.html:9
-#: templates/partials/footer.html:84 templates/partials/header.html:43
-#: templates/partials/header.html:126
+#: templates/partials/footer.html:65 templates/partials/header.html:44
+#: templates/partials/header.html:128
 msgid "Support"
 msgstr ""
 
-#: apps/support/models.py:42 apps/support/models.py:156
+#: apps/support/models.py:42 apps/support/models.py:161
 #: templates/pages/support.html:91
 msgid "Open"
 msgstr ""
@@ -3800,7 +3807,7 @@ msgstr ""
 msgid "Answered"
 msgstr ""
 
-#: apps/support/models.py:44 apps/support/models.py:158
+#: apps/support/models.py:44 apps/support/models.py:163
 msgid "Closed"
 msgstr ""
 
@@ -3821,7 +3828,7 @@ msgid "Refund request"
 msgstr ""
 
 #: apps/support/models.py:51 templates/dashboard/account.html:7
-#: templates/partials/dash_tabs.html:8 templates/partials/header.html:74
+#: templates/partials/dash_tabs.html:8 templates/partials/header.html:75
 msgid "Account"
 msgstr ""
 
@@ -3851,7 +3858,7 @@ msgstr ""
 msgid "ICCID"
 msgstr ""
 
-#: apps/support/models.py:71 apps/support/models.py:173
+#: apps/support/models.py:71 apps/support/models.py:178
 msgid "user agent"
 msgstr ""
 
@@ -3859,11 +3866,11 @@ msgstr ""
 msgid "opened"
 msgstr ""
 
-#: apps/support/models.py:73 apps/support/models.py:176
+#: apps/support/models.py:73 apps/support/models.py:181
 msgid "last activity"
 msgstr ""
 
-#: apps/support/models.py:77 apps/support/models.py:132
+#: apps/support/models.py:77 apps/support/models.py:137
 msgid "ticket"
 msgstr ""
 
@@ -3871,139 +3878,145 @@ msgstr ""
 msgid "tickets"
 msgstr ""
 
-#: apps/support/models.py:128 apps/support/models.py:201
+#: apps/support/models.py:133 apps/support/models.py:206
 #: templates/partials/assistant_widget.html:69
 #: templates/support/ticket_detail.html:31
 msgid "Support team"
 msgstr ""
 
-#: apps/support/models.py:133 apps/support/models.py:206
+#: apps/support/models.py:138 apps/support/models.py:211
 msgid "written by"
 msgstr ""
 
-#: apps/support/models.py:135 apps/support/models.py:207
+#: apps/support/models.py:140 apps/support/models.py:212
 msgid "message"
 msgstr ""
 
-#: apps/support/models.py:136 apps/support/models.py:209
+#: apps/support/models.py:141 apps/support/models.py:214
 msgid "sent"
 msgstr ""
 
-#: apps/support/models.py:140
+#: apps/support/models.py:145
 msgid "ticket message"
 msgstr ""
 
-#: apps/support/models.py:141
+#: apps/support/models.py:146
 msgid "ticket messages"
 msgstr ""
 
-#: apps/support/models.py:157
+#: apps/support/models.py:162
 msgid "Escalated"
 msgstr ""
 
-#: apps/support/models.py:168
+#: apps/support/models.py:173
 msgid "intent flags"
 msgstr ""
 
-#: apps/support/models.py:170
+#: apps/support/models.py:175
 msgid "operator joined"
 msgstr ""
 
-#: apps/support/models.py:171
+#: apps/support/models.py:176
 msgid "unread for customer"
 msgstr ""
 
-#: apps/support/models.py:174
+#: apps/support/models.py:179
 msgid "escalated"
 msgstr ""
 
-#: apps/support/models.py:175
+#: apps/support/models.py:180
 msgid "started"
 msgstr ""
 
-#: apps/support/models.py:180
+#: apps/support/models.py:185
 msgid "assistant conversation"
 msgstr ""
 
-#: apps/support/models.py:181
+#: apps/support/models.py:186
 msgid "assistant conversations"
 msgstr ""
 
-#: apps/support/models.py:200 templates/partials/assistant_widget.html:69
+#: apps/support/models.py:205 templates/partials/assistant_widget.html:69
 msgid "Assistant"
 msgstr ""
 
-#: apps/support/models.py:205
+#: apps/support/models.py:210
 msgid "conversation"
 msgstr ""
 
-#: apps/support/models.py:213
+#: apps/support/models.py:218
 msgid "assistant message"
 msgstr ""
 
-#: apps/support/models.py:214
+#: apps/support/models.py:219
 msgid "assistant messages"
 msgstr ""
 
 #: apps/support/views.py:97
+#, python-format
+msgid "Support — %(site)s"
+msgstr ""
+
+#: apps/support/views.py:98
+msgid ""
+"Fix eSIM installation, activation and no-data problems, or open a support "
+"ticket. Guests can use their order reference."
+msgstr ""
+
+#: apps/support/views.py:124
 msgid "Please enter a valid email address so we can reply."
 msgstr ""
 
-#: apps/support/views.py:100
+#: apps/support/views.py:127
 msgid "Add a subject and a few sentences so we can help properly."
 msgstr ""
 
-#: apps/support/views.py:104
+#: apps/support/views.py:131
 msgid ""
 "You already have several open tickets. Reply on one of those and we will "
 "pick it up there."
 msgstr ""
 
-#: apps/support/views.py:115
+#: apps/support/views.py:142
 msgid "Something went wrong on our side. Please try once more."
 msgstr ""
 
-#: apps/support/views.py:130
+#: apps/support/views.py:157
 #, python-format
 msgid ""
 "Thanks — your reference is %(ref)s. We reply by email, usually within a few "
 "hours."
 msgstr ""
 
-#: apps/support/views.py:143
-#, python-format
-msgid "Support — %(site)s"
-msgstr ""
-
-#: apps/support/views.py:144
-msgid ""
-"Fix eSIM installation, activation and no-data problems, or open a support "
-"ticket. Guests can use their order reference."
-msgstr ""
-
-#: apps/support/views.py:176
+#: apps/support/views.py:198
 msgid "Ticket closed. Reply any time to open it again."
 msgstr ""
 
-#: apps/support/views.py:181
+#: apps/support/views.py:203
 msgid "Write a message first."
 msgstr ""
 
-#: apps/support/views.py:194
+#: apps/support/views.py:216
 msgid "Sent. We reply by email."
 msgstr ""
 
-#: apps/support/views.py:202
+#: apps/support/views.py:224
 #, python-format
 msgid "Ticket %(ref)s"
 msgstr ""
 
-#: apps/support/views.py:282
+#: apps/support/views.py:312
+msgid ""
+"The assistant is off right now. Open a support ticket and we will answer by "
+"email."
+msgstr ""
+
+#: apps/support/views.py:322
 msgid ""
 "Sign in to chat with the assistant. Guests can open a support ticket instead."
 msgstr ""
 
-#: apps/support/views.py:305
+#: apps/support/views.py:345
 msgid ""
 "That is a lot of messages in one hour. Give it a few minutes, or open a "
 "ticket and we will answer by email."
@@ -4124,9 +4137,9 @@ msgstr ""
 
 #: templates/accounts/login.html:55
 #: templates/accounts/password_reset_complete.html:13
-#: templates/pages/support.html:164
-#: templates/partials/assistant_widget.html:266
-#: templates/partials/header.html:97 templates/partials/header.html:135
+#: templates/pages/support.html:166
+#: templates/partials/assistant_widget.html:269
+#: templates/partials/header.html:98 templates/partials/header.html:137
 msgid "Sign in"
 msgstr ""
 
@@ -4434,7 +4447,7 @@ msgstr ""
 #: templates/catalog/country_detail.html:26 templates/catalog/home.html:144
 #: templates/catalog/region_detail.html:26 templates/catalog/unlimited.html:28
 #: templates/partials/plan_card.html:22
-#: templates/subscriptions/subscribe_intro.html:67
+#: templates/subscriptions/subscribe_intro.html:72
 #, python-format
 msgid "%(pct)s%% OFF"
 msgstr ""
@@ -4539,9 +4552,9 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: templates/catalog/country_detail.html:114
-#: templates/catalog/region_detail.html:84 templates/coupons/index.html:125
-#: templates/pages/faq.html:8 templates/partials/footer.html:48
-#: templates/partials/header.html:125
+#: templates/catalog/region_detail.html:84 templates/coupons/index.html:133
+#: templates/pages/faq.html:8 templates/partials/footer.html:58
+#: templates/partials/header.html:127
 msgid "FAQ"
 msgstr ""
 
@@ -4701,7 +4714,7 @@ msgstr ""
 msgid "One eSIM, many borders"
 msgstr ""
 
-#: templates/catalog/home.html:81 templates/partials/header.html:118
+#: templates/catalog/home.html:81 templates/partials/header.html:120
 msgid "Regional and global plans"
 msgstr ""
 
@@ -4780,8 +4793,8 @@ msgid ""
 "a price we used to charge."
 msgstr ""
 
-#: templates/catalog/home.html:161 templates/partials/footer.html:49
-#: templates/partials/header.html:124
+#: templates/catalog/home.html:161 templates/partials/footer.html:59
+#: templates/partials/header.html:126
 msgid "Travel guides"
 msgstr ""
 
@@ -4898,7 +4911,7 @@ msgstr ""
 #: templates/partials/plan_card.html:12 templates/partials/plan_tabs.html:8
 #: templates/seo/alternative.html:110 templates/seo/cheap.html:75
 #: templates/seo/prices.html:53 templates/subscriptions/list.html:32
-#: templates/subscriptions/subscribe_intro.html:57
+#: templates/subscriptions/subscribe_intro.html:62
 msgid "Unlimited"
 msgstr ""
 
@@ -4964,107 +4977,114 @@ msgstr ""
 msgid "First order"
 msgstr ""
 
-#: templates/coupons/index.html:37
+#: templates/coupons/index.html:39
 msgid "Copy"
 msgstr ""
 
-#: templates/coupons/index.html:47
+#: templates/coupons/index.html:49
 #, python-format
 msgid "%(left)s use left"
 msgid_plural "%(left)s uses left"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/coupons/index.html:51
+#: templates/coupons/index.html:53
 msgid "Use this code"
 msgstr ""
 
-#: templates/coupons/index.html:59
+#: templates/coupons/index.html:61
+msgid ""
+"The offer descriptions above are our campaign wording and are not "
+"translated. The discount, the conditions and the total you pay are all shown "
+"in your language."
+msgstr ""
+
+#: templates/coupons/index.html:67
 msgid "No public codes at the moment"
 msgstr ""
 
-#: templates/coupons/index.html:61
+#: templates/coupons/index.html:69
 msgid ""
 "Our prices are set low all year rather than inflated and discounted on a "
 "schedule, so there are stretches with no code to give. The plan prices you "
 "see are the real ones."
 msgstr ""
 
-#: templates/coupons/index.html:63
+#: templates/coupons/index.html:71
 msgid "See plan prices"
 msgstr ""
 
-#: templates/coupons/index.html:72
+#: templates/coupons/index.html:80
 msgid "How to use a code"
 msgstr ""
 
-#: templates/coupons/index.html:73
+#: templates/coupons/index.html:81
 msgid "Three steps, about forty seconds, no account needed."
 msgstr ""
 
-#: templates/coupons/index.html:78 templates/partials/steps.html:4
+#: templates/coupons/index.html:86 templates/partials/steps.html:4
 msgid "Pick your destination and plan"
 msgstr ""
 
-#: templates/coupons/index.html:79
+#: templates/coupons/index.html:87
 msgid ""
 "Choose the country or region you are travelling to, then the amount of data "
 "and the number of days you need."
 msgstr ""
 
-#: templates/coupons/index.html:82
+#: templates/coupons/index.html:90
 msgid "Paste the code at checkout"
 msgstr ""
 
-#: templates/coupons/index.html:83
+#: templates/coupons/index.html:91
 msgid ""
 "The coupon box sits under your email address on the checkout page. Paste the "
 "code, apply it, and the order summary updates with the discount shown as its "
 "own line."
 msgstr ""
 
-#: templates/coupons/index.html:86
+#: templates/coupons/index.html:94
 msgid "Pay and install"
 msgstr ""
 
-#: templates/coupons/index.html:87
+#: templates/coupons/index.html:95
 msgid ""
 "Pay by card or crypto. The QR code appears on the next screen and lands in "
 "your inbox, so you can install on Wi-Fi before you fly."
 msgstr ""
 
-#: templates/coupons/index.html:99
+#: templates/coupons/index.html:107
 msgid "The discount comes off a low price"
 msgstr ""
 
-#: templates/coupons/index.html:101
+#: templates/coupons/index.html:109
 msgid ""
 "We do not buy app-install ads, and on the well-known eSIM apps that spending "
 "is a large part of what you pay. A code here takes money off a price that is "
 "already cut close."
 msgstr ""
 
-#: templates/coupons/index.html:106
+#: templates/coupons/index.html:114
 msgid "One code per order, stated plainly"
 msgstr ""
 
-#: templates/coupons/index.html:108
+#: templates/coupons/index.html:116
 msgid ""
 "Codes do not stack. Each card above carries its own conditions, and checkout "
 "tells you exactly why a code was refused rather than failing in silence."
 msgstr ""
 
-#: templates/coupons/index.html:113
+#: templates/coupons/index.html:121
 msgid "No subscription behind the discount"
 msgstr ""
 
-#: templates/coupons/index.html:115
+#: templates/coupons/index.html:123
 msgid ""
 "A plan is a one-off purchase. Nothing renews, nothing is charged later, and "
 "a coupon never signs you up for anything."
 msgstr ""
 
-#: templates/coupons/index.html:126
+#: templates/coupons/index.html:134
 msgid "Coupon questions"
 msgstr ""
 
@@ -5220,8 +5240,8 @@ msgid "Add more data to this eSIM"
 msgstr ""
 
 #: templates/dashboard/index.html:9 templates/partials/dash_tabs.html:3
-#: templates/partials/header.html:72 templates/partials/header.html:82
-#: templates/partials/header.html:129
+#: templates/partials/header.html:73 templates/partials/header.html:83
+#: templates/partials/header.html:131
 msgid "My eSIMs"
 msgstr ""
 
@@ -5276,7 +5296,7 @@ msgid "View"
 msgstr ""
 
 #: templates/dashboard/orders.html:8 templates/partials/dash_tabs.html:7
-#: templates/partials/header.html:86
+#: templates/partials/header.html:87
 msgid "Orders"
 msgstr ""
 
@@ -6325,7 +6345,7 @@ msgid ""
 msgstr ""
 
 #: templates/pages/refund.html:31 templates/partials/dash_tabs.html:5
-#: templates/partials/header.html:84 templates/subscriptions/list.html:9
+#: templates/partials/header.html:85 templates/subscriptions/list.html:9
 msgid "Subscriptions"
 msgstr ""
 
@@ -6513,7 +6533,7 @@ msgstr ""
 msgid "Your tickets"
 msgstr ""
 
-#: templates/pages/support.html:69 templates/partials/header.html:79
+#: templates/pages/support.html:69 templates/partials/header.html:80
 msgid "Signed in as"
 msgstr ""
 
@@ -6562,27 +6582,27 @@ msgstr ""
 msgid "Order reference"
 msgstr ""
 
-#: templates/pages/support.html:138
+#: templates/pages/support.html:139
 msgid "ICCID (optional)"
 msgstr ""
 
-#: templates/pages/support.html:144
+#: templates/pages/support.html:146
 msgid "What is happening?"
 msgstr ""
 
-#: templates/pages/support.html:146
+#: templates/pages/support.html:148
 msgid "Phone model, which country you are in, and what the screen says."
 msgstr ""
 
-#: templates/pages/support.html:149
+#: templates/pages/support.html:151
 msgid "Send message"
 msgstr ""
 
-#: templates/pages/support.html:156 templates/partials/assistant_widget.html:14
+#: templates/pages/support.html:158 templates/partials/assistant_widget.html:14
 msgid "Chat with the assistant"
 msgstr ""
 
-#: templates/pages/support.html:158
+#: templates/pages/support.html:160
 msgid ""
 "The chat button sits in the bottom corner of every page. It can see your "
 "own\n"
@@ -6590,7 +6610,7 @@ msgid ""
 "general."
 msgstr ""
 
-#: templates/pages/support.html:161
+#: templates/pages/support.html:163
 msgid ""
 "The assistant is for signed-in customers only, because it reads your eSIM "
 "and\n"
@@ -6598,44 +6618,44 @@ msgid ""
 "way in."
 msgstr ""
 
-#: templates/pages/support.html:165
-#: templates/partials/assistant_widget.html:267
+#: templates/pages/support.html:167
+#: templates/partials/assistant_widget.html:270
 msgid "Create an account"
 msgstr ""
 
-#: templates/pages/support.html:172
+#: templates/pages/support.html:174
 msgid "Before you write"
 msgstr ""
 
-#: templates/pages/support.html:174
+#: templates/pages/support.html:176
 msgid "Data roaming is ON for the eSIM line"
 msgstr ""
 
-#: templates/pages/support.html:175
+#: templates/pages/support.html:177
 msgid "The eSIM is selected for mobile data"
 msgstr ""
 
-#: templates/pages/support.html:176
+#: templates/pages/support.html:178
 msgid "You restarted the phone once"
 msgstr ""
 
-#: templates/pages/support.html:177 templates/seo/not_working.html:106
+#: templates/pages/support.html:179 templates/seo/not_working.html:106
 msgid "The phone is carrier-unlocked"
 msgstr ""
 
-#: templates/pages/support.html:178
+#: templates/pages/support.html:180
 msgid "You have arrived at the destination"
 msgstr ""
 
-#: templates/pages/support.html:184
+#: templates/pages/support.html:186
 msgid "Prefer your own mail client?"
 msgstr ""
 
-#: templates/pages/support.html:185
+#: templates/pages/support.html:187
 msgid "Write to us directly and we open the ticket on your behalf."
 msgstr ""
 
-#: templates/pages/support.html:191
+#: templates/pages/support.html:193
 msgid ""
 "Bought as a guest? Your ticket link arrives by email and opens the thread "
 "without a\n"
@@ -6901,14 +6921,14 @@ msgid "14. Contact"
 msgstr ""
 
 #: templates/partials/assistant_widget.html:17
-#: templates/partials/assistant_widget.html:247
+#: templates/partials/assistant_widget.html:250
 msgid "Ask us"
 msgstr ""
 
 #: templates/partials/assistant_widget.html:22
 #: templates/partials/assistant_widget.html:26
-#: templates/partials/assistant_widget.html:251
 #: templates/partials/assistant_widget.html:254
+#: templates/partials/assistant_widget.html:257
 msgid "eSIMsterr assistant"
 msgstr ""
 
@@ -6963,23 +6983,23 @@ msgstr ""
 msgid "Connection hiccup. Please try that again in a moment."
 msgstr ""
 
-#: templates/partials/assistant_widget.html:244
+#: templates/partials/assistant_widget.html:247
 msgid "About the assistant"
 msgstr ""
 
-#: templates/partials/assistant_widget.html:255
-#: templates/partials/header.html:115
+#: templates/partials/assistant_widget.html:258
+#: templates/partials/header.html:117
 msgid "Close"
 msgstr ""
 
-#: templates/partials/assistant_widget.html:262
+#: templates/partials/assistant_widget.html:265
 msgid ""
 "The assistant is for signed-in customers only: it reads your own eSIMs and "
 "orders to answer,\n"
 "      so it needs to know who you are."
 msgstr ""
 
-#: templates/partials/assistant_widget.html:272
+#: templates/partials/assistant_widget.html:275
 #, python-format
 msgid ""
 "Bought as a guest? <a class=\"link\" href=\"%(support_url)s\">Open a ticket</"
@@ -7133,154 +7153,134 @@ msgid ""
 "actually taking."
 msgstr ""
 
-#: templates/partials/footer.html:13
+#: templates/partials/footer.html:15
 msgid ""
 "Connect without borders. Prepaid travel eSIM data on local networks, "
 "delivered the moment you pay, at prices the big eSIM apps cannot match."
 msgstr ""
 
-#: templates/partials/footer.html:19
+#: templates/partials/footer.html:21
 msgid "Download on the"
 msgstr ""
 
-#: templates/partials/footer.html:25
+#: templates/partials/footer.html:27
 msgid "Get it on"
 msgstr ""
 
-#: templates/partials/footer.html:32 templates/partials/header.html:15
+#: templates/partials/footer.html:34 templates/partials/header.html:16
 msgid "Destinations"
 msgstr ""
 
-#: templates/partials/footer.html:33 templates/partials/header.html:20
+#: templates/partials/footer.html:35 templates/partials/header.html:21
 msgid "All countries"
 msgstr ""
 
-#: templates/partials/footer.html:35 templates/partials/header.html:30
-#: templates/partials/header.html:119
+#: templates/partials/footer.html:37 templates/partials/header.html:31
+#: templates/partials/header.html:121
 msgid "Unlimited data"
 msgstr ""
 
-#: templates/partials/footer.html:36
-msgid "All prices"
-msgstr ""
-
-#: templates/partials/footer.html:37
-msgid "United States eSIM"
-msgstr ""
-
 #: templates/partials/footer.html:38
-msgid "Turkey eSIM"
+msgid "United States"
 msgstr ""
 
 #: templates/partials/footer.html:39
-msgid "Europe eSIM"
+msgid "Turkey"
 msgstr ""
 
-#: templates/partials/footer.html:43
-msgid "Learn"
+#: templates/partials/footer.html:40
+msgid "Europe"
 msgstr ""
 
-#: templates/partials/footer.html:46 templates/partials/header.html:123
-msgid "Compatible devices"
-msgstr ""
-
-#: templates/partials/footer.html:53
+#: templates/partials/footer.html:44
 msgid "Buy"
 msgstr ""
 
-#: templates/partials/footer.html:54
+#: templates/partials/footer.html:45
 msgid "Cheap eSIM plans"
 msgstr ""
 
-#: templates/partials/footer.html:56
+#: templates/partials/footer.html:46 templates/seo/prices.html:14
+msgid "Full price list"
+msgstr ""
+
+#: templates/partials/footer.html:47
 msgid "Coupons and deals"
 msgstr ""
 
-#: templates/partials/footer.html:57
+#: templates/partials/footer.html:48
 msgid "Pay with crypto"
 msgstr ""
 
-#: templates/partials/footer.html:58
+#: templates/partials/footer.html:49
 msgid "Pay by card"
 msgstr ""
 
-#: templates/partials/footer.html:62
-msgid "For travellers"
+#: templates/partials/footer.html:53
+msgid "Learn"
+msgstr ""
+
+#: templates/partials/footer.html:56 templates/partials/header.html:125
+msgid "Compatible devices"
 msgstr ""
 
 #: templates/partials/footer.html:63
-msgid "Holiday travel"
-msgstr ""
-
-#: templates/partials/footer.html:64
-msgid "Digital nomads"
-msgstr ""
-
-#: templates/partials/footer.html:65
-msgid "Business trips"
-msgstr ""
-
-#: templates/partials/footer.html:66
-msgid "Backpacking"
-msgstr ""
-
-#: templates/partials/footer.html:67
-msgid "Students abroad"
-msgstr ""
-
-#: templates/partials/footer.html:68
-msgid "Long stays"
-msgstr ""
-
-#: templates/partials/footer.html:72
-msgid "Compare"
-msgstr ""
-
-#: templates/partials/footer.html:73
-msgid "Airalo alternative"
-msgstr ""
-
-#: templates/partials/footer.html:74
-msgid "Holafly alternative"
-msgstr ""
-
-#: templates/partials/footer.html:75
-msgid "Saily alternative"
-msgstr ""
-
-#: templates/partials/footer.html:76
-msgid "Nomad alternative"
-msgstr ""
-
-#: templates/partials/footer.html:77
-msgid "Ubigi alternative"
-msgstr ""
-
-#: templates/partials/footer.html:78
-msgid "Cellesim alternative"
-msgstr ""
-
-#: templates/partials/footer.html:82
 msgid "Company"
 msgstr ""
 
-#: templates/partials/footer.html:83
+#: templates/partials/footer.html:64
 msgid "About us"
 msgstr ""
 
-#: templates/partials/footer.html:86
+#: templates/partials/footer.html:66
+msgid "Email us"
+msgstr ""
+
+#: templates/partials/footer.html:67
 msgid "Terms of service"
 msgstr ""
 
-#: templates/partials/footer.html:87
+#: templates/partials/footer.html:68
 msgid "Privacy policy"
 msgstr ""
 
-#: templates/partials/footer.html:88
+#: templates/partials/footer.html:69
 msgid "Refund policy"
 msgstr ""
 
-#: templates/partials/footer.html:93
+#: templates/partials/footer.html:81
+msgid "eSIMs for"
+msgstr ""
+
+#: templates/partials/footer.html:83
+msgid "Holiday travel"
+msgstr ""
+
+#: templates/partials/footer.html:84
+msgid "Digital nomads"
+msgstr ""
+
+#: templates/partials/footer.html:85
+msgid "Business trips"
+msgstr ""
+
+#: templates/partials/footer.html:86
+msgid "Backpacking"
+msgstr ""
+
+#: templates/partials/footer.html:87
+msgid "Students abroad"
+msgstr ""
+
+#: templates/partials/footer.html:88
+msgid "Long stays"
+msgstr ""
+
+#: templates/partials/footer.html:92
+msgid "Compare us with"
+msgstr ""
+
+#: templates/partials/footer.html:105
 msgid "All rights reserved."
 msgstr ""
 
@@ -7293,63 +7293,63 @@ msgstr ""
 msgid "%(site_name)s home"
 msgstr ""
 
-#: templates/partials/header.html:21
+#: templates/partials/header.html:22
 msgid "Browse every destination on local networks"
 msgstr ""
 
-#: templates/partials/header.html:25
+#: templates/partials/header.html:26
 msgid "Regional and global"
 msgstr ""
 
-#: templates/partials/header.html:26
+#: templates/partials/header.html:27
 msgid "One eSIM for a whole trip"
 msgstr ""
 
-#: templates/partials/header.html:31
+#: templates/partials/header.html:32
 msgid "7, 15 or 30 days, no cap"
 msgstr ""
 
-#: templates/partials/header.html:35 templates/partials/header.html:120
+#: templates/partials/header.html:36 templates/partials/header.html:122
 msgid "Cheapest plans"
 msgstr ""
 
-#: templates/partials/header.html:36
+#: templates/partials/header.html:37
 msgid "Every destination, sorted by price"
 msgstr ""
 
-#: templates/partials/header.html:41
+#: templates/partials/header.html:42
 msgid "Devices"
 msgstr ""
 
-#: templates/partials/header.html:42
+#: templates/partials/header.html:43
 msgid "Deals"
 msgstr ""
 
-#: templates/partials/header.html:47
+#: templates/partials/header.html:48
 msgid "Toggle dark mode"
 msgstr ""
 
-#: templates/partials/header.html:54
+#: templates/partials/header.html:55
 msgid "Language"
 msgstr ""
 
-#: templates/partials/header.html:87
+#: templates/partials/header.html:88
 msgid "Account settings"
 msgstr ""
 
-#: templates/partials/header.html:91 templates/partials/header.html:131
+#: templates/partials/header.html:92 templates/partials/header.html:133
 msgid "Sign out"
 msgstr ""
 
-#: templates/partials/header.html:98 templates/partials/header.html:134
+#: templates/partials/header.html:99 templates/partials/header.html:136
 msgid "Get an eSIM"
 msgstr ""
 
-#: templates/partials/header.html:101
+#: templates/partials/header.html:102
 msgid "Menu"
 msgstr ""
 
-#: templates/partials/header.html:121
+#: templates/partials/header.html:123
 msgid "Deals and coupons"
 msgstr ""
 
@@ -7455,6 +7455,18 @@ msgstr ""
 msgid ""
 "We buy wholesale and add a thin margin instead of a marketing budget. The "
 "same networks the big eSIM apps resell, usually at a fraction of the price."
+msgstr ""
+
+#: templates/seo/_related_pages.html:18
+msgid ""
+"Buying for a particular kind of trip? These pages narrow the catalogue to "
+"what suits it."
+msgstr ""
+
+#: templates/seo/_related_pages.html:26
+msgid ""
+"Weighing us up against something you already use? Each comparison sets out "
+"what we do differently and how to check it for yourself."
 msgstr ""
 
 #: templates/seo/_seo_base.html:20
@@ -7585,12 +7597,12 @@ msgstr ""
 msgid "Why people move over"
 msgstr ""
 
-#: templates/seo/alternative.html:138
+#: templates/seo/alternative.html:140
 #, python-format
 msgid "Switching from %(brand)s, answered"
 msgstr ""
 
-#: templates/seo/alternative.html:142
+#: templates/seo/alternative.html:144
 msgid "Comparing something else?"
 msgstr ""
 
@@ -7716,7 +7728,7 @@ msgstr ""
 msgid "from %(amount)s"
 msgstr ""
 
-#: templates/seo/cheap.html:134
+#: templates/seo/cheap.html:136
 msgid "Questions about cheap eSIM plans"
 msgstr ""
 
@@ -7871,13 +7883,9 @@ msgstr ""
 msgid "Crossing borders?"
 msgstr ""
 
-#: templates/seo/payment_method.html:108
+#: templates/seo/payment_method.html:110
 #, python-format
 msgid "%(label)s payments, answered"
-msgstr ""
-
-#: templates/seo/prices.html:14
-msgid "Full price list"
 msgstr ""
 
 #: templates/seo/prices.html:15
@@ -7967,11 +7975,11 @@ msgid ""
 "destination."
 msgstr ""
 
-#: templates/seo/prices.html:121
+#: templates/seo/prices.html:123
 msgid "About these prices"
 msgstr ""
 
-#: templates/seo/prices.html:125
+#: templates/seo/prices.html:127
 msgid "Cheap eSIM deals"
 msgstr ""
 
@@ -7988,8 +7996,9 @@ msgstr ""
 #: templates/seo/use_case.html:55
 #, python-format
 msgid ""
-"The cheapest live plan in each that fits the recommendation of %(r)s. Open a "
-"destination for the full range of sizes and durations."
+"The cheapest live plan in each that fits the recommendation of %(r)s, or the "
+"closest we sell where nothing does. Open a destination for the full range of "
+"sizes and durations."
 msgstr ""
 
 #: templates/seo/use_case.html:62
@@ -7998,6 +8007,11 @@ msgstr ""
 
 #: templates/seo/use_case.html:65
 msgid "Per day"
+msgstr ""
+
+#: templates/seo/use_case.html:73
+#, python-format
+msgid "below %(r)s, the closest we sell here"
 msgstr ""
 
 #: templates/seo/use_case.html:91
@@ -8010,12 +8024,12 @@ msgid ""
 "less admin."
 msgstr ""
 
-#: templates/seo/use_case.html:111
+#: templates/seo/use_case.html:113
 #, python-format
 msgid "%(h)s: common questions"
 msgstr ""
 
-#: templates/seo/use_case.html:115
+#: templates/seo/use_case.html:117
 msgid "Travelling for something else?"
 msgstr ""
 
@@ -8189,7 +8203,7 @@ msgstr ""
 msgid "Popular places to try one"
 msgstr ""
 
-#: templates/seo/what_is_esim.html:155
+#: templates/seo/what_is_esim.html:157
 msgid "eSIM questions, answered plainly"
 msgstr ""
 
@@ -8398,70 +8412,86 @@ msgid ""
 "the profile on your phone never changes."
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:37
+#: templates/subscriptions/subscribe_intro.html:38
 #, python-format
 msgid "%(saving_pct)s%% cheaper than buying it again"
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:38
+#: templates/subscriptions/subscribe_intro.html:39
 msgid ""
 "Subscribers pay less than the one-off price for exactly the same plan. We do "
 "not spend the difference on app-install ads."
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:44
+#: templates/subscriptions/subscribe_intro.html:41
+msgid "The same price, none of the paperwork"
+msgstr ""
+
+#: templates/subscriptions/subscribe_intro.html:42
+msgid ""
+"This plan is already at our lowest price, so a subscription costs exactly "
+"what buying it again costs. What you get is that it happens on time, by "
+"itself."
+msgstr ""
+
+#: templates/subscriptions/subscribe_intro.html:49
 msgid "Cancel whenever you want"
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:45
+#: templates/subscriptions/subscribe_intro.html:50
 msgid ""
 "Cancel from your dashboard in two clicks. You keep the data you have already "
 "paid for until the end of the current period."
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:58
+#: templates/subscriptions/subscribe_intro.html:63
 #, python-format
 msgid "Renews every %(days)s day"
 msgid_plural "Renews every %(days)s days"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/subscriptions/subscribe_intro.html:63
+#: templates/subscriptions/subscribe_intro.html:68
 #, python-format
 msgid "/ %(days)s day"
 msgid_plural "/ %(days)s days"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/subscriptions/subscribe_intro.html:70
+#: templates/subscriptions/subscribe_intro.html:76
 msgid "Compared with buying this same plan one-off, every time."
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:75
+#: templates/subscriptions/subscribe_intro.html:78
+msgid ""
+"The same price as buying this plan one-off, renewed for you each period."
+msgstr ""
+
+#: templates/subscriptions/subscribe_intro.html:84
 msgid "Billed automatically by card until you cancel"
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:76
+#: templates/subscriptions/subscribe_intro.html:85
 msgid "Same eSIM every cycle — install it once"
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:77
+#: templates/subscriptions/subscribe_intro.html:86
 msgid "Card details stay with Stripe, never with us"
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:83
+#: templates/subscriptions/subscribe_intro.html:92
 #, python-format
 msgid "Subscribe for %(price)s"
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:87
+#: templates/subscriptions/subscribe_intro.html:96
 #, python-format
 msgid ""
 "You are charged %(price)s today and the same amount each period. Cancel any "
 "time."
 msgstr ""
 
-#: templates/subscriptions/subscribe_intro.html:91
+#: templates/subscriptions/subscribe_intro.html:100
 msgid "Prefer a single purchase? Buy it once instead"
 msgstr ""
 

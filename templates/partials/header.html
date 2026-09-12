@@ -3,10 +3,11 @@
   <div class="shell">
     <nav class="nav" aria-label="{% trans 'Main' %}">
       <a href="{% url 'home' %}" class="brand" aria-label="{% blocktrans %}{{ site_name }} home{% endblocktrans %}">
-        <img class="brand-logo logo-on-light" src="{% static 'img/logo-wordmark-on-light.png' %}"
-             alt="{{ site_name }}" width="120" height="38">
-        <img class="brand-logo logo-on-dark" src="{% static 'img/logo-wordmark-on-dark.png' %}"
-             alt="{{ site_name }}" width="120" height="38">
+        <img class="brand-mark-img logo-on-light" src="{% static 'img/logo-mark-on-light.png' %}"
+             alt="" width="40" height="37">
+        <img class="brand-mark-img logo-on-dark" src="{% static 'img/logo-mark-on-dark.png' %}"
+             alt="" width="40" height="34">
+        <span class="brand-name">eSIM<span class="grad-text">sterr</span></span>
       </a>
 
       <div class="nav-links">
@@ -109,8 +110,9 @@
 <div class="mobile-panel" id="mobile-panel" hidden>
   <div class="row-between mb-3">
     <a href="{% url 'home' %}" class="brand">
-      <img class="brand-logo logo-on-light" src="{% static 'img/logo-wordmark-on-light.png' %}" alt="{{ site_name }}" width="120" height="38">
-      <img class="brand-logo logo-on-dark" src="{% static 'img/logo-wordmark-on-dark.png' %}" alt="{{ site_name }}" width="120" height="38">
+      <img class="brand-mark-img logo-on-light" src="{% static 'img/logo-mark-on-light.png' %}" alt="" width="40" height="37">
+      <img class="brand-mark-img logo-on-dark" src="{% static 'img/logo-mark-on-dark.png' %}" alt="" width="40" height="34">
+      <span class="brand-name">eSIM<span class="grad-text">sterr</span></span>
     </a>
     <button class="icon-btn" data-mobile-toggle aria-label="{% trans 'Close' %}">{% icon "x" size=22 %}</button>
   </div>

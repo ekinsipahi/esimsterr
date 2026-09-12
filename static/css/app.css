@@ -328,7 +328,6 @@ html[data-theme="dark"] .icon-tile.v-amber { color: #fbbf24; }
   display: grid; place-content: center; font-size: 1rem; font-weight: 800;
   box-shadow: var(--glow);
 }
-.brand img { width: 34px; height: 34px; border-radius: 10px; }
 
 .nav-links { display: flex; align-items: center; gap: 2px; }
 @media (max-width: 1000px) { .nav-links { display: none; } }
@@ -414,10 +413,20 @@ html[data-theme="dark"] .icon-tile.v-amber { color: #fbbf24; }
   font-size: 1.02rem; padding-block: 14px;
 }
 .search input::placeholder { color: var(--text-3); }
-@media (max-width: 540px) {
-  .search { padding-left: 14px; }
-  .search .btn { padding-inline: 14px; }
-  .search .btn span { display: none; }
+@media (max-width: 560px) {
+  /* Side by side, the button eats the input and the placeholder truncates
+     mid-word. Stack them so the destination field gets the full width. */
+  .search { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 14px 12px; }
+  .search > .ico { position: absolute; left: 16px; top: 22px; }
+  .search input { padding-left: 30px; padding-block: 10px; }
+  .search .btn { width: 100%; justify-content: center; }
+}
+
+/* The launcher keeps its label where there is room and becomes a round button
+   on a phone, so it covers as little of the page as possible. */
+@media (max-width: 560px) {
+  .chat-launcher { padding: 14px; border-radius: 999px; right: 14px; bottom: 14px; }
+  .chat-launcher span { display: none; }
 }
 
 .search-results {
@@ -771,14 +780,37 @@ html[data-theme="dark"] .prose a { color: var(--b-300); }
   margin-top: 60px; padding-block: 56px 30px;
   background: var(--page-2); border-top: 1px solid var(--line);
 }
+/* The chat launcher is fixed to the bottom-right; leave it somewhere to sit so
+   it never covers the last row of links. */
+@media (max-width: 1040px) { .footer { padding-bottom: 96px; } }
 html[data-theme="dark"] .footer { background: #070814; }
+/* Explicit tracks, never auto-fit: an auto-repeat cannot be mixed with an `fr`
+   track, so the whole declaration would be dropped and every column would stack
+   into one long list. */
 .footer-grid {
-  display: grid; gap: 32px 28px;
-  grid-template-columns: 1.6fr repeat(auto-fit, minmax(140px, 1fr));
+  display: grid;
+  gap: 36px 30px;
+  grid-template-columns: 1.7fr repeat(4, minmax(0, 1fr));
+  align-items: start;
 }
-@media (max-width: 1100px) { .footer-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 720px) { .footer-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 460px) { .footer-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1040px) {
+  .footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .footer-brand { grid-column: 1 / -1; }
+}
+@media (max-width: 680px) { .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .footer-grid { grid-template-columns: 1fr; } }
+
+.footer-brand p { line-height: 1.65; }
+
+/* Secondary link rows: inline, wrapping, so six links take one line instead of
+   a sixth and seventh column. */
+.footer-more {
+  margin-top: 42px; padding-top: 30px; border-top: 1px solid var(--line);
+  display: grid; gap: 26px 44px; grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 760px) { .footer-more { grid-template-columns: 1fr; } }
+.footer-inline { display: flex; flex-wrap: wrap; gap: 2px 20px; }
+.footer-inline a { padding: 3px 0; }
 .footer h4 { font-size: .78rem; font-weight: 750; text-transform: uppercase; letter-spacing: .11em; color: var(--text-3); margin-bottom: 14px; }
 .footer a { display: block; padding: 5px 0; font-size: .92rem; color: var(--text-2); transition: color .16s ease; }
 .footer a:hover { color: var(--b-600); }
@@ -900,23 +932,50 @@ html[data-theme="dark"] .flag-unknown { color: var(--b-300); }
 /* Logo swaps with the theme: the artwork has a light-background and a
    dark-background master, each drawn for its own surface. */
 .brand-logo { height: 38px; width: auto; display: block; }
+.brand-mark-img { height: 38px; width: auto; display: block; }
+.brand-name {
+  font-weight: 800; font-size: 1.24rem; letter-spacing: -.02em; line-height: 1;
+  white-space: nowrap;
+}
+/* The footer has room for the full stacked lockup, where it is legible. */
+.brand-logo-stacked { height: 104px; }
 .logo-on-light { display: block; }
 .logo-on-dark { display: none; }
 html[data-theme="dark"] .logo-on-light { display: none; }
 html[data-theme="dark"] .logo-on-dark { display: block; }
 
 /* Hero film — the brand film sits behind the copy, dimmed into the page. */
-.hero-film { position: absolute; inset: 0; z-index: -2; overflow: hidden; }
-.hero-film video { width: 100%; height: 100%; object-fit: cover; opacity: .55; }
-html[data-theme="dark"] .hero-film video { opacity: .62; }
+.hero-film { position: absolute; inset: 0; z-index: -2; overflow: hidden; background: #04101f; }
+.hero-film video { width: 100%; height: 100%; object-fit: cover; }
 .hero-film::after {
+  /* Scrim for legibility at the top, fading into the page colour at the bottom
+     so the section joins the rest of the page instead of ending on a hard edge. */
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--page) 62%, transparent) 0%,
-    color-mix(in srgb, var(--page) 42%, transparent) 42%,
-    var(--page) 100%);
+  background:
+    linear-gradient(105deg, rgba(4, 16, 31, .88) 0%, rgba(4, 16, 31, .62) 46%, rgba(4, 16, 31, .28) 72%),
+    linear-gradient(180deg, transparent 55%, var(--page) 100%);
 }
 .hero-film.is-static video { display: none; }
+
+/* Inside the film band the copy is always light, whichever theme is active. */
+.hero-on-film { position: relative; }
+.hero-on-film h1,
+.hero-on-film .trust-row .item { color: #f2f8fd; }
+.hero-on-film .hero-lead { color: #c6dbec; }
+.hero-on-film .eyebrow {
+  color: #eaf4fb;
+  background: rgba(255, 255, 255, .12);
+  border-color: rgba(255, 255, 255, .28);
+}
+.hero-on-film .eyebrow::before { background: var(--gold-400); }
+.hero-on-film .trust-row svg { color: var(--gold-400); }
+.hero-on-film .search {
+  background: rgba(255, 255, 255, .97);
+  border-color: rgba(255, 255, 255, .5);
+  color: #0b2a4a;
+}
+.hero-on-film .search input { color: #0b2a4a; }
+.hero-on-film .search > .ico { color: #4a6883; }
 
 /* ---------- 14. Offers, coupons, subscriptions ---------------------------- */
 .price-stack { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }

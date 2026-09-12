@@ -2,17 +2,19 @@
 <footer class="footer">
   <div class="shell">
     <div class="footer-grid">
-      <div>
+      <div class="footer-brand">
         <a href="{% url 'home' %}" class="brand mb-2">
-          <img class="brand-logo logo-on-light" src="{% static 'img/logo-wordmark-on-light.png' %}"
-               alt="{{ site_name }}" width="140" height="44" style="height:44px">
-          <img class="brand-logo logo-on-dark" src="{% static 'img/logo-wordmark-on-dark.png' %}"
-               alt="{{ site_name }}" width="140" height="44" style="height:44px">
+          <img class="brand-logo brand-logo-stacked logo-on-light"
+               src="{% static 'img/logo-wordmark-on-light.png' %}"
+               alt="{{ site_name }}" width="160" height="132">
+          <img class="brand-logo brand-logo-stacked logo-on-dark"
+               src="{% static 'img/logo-wordmark-on-dark.png' %}"
+               alt="{{ site_name }}" width="160" height="118">
         </a>
-        <p class="small muted" style="max-width:36ch">
+        <p class="small muted" style="max-width:38ch">
           {% trans "Connect without borders. Prepaid travel eSIM data on local networks, delivered the moment you pay, at prices the big eSIM apps cannot match." %}
         </p>
-        <div class="row mt-3">
+        <div class="row mt-3" style="gap:10px">
           {% if app_store_url %}
           <a class="store-badge" href="{{ app_store_url }}" rel="noopener">
             {% icon "smartphone" size=20 %}
@@ -33,10 +35,18 @@
         <a href="{% url 'destinations' %}">{% trans "All countries" %}</a>
         <a href="{% url 'regions' %}">{% trans "Regional plans" %}</a>
         <a href="{% url 'unlimited' %}">{% trans "Unlimited data" %}</a>
-        <a href="{% url 'prices' %}">{% trans "All prices" %}</a>
-        <a href="/esim/united-states/">{% trans "United States eSIM" %}</a>
-        <a href="/esim/turkey/">{% trans "Turkey eSIM" %}</a>
-        <a href="/esim-region/europe/">{% trans "Europe eSIM" %}</a>
+        <a href="/esim/united-states/">{% trans "United States" %}</a>
+        <a href="/esim/turkey/">{% trans "Turkey" %}</a>
+        <a href="/esim-region/europe/">{% trans "Europe" %}</a>
+      </div>
+
+      <div>
+        <h4>{% trans "Buy" %}</h4>
+        <a href="{% url 'cheap_esim' %}">{% trans "Cheap eSIM plans" %}</a>
+        <a href="{% url 'prices' %}">{% trans "Full price list" %}</a>
+        <a href="{% url 'coupons' %}">{% trans "Coupons and deals" %}</a>
+        <a href="{% url 'payment_method' 'crypto' %}">{% trans "Pay with crypto" %}</a>
+        <a href="{% url 'payment_method' 'card' %}">{% trans "Pay by card" %}</a>
       </div>
 
       <div>
@@ -50,42 +60,43 @@
       </div>
 
       <div>
-        <h4>{% trans "Buy" %}</h4>
-        <a href="{% url 'cheap_esim' %}">{% trans "Cheap eSIM plans" %}</a>
-        <a href="{% url 'prices' %}">{% trans "Price list" %}</a>
-        <a href="{% url 'coupons' %}">{% trans "Coupons and deals" %}</a>
-        <a href="{% url 'payment_method' 'crypto' %}">{% trans "Pay with crypto" %}</a>
-        <a href="{% url 'payment_method' 'card' %}">{% trans "Pay by card" %}</a>
-      </div>
-
-      <div>
-        <h4>{% trans "For travellers" %}</h4>
-        <a href="{% url 'use_case' 'travel' %}">{% trans "Holiday travel" %}</a>
-        <a href="{% url 'use_case' 'digital-nomads' %}">{% trans "Digital nomads" %}</a>
-        <a href="{% url 'use_case' 'business-trips' %}">{% trans "Business trips" %}</a>
-        <a href="{% url 'use_case' 'backpacking' %}">{% trans "Backpacking" %}</a>
-        <a href="{% url 'use_case' 'students' %}">{% trans "Students abroad" %}</a>
-        <a href="{% url 'use_case' 'long-stays' %}">{% trans "Long stays" %}</a>
-      </div>
-
-      <div>
-        <h4>{% trans "Compare" %}</h4>
-        <a href="{% url 'alternative' 'airalo' %}">{% trans "Airalo alternative" %}</a>
-        <a href="{% url 'alternative' 'holafly' %}">{% trans "Holafly alternative" %}</a>
-        <a href="{% url 'alternative' 'saily' %}">{% trans "Saily alternative" %}</a>
-        <a href="{% url 'alternative' 'nomad' %}">{% trans "Nomad alternative" %}</a>
-        <a href="{% url 'alternative' 'ubigi' %}">{% trans "Ubigi alternative" %}</a>
-        <a href="{% url 'alternative' 'cellesim' %}">{% trans "Cellesim alternative" %}</a>
-      </div>
-
-      <div>
         <h4>{% trans "Company" %}</h4>
         <a href="{% url 'about' %}">{% trans "About us" %}</a>
         <a href="{% url 'support' %}">{% trans "Support" %}</a>
-        <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+        <a href="mailto:{{ support_email }}">{% trans "Email us" %}</a>
         <a href="{% url 'terms' %}">{% trans "Terms of service" %}</a>
         <a href="{% url 'privacy' %}">{% trans "Privacy policy" %}</a>
         <a href="{% url 'refund' %}">{% trans "Refund policy" %}</a>
+      </div>
+    </div>
+
+    {% comment %}
+      Secondary links sit inline rather than as two more skinny columns: they
+      still pass authority to the intent pages without turning the footer into
+      a wall of seven columns.
+    {% endcomment %}
+    <div class="footer-more">
+      <div>
+        <h4>{% trans "eSIMs for" %}</h4>
+        <div class="footer-inline">
+          <a href="{% url 'use_case' 'travel' %}">{% trans "Holiday travel" %}</a>
+          <a href="{% url 'use_case' 'digital-nomads' %}">{% trans "Digital nomads" %}</a>
+          <a href="{% url 'use_case' 'business-trips' %}">{% trans "Business trips" %}</a>
+          <a href="{% url 'use_case' 'backpacking' %}">{% trans "Backpacking" %}</a>
+          <a href="{% url 'use_case' 'students' %}">{% trans "Students abroad" %}</a>
+          <a href="{% url 'use_case' 'long-stays' %}">{% trans "Long stays" %}</a>
+        </div>
+      </div>
+      <div>
+        <h4>{% trans "Compare us with" %}</h4>
+        <div class="footer-inline">
+          <a href="{% url 'alternative' 'airalo' %}">Airalo</a>
+          <a href="{% url 'alternative' 'holafly' %}">Holafly</a>
+          <a href="{% url 'alternative' 'saily' %}">Saily</a>
+          <a href="{% url 'alternative' 'nomad' %}">Nomad</a>
+          <a href="{% url 'alternative' 'ubigi' %}">Ubigi</a>
+          <a href="{% url 'alternative' 'cellesim' %}">Cellesim</a>
+        </div>
       </div>
     </div>
 
