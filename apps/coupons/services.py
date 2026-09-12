@@ -6,9 +6,12 @@ for how much" -- safe to call on every keystroke from the checkout page.
 row lock so two people racing the final seat of a capped code cannot both win.
 
 Every rejection carries a machine-readable `reason` alongside its customer-facing
-sentence. Callers that answer an unauthenticated request use it to decide which
-of those sentences is safe to repeat back: two of them would otherwise confirm
-whether a given email address has bought from us.
+sentence, so a caller can record why a code was refused without parsing prose.
+
+The two identity rules -- once per customer, first order only -- can only be
+answered about a person, and answering them for a caller who merely typed an
+address into a request body turns a public endpoint into a customer-list oracle.
+`preview=True` leaves those two rules out and applies everything else.
 """
 from __future__ import annotations
 
@@ -22,11 +25,6 @@ from django.utils.translation import gettext as _
 from apps.orders.models import Order
 
 from .models import ZERO, Coupon, CouponRedemption, money, normalise_code
-
-# Rejections that are only reachable by knowing something about the person behind
-# the address. Repeating these to a caller who has not proved they own that
-# mailbox turns the coupon endpoint into a customer-list oracle.
-IDENTITY_REASONS = frozenset({"already_used", "first_order_only"})
 
 
 class CouponError(Exception):

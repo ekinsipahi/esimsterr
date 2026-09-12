@@ -3,6 +3,12 @@
 Written by hand and kept idempotent (get_or_create on the code) so it is safe on
 a database that already has these codes -- for example one seeded by hand before
 this migration existed.
+
+The descriptions are plain English rather than translated strings on purpose:
+they are campaign copy that operators rewrite from the admin, so they belong in
+the database with the rest of the coupon, not in a .po file that the first edit
+would make a lie. The coupons page marks them with their source language instead
+of passing them off as translated (see apps/coupons/views.coupons_page).
 """
 from decimal import Decimal
 

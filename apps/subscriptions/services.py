@@ -542,6 +542,18 @@ def start_cycle(subscription: Subscription, *, stripe_invoice_id: str,
         .filter(subscription=sub, status=SubscriptionCycle.Status.PAID,
                 order__isnull=False)
         .exclude(pk=cycle.pk).exists())
+
+    # A top-up needs a line to top up. If an earlier cycle was billed but its
+    # provisioning is still stuck, there is no eSIM to attach to, and an order of
+    # kind TOPUP with target_esim NULL can never be fulfilled by anything -- not
+    # the sweeper, not the admin action. The customer has paid, so issue a fresh
+    # profile instead of booking work that cannot be done.
+    if not first_cycle and esim is None:
+        log.warning(
+            "subscription %s has no bound eSIM at renewal; issuing a new profile "
+            "rather than a top-up with no target", sub.pk,
+        )
+        first_cycle = True
     order = Order.objects.create(
         user=sub.user,
         email=sub.user.email,

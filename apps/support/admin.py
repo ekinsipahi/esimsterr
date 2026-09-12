@@ -93,7 +93,7 @@ class TicketAdmin(admin.ModelAdmin):
         # Only flip to "answered" if the operator did not set a status by hand
         # in the same save (closing a thread with a final word is common, and so
         # is leaving it open on purpose while the fix is still in progress).
-        if "status" not in form.changed_data and ticket.status != Ticket.Status.ANSWERED:
+        if "status" not in form.changed_data and ticket.status == Ticket.Status.OPEN:
             ticket.status = Ticket.Status.ANSWERED
             ticket.save(update_fields=["status", "updated_at"])
         body = "\n\n".join(m.body for m in new_staff)

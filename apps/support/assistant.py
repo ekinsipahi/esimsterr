@@ -44,13 +44,17 @@ _INTENT_KEYWORDS = {
         "no internet", "no data", "not working", "doesn't work", "does not work",
         "won't connect", "wont connect", "can't connect", "cant connect", "no signal",
         "no service", "no network", "sos only", "drops", "disconnect",
-        "keeps dropping", "broken", "error code", "gives an error", "error message",
+        "keeps dropping", "broken", "error code", "gives an error", "error message", "an error", "i get an error",
+        "something is wrong", "goes wrong", "problem with", "having trouble",
+        "trouble with", "issue with",
         "searching for network", "keeps searching", "says searching",
         "çalışmıyor", "calismiyor", "bağlanmıyor", "baglanmiyor", "internet yok",
         "çekmiyor", "cekmiyor", "sinyal yok", "şebeke yok", "sebeke yok",
-        "kopuyor", "bozuk", "hata kodu", "hata veriyor", "hata alıyorum",
-        "hata aliyorum", "sorun yaşıyorum", "sorun yasiyorum", "şebeke arıyor",
-        "sebeke ariyor",
+        "kopuyor", "bozuk", "şebeke arıyor", "sebeke ariyor",
+        # Turkish is agglutinative, so a fixed-phrase list misses "sorunum",
+        # "hatalı", "arızası". These stay bare stems: no routine product question
+        # contains them, and a missed fault report is a customer sitting unread.
+        "hata", "sorun", "arıza", "ariza",
     ),
     "billing": (
         "payment", "paid", "charged", "charge me", "overcharge", "invoice", "receipt",
@@ -93,7 +97,7 @@ _INTENT_KEYWORDS = {
     ),
     "speed": (
         "slow", "speed", "buffering", "throttle",
-        "yavaş", "yavas", "hız", "hiz",
+        "yavaş", "yavas", "hız", "hız ", "hizli", "hızlı",
     ),
 }
 

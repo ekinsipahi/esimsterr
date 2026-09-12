@@ -15,13 +15,28 @@ import functools
 import time
 
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_ipv46_address
 from django.http import JsonResponse
 from django.shortcuts import render
 
 
 def client_ip(request) -> str:
+    """Best-effort caller address for the rate-limit key.
+
+    X-Forwarded-For is attacker-controlled, so a junk value is discarded rather
+    than used: an unvalidated header would otherwise let someone rotate garbage
+    through it and get a fresh bucket on every request, which is the opposite of
+    a rate limit."""
     xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    return (xff.split(",")[0].strip() if xff else request.META.get("REMOTE_ADDR", "")) or "unknown"
+    candidate = (xff.split(",")[0].strip() if xff else "") or request.META.get("REMOTE_ADDR", "")
+    if candidate:
+        try:
+            validate_ipv46_address(candidate)
+            return candidate
+        except ValidationError:
+            pass
+    return "unknown"
 
 
 def rate_limit(key: str, limit: int, window: int, methods=("POST",)):

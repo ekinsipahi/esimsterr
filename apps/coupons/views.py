@@ -20,7 +20,7 @@ from apps.catalog.models import Plan
 from core.ratelimit import client_ip, rate_limit
 
 from .models import ZERO, money
-from .services import IDENTITY_REASONS, CouponError, public_coupons, validate_coupon
+from .services import CouponError, public_coupons, validate_coupon
 
 log = logging.getLogger(__name__)
 
@@ -158,26 +158,32 @@ def validate_api(request):
         }, status=400)
 
     amount = money(plan.price)
+    # "You have already used this code" and "this code is for a first order only"
+    # both answer the question "has this address bought from us" -- and so does a
+    # plain refusal where another address gets a discount, so softening the
+    # wording alone would not close the hole. Anyone can post any address here, so
+    # the identity rules are simply not evaluated on behalf of a caller who has
+    # not proved they read that mailbox: they get the indicative discount, exactly
+    # as an unknown address would, and checkout applies the rule when the order is
+    # submitted. A signed-in customer asking about their own account has proved
+    # enough, and gets the straight answer.
+    owns_address = _owns_address(request, email)
     try:
         coupon, discount = validate_coupon(
             code, amount_usd=amount, plan=plan,
             user=request.user if request.user.is_authenticated else None,
             email=email or (request.user.email if request.user.is_authenticated else ""),
+            preview=not owns_address,
         )
     except CouponError as e:
-        message = str(e)
-        if e.reason in IDENTITY_REASONS and not _owns_address(request, email):
-            # "You have already used this code" and "first order only" both answer
-            # the question "has this address bought from us", to anyone who can
-            # post an email address. Say nothing useful; keep the reason in the log.
-            log.info(
-                "coupon %s refused for %s (%s) from %s",
-                code, email or "-", e.reason, client_ip(request),
-            )
-            message = _("This code cannot be applied to this order.")
+        # The real reason stays here, where abuse monitoring can see it.
+        log.info(
+            "coupon %s refused for %s (%s) from %s",
+            code, email or "-", e.reason or "-", client_ip(request),
+        )
         return JsonResponse({
             "ok": False, "code": "", "discount_usd": "0.00", "total_usd": f"{amount}",
-            "message": message,
+            "message": str(e),
         })
 
     return JsonResponse({
