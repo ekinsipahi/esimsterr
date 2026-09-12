@@ -1,0 +1,161 @@
+{% extends "seo/_seo_base.html" %}
+{% load i18n ui %}
+
+{% block seo_content %}
+<section class="section">
+  <div class="shell">
+    <div class="mx-auto" style="max-width:820px">
+      <span class="eyebrow">{% trans "eSIM explained" %}</span>
+      <h1 class="mt-2">{% trans "What is an eSIM?" %}</h1>
+      <p class="h-sub mt-2">{% blocktrans trimmed %}
+        An eSIM is a SIM card that is already inside your phone. Instead of collecting a piece of
+        plastic from a shop, you scan a QR code and the mobile plan downloads onto a chip that was
+        soldered in at the factory. Everything else about it behaves like a SIM, because it is one.
+      {% endblocktrans %}</p>
+      <div class="row mt-3" style="gap:10px;flex-wrap:wrap">
+        <a class="btn btn-primary btn-lg" href="{% url 'destinations' %}">{% blocktrans with p=from_price_str %}Try one from ${{ p }}{% endblocktrans %}</a>
+        <a class="btn btn-ghost btn-lg" href="{% url 'compatible_devices' %}">{% trans "Check your phone" %}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell prose mx-auto">
+    <h2>{% trans "How an eSIM actually works" %}</h2>
+    <p>{% blocktrans trimmed %}
+      A physical SIM is a small computer with a number on it. It stores the credentials that tell a
+      mobile network who you are and which plan you have paid for. An eSIM stores exactly the same
+      credentials, but it is a permanent chip inside the handset that can be written to over the
+      internet rather than a card you swap.
+    {% endblocktrans %}</p>
+    <p>{% blocktrans trimmed %}
+      The QR code you scan is not the plan itself. It is an address and an activation token: your
+      phone reads it, connects to the provisioning server it points at, downloads the profile and
+      installs it. That is why installing an eSIM needs an internet connection and why you should do
+      it on Wi-Fi at home rather than after you land.
+    {% endblocktrans %}</p>
+    <p>{% blocktrans trimmed %}
+      Once installed, the profile sits in your phone's settings next to your existing line. You can
+      turn it on and off, choose which line carries mobile data, and delete it when the trip is over.
+      Most modern phones can store several profiles and keep two of them active at the same time.
+    {% endblocktrans %}</p>
+
+    <h2>{% trans "Is an eSIM the same as dual SIM?" %}</h2>
+    <p>{% blocktrans trimmed %}
+      They are related, and the two terms get muddled constantly. Dual SIM describes a phone that can
+      run two lines at once. An eSIM is one way of supplying one of those lines. Most recent phones
+      are dual SIM precisely because they pair one physical tray with an eSIM, and some newer models
+      support two eSIM profiles active together with no tray at all.
+    {% endblocktrans %}</p>
+    <p>{% blocktrans trimmed %}
+      For a traveller this is the whole point. Your normal SIM stays where it is and keeps your
+      number reachable for calls, SMS and the bank codes that follow you everywhere. The travel eSIM
+      carries the data. Nothing about your identity, your WhatsApp account or your contacts changes.
+    {% endblocktrans %}</p>
+
+    <h2>{% trans "What an eSIM is not" %}</h2>
+    <p>{% blocktrans trimmed %}
+      It is not a VPN and it does not hide anything. It is not a second phone number unless you
+      specifically buy a plan that includes one; travel data plans are data-only, which is why calls
+      go over WhatsApp, FaceTime or Telegram. And it is not tied to a country: the same chip in your
+      phone can hold a plan from anywhere.
+    {% endblocktrans %}</p>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head">
+      <h2>{% trans "eSIM vs physical SIM" %}</h2>
+      <p class="h-sub">{% trans "The differences that actually change what you do, rather than the ones that only matter to network engineers." %}</p>
+    </div>
+    <div class="table-wrap">
+      <table class="table compare-table">
+        <thead>
+          <tr>
+            <th>{% trans "Aspect" %}</th>
+            <th>{% trans "eSIM" %}</th>
+            <th>{% trans "Physical SIM" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for aspect, esim, physical in comparison %}
+          <tr>
+            <td><b>{{ aspect }}</b></td>
+            <td>{{ esim }}</td>
+            <td class="muted">{{ physical }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted mt-2">{% trans "The one real disadvantage: an eSIM needs a reasonably recent, carrier-unlocked handset, and most profiles cannot be moved to a different phone once installed." %}</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head center">
+      <h2>{% trans "Getting one onto your phone" %}</h2>
+      <p class="h-sub">{% trans "Four steps, about two minutes, no shop involved." %}</p>
+    </div>
+    <div class="mx-auto" style="max-width:720px">{% include "partials/steps.html" %}</div>
+
+    <div class="alert alert-warn mt-4 mx-auto" style="max-width:820px">
+      {% icon "alert" size=20 %}
+      <div><b>{% trans "The setting everybody forgets." %}</b>
+        {% blocktrans trimmed %}
+        Data roaming has to be switched on for the eSIM line. It sounds wrong, but a travel eSIM is
+        technically roaming on partner networks, and with the setting off you will see signal bars and
+        get no data at all.
+        {% endblocktrans %}
+        <a class="link" href="{% url 'esim_not_working' %}">{% trans "More fixes if it will not connect" %}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="grid g3">
+      <div class="card">
+        <span class="icon-tile v-sky">{% icon "smartphone" %}</span>
+        <h3 class="mt-2">{% trans "Which phones support it" %}</h3>
+        <p class="muted small mt-1">{% trans "iPhone XS and newer, Pixel 3 and newer, Galaxy S20 and newer, plus many recent Xiaomi, Motorola, Huawei and Oppo models. The handset must also be carrier-unlocked." %}</p>
+        <a class="link small mt-2" href="{% url 'compatible_devices' %}">{% trans "Full device list" %}</a>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-mint">{% icon "globe" %}</span>
+        <h3 class="mt-2">{% trans "Where you can use one" %}</h3>
+        <p class="muted small mt-1">{% blocktrans with n=country_count %}We sell data profiles for {{ n }} destinations, plus regional plans that cover whole continents on a single profile.{% endblocktrans %}</p>
+        <a class="link small mt-2" href="{% url 'destinations' %}">{% trans "Browse destinations" %}</a>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-amber">{% icon "tag" %}</span>
+        <h3 class="mt-2">{% trans "What it costs" %}</h3>
+        <p class="muted small mt-1">{% blocktrans with p=from_price_str %}Plans start at ${{ p }}, and every one of them shows its price per gigabyte and per day so you can compare honestly.{% endblocktrans %}</p>
+        <a class="link small mt-2" href="{% url 'prices' %}">{% trans "See the price list" %}</a>
+      </div>
+    </div>
+
+    {% if popular %}
+    <div class="mt-4">
+      <b class="small">{% trans "Popular places to try one" %}</b>
+      <div class="chips mt-2">
+        {% for c in popular %}<a class="chip" href="{{ c.get_absolute_url }}">{% flag c.iso2 size=18 %} {{ c.name }}</a>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% include "seo/_related_pages.html" %}
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head center"><h2>{% trans "eSIM questions, answered plainly" %}</h2></div>
+    {% include "partials/faq.html" %}
+  </div>
+</section>
+{% endblock %}

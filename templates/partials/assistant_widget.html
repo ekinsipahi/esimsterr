@@ -1,0 +1,298 @@
+{% load i18n ui %}
+{% comment %}
+Corner chat widget, included from base.html on every page.
+
+Signed-out visitors get the launcher too, but opening it explains in one line
+that the assistant needs an account and points at sign-in and the ticket form --
+a disabled button with no explanation reads as a broken site.
+
+Styling comes entirely from the .chat-* and .bubble-* classes already in
+app.css; nothing here adds a stylesheet.
+{% endcomment %}
+
+{% if user.is_authenticated %}
+<button class="chat-launcher" id="asst-launcher" aria-label="{% trans 'Chat with the assistant' %}"
+        aria-expanded="false" aria-controls="asst-panel">
+  {% icon "chat" size=20 %}
+  <span>{% trans "Ask us" %}</span>
+  <span class="chat-badge" id="asst-badge" hidden style="display:none"></span>
+</button>
+
+<div class="chat-panel" id="asst-panel" hidden role="dialog"
+     aria-label="{% trans 'eSIMsterr assistant' %}">
+  <div class="chat-head">
+    {% icon "sparkle" size=20 %}
+    <div class="flex-1">
+      <div class="bold">{% trans "eSIMsterr assistant" %}</div>
+      <div class="xs" id="asst-status" style="opacity:.85">{% trans "Answers from your own eSIM and order data" %}</div>
+    </div>
+    <button id="asst-close" aria-label="{% trans 'Close chat' %}"
+            style="background:none;border:0;color:inherit;cursor:pointer;padding:4px;display:flex">
+      {% icon "x" size=20 %}
+    </button>
+  </div>
+
+  <div class="chat-body" id="asst-body" aria-live="polite">
+    <div class="bubble bubble-ai" id="asst-greeting">
+      {% blocktrans %}Hello. Ask me about installing your eSIM, data that will not connect, top-ups or your
+      orders. I can see your own lines, so answers are about your eSIM, not the general case.{% endblocktrans %}
+    </div>
+  </div>
+
+  <div class="chat-foot">
+    <textarea id="asst-input" rows="1" maxlength="2000"
+              placeholder="{% trans 'Type your message' %}"
+              aria-label="{% trans 'Your message' %}"></textarea>
+    <button class="btn btn-primary btn-sm" id="asst-send" aria-label="{% trans 'Send' %}">
+      {% icon "send" size=18 %}
+    </button>
+  </div>
+
+  {% url 'support' as support_url %}
+  <div class="chat-note">
+    {% blocktrans %}The assistant cannot change or refund anything. For that, <a class="link" href="{{ support_url }}">open a ticket</a>
+    and a person answers by email.{% endblocktrans %}
+  </div>
+</div>
+
+<script>
+(function () {
+  var API = "{% url 'assistant_api' %}";
+  var $ = function (id) { return document.getElementById(id); };
+  var launcher = $("asst-launcher"), panel = $("asst-panel"), body = $("asst-body"),
+      input = $("asst-input"), sendBtn = $("asst-send"), badge = $("asst-badge"),
+      status = $("asst-status"), greeting = $("asst-greeting");
+  if (!launcher || !panel) return;
+
+  /* Translated copy goes through escapejs: a translator's apostrophe would
+     otherwise terminate the JavaScript string and break the whole widget. */
+  {% trans "Support team" as t_team %}{% trans "Assistant" as t_ai %}
+  {% trans "A person from the team is answering here" as t_human %}
+  {% trans "Answers from your own eSIM and order data" as t_auto %}
+  {% trans "That is a lot of messages in one hour. Give it a few minutes, or open a ticket." as t_busy %}
+  {% trans "Connection hiccup. Please try that again in a moment." as t_fail %}
+  var LABEL_TEAM = "{{ t_team|escapejs }}";
+  var LABEL_AI = "{{ t_ai|escapejs }}";
+  var TXT_HUMAN = "{{ t_human|escapejs }}";
+  var TXT_AI = "{{ t_auto|escapejs }}";
+  var TXT_BUSY = "{{ t_busy|escapejs }}";
+  var TXT_FAIL = "{{ t_fail|escapejs }}";
+
+  var msgs = [], open = false, sending = false, hasConv = false, typing = false;
+  var openTimer = null, idleTimer = null;
+
+  function csrf() {
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : "";
+  }
+  /* Quotes are escaped as well: the linkifier below builds an href attribute,
+     and an unescaped quote inside a URL would break out of it. */
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function fmt(s) {
+    s = esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    return s.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+      var tail = "", trailing = url.match(/[.,!?;:)\]]+$/);
+      if (trailing) { tail = trailing[0]; url = url.slice(0, -tail.length); }
+      return '<a href="' + url + '" rel="noopener noreferrer nofollow">' + url + "</a>" + tail;
+    });
+  }
+  function clockOf(iso) {
+    try { return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+    catch (e) { return ""; }
+  }
+  function toBottom() {
+    requestAnimationFrame(function () { body.scrollTop = body.scrollHeight; });
+  }
+  /* .chat-badge carries display:grid, and an author rule outranks the browser
+     rule behind the hidden attribute -- on its own the attribute leaves an
+     empty badge sitting on the launcher on every page. The inline display is
+     what hides it; hidden stays for assistive technology. */
+  function setBadge(n) {
+    badge.textContent = n > 9 ? "9+" : String(n);
+    badge.hidden = !n;
+    badge.style.display = n ? "" : "none";
+  }
+
+  function render() {
+    if (greeting) greeting.hidden = msgs.length > 0;
+    var html = "";
+    msgs.forEach(function (m) {
+      var cls = m.role === "user" ? "bubble-user" : (m.role === "owner" ? "bubble-staff" : "bubble-ai");
+      html += '<div class="bubble ' + cls + '">' + fmt(m.content) + '<div class="bubble-meta">';
+      html += m.role === "owner" ? esc(LABEL_TEAM) : (m.role === "assistant" ? esc(LABEL_AI) : "");
+      if (m.created_at) html += (m.role === "user" ? "" : " · ") + esc(clockOf(m.created_at));
+      html += "</div></div>";
+    });
+    if (typing) {
+      html += '<div class="bubble bubble-ai"><span class="spinner" aria-hidden="true"></span></div>';
+    }
+    // Keep the greeting node; it is re-shown when a conversation is closed.
+    body.innerHTML = "";
+    if (greeting) body.appendChild(greeting);
+    body.insertAdjacentHTML("beforeend", html);
+  }
+
+  function api(method, payload) {
+    var opts = { method: method, credentials: "same-origin", headers: {} };
+    if (payload) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.headers["X-CSRFToken"] = csrf();
+      opts.body = JSON.stringify(payload);
+    }
+    var url = API + (method === "GET" && open ? "?seen=1" : "");
+    return fetch(url, opts).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+
+  function absorb(conv) {
+    if (!conv) return;
+    hasConv = !!conv.id;
+    status.textContent = conv.owner_joined ? TXT_HUMAN : TXT_AI;
+    setBadge(open ? 0 : (conv.unread || 0));
+    if (conv.messages) {
+      var grew = conv.messages.length !== msgs.length;
+      msgs = conv.messages;
+      // Only repaint when something actually arrived: re-rendering on every
+      // poll throws the reader back down the thread.
+      if (grew) { render(); toBottom(); }
+    }
+  }
+
+  function pollOpen() {
+    if (openTimer) clearTimeout(openTimer);
+    if (!open || document.visibilityState !== "visible") return;
+    openTimer = setTimeout(function () {
+      api("GET").then(absorb).catch(function () {}).then(pollOpen);
+    }, 6000);
+  }
+  function pollIdle() {
+    if (idleTimer) clearTimeout(idleTimer);
+    if (open || !hasConv) return;   // nothing to watch for until there is a thread
+    idleTimer = setTimeout(function () {
+      api("GET").then(absorb).catch(function () {}).then(pollIdle);
+    }, 60000 + Math.floor(Math.random() * 15000));
+  }
+
+  function openPanel() {
+    open = true;
+    panel.hidden = false;
+    launcher.style.display = "none";
+    launcher.setAttribute("aria-expanded", "true");
+    if (idleTimer) clearTimeout(idleTimer);
+    api("GET").then(function (c) { absorb(c); toBottom(); }).catch(function () {});
+    pollOpen();
+    setTimeout(function () { input.focus(); }, 60);
+  }
+  function closePanel() {
+    open = false;
+    panel.hidden = true;
+    launcher.style.display = "";
+    launcher.setAttribute("aria-expanded", "false");
+    if (openTimer) clearTimeout(openTimer);
+    pollIdle();
+  }
+  launcher.addEventListener("click", openPanel);
+  $("asst-close").addEventListener("click", closePanel);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && open) closePanel();
+  });
+
+  function send() {
+    var text = (input.value || "").trim();
+    if (!text || sending) return;
+    msgs.push({ role: "user", content: text, created_at: new Date().toISOString() });
+    input.value = "";
+    input.style.height = "auto";
+    sending = true; typing = true; sendBtn.disabled = true;
+    render(); toBottom();
+    api("POST", { message: text }).then(function (conv) {
+      typing = false;
+      absorb(conv);
+    }).catch(function (err) {
+      typing = false;
+      msgs.push({ role: "assistant",
+                  content: String(err).indexOf("429") > -1 ? TXT_BUSY : TXT_FAIL });
+      render();
+    }).then(function () {
+      sending = false; sendBtn.disabled = false;
+      render(); toBottom();
+    });
+  }
+  sendBtn.addEventListener("click", send);
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  input.addEventListener("input", function () {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 110) + "px";
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && open) pollOpen();
+  });
+
+  // First load is silent: learn whether a thread exists, then idle-poll for the
+  // badge only if it does.
+  api("GET").then(absorb).catch(function () {}).then(pollIdle);
+})();
+</script>
+
+{% else %}
+
+<button class="chat-launcher" id="asst-launcher-out" aria-label="{% trans 'About the assistant' %}"
+        aria-expanded="false" aria-controls="asst-panel-out">
+  {% icon "chat" size=20 %}
+  <span>{% trans "Ask us" %}</span>
+</button>
+
+<div class="chat-panel" id="asst-panel-out" hidden role="dialog"
+     aria-label="{% trans 'eSIMsterr assistant' %}" style="height:auto">
+  <div class="chat-head">
+    {% icon "sparkle" size=20 %}
+    <div class="flex-1"><div class="bold">{% trans "eSIMsterr assistant" %}</div></div>
+    <button id="asst-close-out" aria-label="{% trans 'Close' %}"
+            style="background:none;border:0;color:inherit;cursor:pointer;padding:4px;display:flex">
+      {% icon "x" size=20 %}
+    </button>
+  </div>
+  <div class="chat-body">
+    <div class="bubble bubble-ai">
+      {% blocktrans %}The assistant is for signed-in customers only: it reads your own eSIMs and orders to answer,
+      so it needs to know who you are.{% endblocktrans %}
+    </div>
+    <div class="row mt-2" style="gap:10px;flex-wrap:wrap">
+      <a class="btn btn-primary btn-sm" href="{% url 'login' %}">{% trans "Sign in" %}</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'signup' %}">{% trans "Create an account" %}</a>
+    </div>
+  </div>
+  {% url 'support' as support_url %}
+  <div class="chat-note">
+    {% blocktrans %}Bought as a guest? <a class="link" href="{{ support_url }}">Open a ticket</a> with your email and order
+    reference — no account needed, and a person replies by email.{% endblocktrans %}
+  </div>
+</div>
+
+<script>
+(function () {
+  var launcher = document.getElementById("asst-launcher-out");
+  var panel = document.getElementById("asst-panel-out");
+  var close = document.getElementById("asst-close-out");
+  if (!launcher || !panel) return;
+  launcher.addEventListener("click", function () {
+    panel.hidden = false;
+    launcher.style.display = "none";
+    launcher.setAttribute("aria-expanded", "true");
+  });
+  close.addEventListener("click", function () {
+    panel.hidden = true;
+    launcher.style.display = "";
+    launcher.setAttribute("aria-expanded", "false");
+  });
+})();
+</script>
+{% endif %}

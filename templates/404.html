@@ -1,14 +1,20 @@
 {% extends "base.html" %}
+{% load i18n ui %}
+
+{% block title %}{% trans "Page not found" %} — {{ site_name }}{% endblock %}
+
+{# handler404 supplies no context, so meta_robots never reaches base.html. #}
+{% block robots %}<meta name="robots" content="noindex,follow">{% endblock %}
+
 {% block content %}
 <section class="section">
   <div class="shell center" style="max-width:640px">
-    <div style="font-size:3rem">🧭</div>
-    <h1 class="mt-2">This page went travelling</h1>
-    <p class="h-sub mx-auto">The link is wrong or the page has moved. The destinations list is the
-      fastest way back to what you were looking for.</p>
+    <div class="icon-tile v-sky mx-auto">{% icon "compass" %}</div>
+    <h1 class="mt-2">{% trans "This page went travelling" %}</h1>
+    <p class="h-sub mx-auto">{% trans "The link is wrong or the page has moved. The destinations list is the fastest way back to what you were looking for." %}</p>
     <div class="row mt-4" style="justify-content:center;gap:10px">
-      <a class="btn btn-primary" href="{% url 'destinations' %}">Browse destinations</a>
-      <a class="btn btn-ghost" href="{% url 'home' %}">Home</a>
+      <a class="btn btn-primary" href="{% url 'destinations' %}">{% trans "Browse destinations" %}</a>
+      <a class="btn btn-ghost" href="{% url 'home' %}">{% trans "Go to the home page" %}</a>
     </div>
   </div>
 </section>

@@ -1,27 +1,49 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <section class="section">
   <div class="shell">
     <div class="dash-head">
-      <div><h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">Orders</h1></div>
-      <a class="btn btn-primary" href="{% url 'destinations' %}">Buy an eSIM</a>
+      <div><h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">{% trans "Orders" %}</h1></div>
+      <a class="btn btn-primary" href="{% url 'destinations' %}">{% trans "Buy an eSIM" %}</a>
     </div>
     {% include "partials/dash_tabs.html" %}
 
     {% if orders %}
     <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>Order</th><th>Date</th><th>Plan</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+        <thead>
+          <tr>
+            <th>{% trans "Order" %}</th>
+            <th>{% trans "Date" %}</th>
+            <th>{% trans "Plan" %}</th>
+            <th>{% trans "Amount" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th></th>
+          </tr>
+        </thead>
         <tbody>
           {% for order in orders %}
           <tr>
             <td class="nowrap"><b>{{ order.ref }}</b></td>
             <td class="nowrap">{{ order.created_at|date:"j M Y, H:i" }}</td>
-            <td>{{ order.plan_title }}{% if order.kind == 'topup' %} <span class="badge badge-muted">top-up</span>{% endif %}</td>
-            <td class="nowrap">${{ order.amount_usd }}</td>
+            <td>{{ order.plan_title }}{% if order.kind == 'topup' %} <span class="badge badge-muted">{% trans "Top-up" %}</span>{% endif %}</td>
+            <td>
+              {% if order.discount_usd > 0 %}
+                <div class="price-stack">
+                  <span class="price-was">{{ order.subtotal_usd|usd }}</span>
+                  <b>{{ order.amount_usd|usd }}</b>
+                </div>
+                {% if order.coupon_code %}
+                <div class="mt-1"><span class="badge badge-gold">{% icon "tag" size=12 %}{{ order.coupon_code }}</span></div>
+                {% endif %}
+              {% else %}
+                <span class="nowrap">{{ order.amount_usd|usd }}</span>
+              {% endif %}
+            </td>
             <td><span class="status-dot {% if order.status == 'completed' %}status-live{% elif order.status == 'pending' or order.status == 'paid' %}status-pending{% else %}status-dead{% endif %}">{{ order.get_status_display }}</span></td>
-            <td class="nowrap"><a class="link small" href="{{ order.get_absolute_url }}">View</a></td>
+            <td class="nowrap"><a class="link small" href="{{ order.get_absolute_url }}">{% trans "View" %}</a></td>
           </tr>
           {% endfor %}
         </tbody>
@@ -29,10 +51,10 @@
     </div>
     {% else %}
     <div class="empty card">
-      <div class="ico">🧾</div>
-      <h3>No orders yet</h3>
-      <p>Your purchases and receipts will be listed here.</p>
-      <a class="btn btn-primary mt-3" href="{% url 'destinations' %}">Browse destinations</a>
+      <div class="icon-tile mx-auto">{% icon "inbox" %}</div>
+      <h3>{% trans "No orders yet" %}</h3>
+      <p>{% trans "Every purchase and receipt is listed here once you buy your first eSIM." %}</p>
+      <a class="btn btn-primary mt-3" href="{% url 'destinations' %}">{% trans "Browse destinations" %}</a>
     </div>
     {% endif %}
   </div>

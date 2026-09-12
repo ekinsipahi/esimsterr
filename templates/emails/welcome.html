@@ -1,13 +1,14 @@
 {% extends "emails/_shell.html" %}
 {% block preheader %}Your {{ site_name }} account is ready.{% endblock %}
 {% block body %}
-<h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">Welcome aboard 👋</h1>
+<h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">Welcome aboard</h1>
 <p style="margin:0 0 14px">Your {{ site_name }} account is ready. From here you can buy travel eSIMs,
 see how much data is left on each one, and top them up without reinstalling anything.</p>
-<p style="margin:0 0 22px">Pick where you are going and you will have a QR code within a couple of minutes.</p>
+<p style="margin:0 0 22px">Pick where you are going and the QR code is in your inbox within minutes.</p>
 <a href="{{ site_url }}/destinations/"
-   style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#a855f7 58%,#ec4899);color:#fff;
-          text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:15px">Browse destinations</a>
+   style="display:inline-block;background:#0f74b4;background:linear-gradient(135deg,#0d5c91 0%,#1a8fd1 48%,#35bdea 120%);
+          color:#fff;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:15px">Browse destinations</a>
 <p style="margin:22px 0 0;font-size:13px;color:#575c86">One tip before your first trip: install the eSIM at
-home on Wi-Fi, and turn <b>Data Roaming ON</b> for that line. It only starts counting when you land.</p>
+home on Wi-Fi, and turn <b>Data Roaming ON</b> for that line. The plan only starts counting when it
+first connects at your destination, not when you install it.</p>
 {% endblock %}

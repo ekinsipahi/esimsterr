@@ -9,7 +9,10 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET
 
+from django.utils.translation import ngettext
+
 from apps.blog.models import Post
+from apps.common.templatetags.ui import flag_url
 
 from .data import POPULAR_ISO2
 from .models import Country, Device, Plan, Region
@@ -180,7 +183,7 @@ def unlimited(request):
 
 def how_it_works(request):
     return render(request, "pages/how_it_works.html", {
-        "seo_title": f"How eSIM works — install in 3 steps | {settings.SITE_NAME}",
+        "seo_title": f"How an eSIM works — install it in four steps | {settings.SITE_NAME}",
         "seo_description": (
             "What an eSIM is, how to install one with a QR code, when your plan starts and how to "
             "keep your WhatsApp number while travelling."
@@ -235,6 +238,16 @@ def legal(request, page):
     })
 
 
+def _country_result(c):
+    """The type-ahead sends a flag IMAGE URL, never an emoji: Windows has no
+    regional-indicator font and renders emoji flags as the bare country code."""
+    return {
+        "type": "country", "name": c.name, "url": c.get_absolute_url(),
+        "iso2": c.iso2, "flag_url": flag_url(c.iso2),
+        "from": str(c.min_price_usd or ""),
+    }
+
+
 @require_GET
 def search_api(request):
     """Type-ahead for the hero search box: countries + regions, JSON."""
@@ -244,23 +257,18 @@ def search_api(request):
         for c in Country.objects.filter(is_active=True).filter(
             Q(name__istartswith=q) | Q(iso2__iexact=q)
         ).order_by("-is_popular", "name")[:8]:
-            results.append({
-                "type": "country", "name": c.name, "url": c.get_absolute_url(),
-                "flag": c.flag_emoji, "from": str(c.min_price_usd or ""), "iso2": c.iso2,
-            })
+            results.append(_country_result(c))
         if len(results) < 8:
             for c in Country.objects.filter(is_active=True, name__icontains=q).exclude(
                 name__istartswith=q
             ).order_by("name")[: 8 - len(results)]:
-                results.append({
-                    "type": "country", "name": c.name, "url": c.get_absolute_url(),
-                    "flag": c.flag_emoji, "from": str(c.min_price_usd or ""), "iso2": c.iso2,
-                })
+                results.append(_country_result(c))
         for r in Region.objects.filter(is_active=True, name__icontains=q)[:4]:
             results.append({
                 "type": "region", "name": r.name, "url": r.get_absolute_url(),
-                "flag": r.icon, "from": str(r.min_price_usd or ""),
-                "note": f"{r.country_count} countries",
+                "flag_url": "", "from": str(r.min_price_usd or ""),
+                "note": ngettext("%(count)d country", "%(count)d countries",
+                                 r.country_count) % {"count": r.country_count},
             })
     return JsonResponse({"results": results})
 

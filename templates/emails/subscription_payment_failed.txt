@@ -1,0 +1,18 @@
+We could not renew your subscription.
+
+Your bank declined the ${{ subscription.price_usd }} renewal for {{ subscription.target_name }}.
+That is usually an expired card or a block on foreign payments, rather than
+anything wrong with your account.
+
+Your eSIM keeps working until the current period ends. We retry the payment
+automatically over the next few days; if it still does not go through, the
+subscription stops and the line goes quiet.
+
+Update your card: {{ detail_url }}
+
+How to fix it:
+1. Open your subscription and choose Manage billing.
+2. Add a working card. The retry happens straight away.
+3. Still stuck? Reply to this email and a person will sort it out.
+
+-- {{ site_name }} · {{ support_email }}

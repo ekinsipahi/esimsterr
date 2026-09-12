@@ -1,0 +1,140 @@
+{% extends "seo/_seo_base.html" %}
+{% load i18n ui %}
+
+{% comment %}
+Every number on this page comes out of the catalogue at request time. If you
+are editing it, keep it that way: a hardcoded price here would contradict the
+checkout within a week.
+{% endcomment %}
+
+{% block seo_content %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head center mx-auto" style="max-width:760px">
+      <span class="eyebrow">{% trans "Honest pricing" %}</span>
+      <h1 class="mt-2">{% blocktrans with p=from_price_str %}Cheap eSIM plans, from just ${{ p }}{% endblocktrans %}</h1>
+      <p class="h-sub">{% blocktrans with n=country_count %}Travel data in {{ n }} destinations, with the price per gigabyte and per day printed on every plan. The prices below are pulled live from our catalogue as this page loads, so nothing here is a stale screenshot.{% endblocktrans %}</p>
+      <div class="row center mt-3" style="gap:10px;flex-wrap:wrap">
+        <a class="btn btn-primary btn-lg" href="{% url 'destinations' %}">{% trans "Find your destination" %}</a>
+        <a class="btn btn-ghost btn-lg" href="{% url 'prices' %}">{% trans "See every price" %}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-sm section-alt">
+  <div class="shell">
+    <div class="section-head center"><h2>{% trans "Why this costs less than the app you were about to download" %}</h2></div>
+    <div class="grid g3">
+      <div class="card">
+        <span class="icon-tile v-mint">{% icon "tag" %}</span>
+        <h3 class="mt-2">{% trans "Wholesale in, thin margin out" %}</h3>
+        <p class="muted small mt-1">{% trans "We buy data wholesale and add a small, fixed margin on top. That is the entire pricing model. There is no clever tiering designed to make the middle option look sensible." %}</p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-amber">{% icon "smartphone" %}</span>
+        <h3 class="mt-2">{% trans "No app-install advertising" %}</h3>
+        <p class="muted small mt-1">{% trans "The big eSIM apps compete for installs, and app-install advertising is expensive, endless and ultimately paid for by whoever buys the data. We have no app to promote, so that cost is not in your price." %}</p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-sky">{% icon "signal" %}</span>
+        <h3 class="mt-2">{% trans "The same networks either way" %}</h3>
+        <p class="muted small mt-1">{% trans "Travel eSIMs all ride on the national operators, because there are only so many of them in any country. Each destination page names the ones your eSIM will use. Cheaper here means a smaller margin, not a worse radio." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <span class="eyebrow">{% trans "Live prices" %}</span>
+      <h2>{% trans "The cheapest live plan in each popular destination" %}</h2>
+      <p class="h-sub">{% trans "One row per destination, showing the lowest-priced plan available right now and what it works out at per gigabyte." %}</p>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{% trans "Destination" %}</th>
+            <th>{% trans "Cheapest plan" %}</th>
+            <th>{% trans "Validity" %}</th>
+            <th>{% trans "Price" %}</th>
+            <th>{% trans "Per GB" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c, plan in rows %}
+          <tr>
+            <td><a class="row" style="gap:9px" href="{{ c.get_absolute_url }}">{% flag c.iso2 size=22 %}<b>{{ c.name }}</b></a></td>
+            <td>{{ plan.data_label }}</td>
+            <td class="nowrap">{% blocktrans count days=plan.days %}{{ days }} day{% plural %}{{ days }} days{% endblocktrans %}</td>
+            <td class="bold nowrap">{{ plan.price|usd }}</td>
+            <td class="muted nowrap">{% if plan.per_gb_usd %}{{ plan.per_gb_usd|usd }}{% else %}{% trans "Unlimited" %}{% endif %}</td>
+            <td class="nowrap"><a class="link" href="{{ c.get_absolute_url }}">{% trans "All plans" %}</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="muted">{% trans "Prices are syncing. Check back in a minute." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted mt-2">{% blocktrans %}Every destination we sell is listed on the full price index, with its from price and whether it has an unlimited option.{% endblocktrans %} <a class="link" href="{% url 'prices' %}">{% trans "Open the price index" %}</a></p>
+  </div>
+</section>
+
+{% if value_rows %}
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head">
+      <span class="eyebrow">{% trans "Price per GB" %}</span>
+      <h2>{% trans "Where a gigabyte costs least right now" %}</h2>
+      <p class="h-sub">{% trans "Ranked by cost per gigabyte across live plans of 3 GB and above, one entry per destination. This is the number worth comparing between sellers, and the one that is usually left off the plan card." %}</p>
+    </div>
+    <div class="grid g4">
+      {% for plan in value_rows %}
+      <a class="card card-hover" href="{{ plan.country.get_absolute_url }}">
+        <div class="row" style="gap:9px">{% flag plan.country.iso2 size=22 %}<b class="truncate">{{ plan.country.name }}</b></div>
+        <div class="plan-price mt-2">{{ plan.per_gb_usd|usd }}</div>
+        <div class="xs muted-3">{% trans "per GB" %}</div>
+        <div class="small muted mt-2">{% blocktrans with d=plan.data_label days=plan.days amount=plan.price|usd %}{{ d }} for {{ days }} days at {{ amount }}{% endblocktrans %}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if regions %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <h2>{% trans "Crossing borders is cheaper still" %}</h2>
+      <p class="h-sub">{% trans "For any trip covering two or more countries, a regional plan almost always beats a stack of single-country ones." %}</p>
+    </div>
+    <div class="grid g3">
+      {% for r in regions %}
+      <a class="card card-hover" href="{{ r.get_absolute_url }}">
+        <div class="row-between">
+          <b>{{ r.name }}</b>
+          {% if r.min_price_usd %}<span class="badge badge-mint">{% blocktrans with amount=r.min_price_usd|usd %}from {{ amount }}{% endblocktrans %}</span>{% endif %}
+        </div>
+        <p class="muted small mt-2">{% blocktrans count n=r.country_count %}{{ n }} country on one profile{% plural %}{{ n }} countries on one profile{% endblocktrans %}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% include "seo/_related_pages.html" %}
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head center"><h2>{% trans "Questions about cheap eSIM plans" %}</h2></div>
+    {% include "partials/faq.html" %}
+  </div>
+</section>
+{% endblock %}

@@ -1,15 +1,26 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <section class="section">
   <div class="shell">
     <div class="section-head center">
-      <span class="eyebrow">FAQ</span>
-      <h2>Questions, answered plainly</h2>
-      <p class="h-sub">If something is missing, <a class="link" href="{% url 'support' %}">ask us</a> —
-        we answer by email, usually within a couple of hours.</p>
+      <span class="eyebrow">{% trans "FAQ" %}</span>
+      <h2>{% trans "Questions, answered plainly" %}</h2>
+      {% url 'support' as support_url %}
+      <p class="h-sub">{% blocktrans %}If something is missing, <a class="link" href="{{ support_url }}">ask us</a> — we answer by email, usually within a couple of hours.{% endblocktrans %}</p>
     </div>
     {% include "partials/faq.html" %}
+
+    <div class="mx-auto mt-4" style="max-width:820px">
+      <div class="card row-between">
+        <div>
+          <h3>{% trans "Still stuck?" %}</h3>
+          <p class="muted small mt-1">{% trans "Tell us the order reference and what your phone is showing. Real people read it, and an eSIM that cannot connect gets fixed or refunded." %}</p>
+        </div>
+        <a class="btn btn-primary" href="{% url 'support' %}">{% icon "headset" size=18 %}{% trans "Contact support" %}</a>
+      </div>
+    </div>
   </div>
 </section>
 {% include "partials/cta_band.html" %}

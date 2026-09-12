@@ -65,14 +65,32 @@ equity on one URL.
 
 ### Stripe
 
-1. Get `sk_live_…` and `pk_live_…` from the dashboard.
-2. **Developers → Webhooks → Add endpoint**:
-   `https://esimsterr.com/webhooks/stripe/`
-   Events: `checkout.session.completed` and
-   `checkout.session.async_payment_succeeded`.
-3. Copy the `whsec_…` signing secret into `STRIPE_WEBHOOK_SECRET`.
-4. Fill in **Branding** (logo, colours) — that is what customers see on the
-   hosted checkout and on Stripe's receipt email.
+1. Get `sk_live_...` and `pk_live_...` from the dashboard.
+2. **Developers, Webhooks, Add endpoint**: `https://esimsterr.com/webhooks/stripe/`
+   Enable **all** of these, or subscriptions silently never renew:
+
+   ```
+   checkout.session.completed
+   checkout.session.async_payment_succeeded
+   invoice.paid
+   invoice.payment_failed
+   customer.subscription.created
+   customer.subscription.updated
+   customer.subscription.deleted
+   customer.subscription.paused
+   customer.subscription.resumed
+   ```
+
+3. Copy the `whsec_...` signing secret into `STRIPE_WEBHOOK_SECRET`.
+4. **Settings, Billing, Customer portal**: activate it and allow subscription
+   cancellation. Without it the "Manage billing" button cannot open and customers
+   have no self-serve way to cancel.
+5. Fill in **Branding** (logo, colours). That is what customers see on the hosted
+   checkout and on Stripe's receipt email. Use `static/img/logo-mark-on-light.png`.
+
+Discount codes are ours, not Stripe's: `allow_promotion_codes` is deliberately
+off so every discount goes through `apps/coupons`, where it has a redemption cap,
+an audit row and a code frozen onto the order. Do not turn it back on.
 
 Stripe will ask what you sell during review. Answer plainly: prepaid mobile data
 (eSIM profiles) for travellers, delivered electronically, one-off purchases, no
@@ -110,7 +128,30 @@ when it hits zero, `add_plan_iccid` starts returning "Insufficient funds",
 fulfilment fails, and every order sits in `paid` until you top up. Orders are not
 lost (the sweeper retries), but customers wait.
 
-## 6. Google sign-in
+## 6. Subscriptions, coupons and the assistant
+
+**Subscriptions** are on by default (`SUBSCRIPTIONS_ENABLED`) but do nothing
+without Stripe. They sell the unlimited plans on a repeating cycle that mirrors
+the plan's own duration: a 7-day plan bills weekly, a 30-day plan monthly, a
+15-day plan every 15 days. Each cycle tops up the **same** eSIM, so the customer
+never reinstalls anything. `SUBSCRIPTION_DISCOUNT_PCT` (default 15) is the real
+discount charged, not a display figure.
+
+**Coupons** are managed in the admin. Three launch codes are seeded by a
+migration: `WELCOME10` (first order), `BORDERLESS20` (orders over $9.99) and
+`CRYPTO5`. Public codes appear on `/coupons/`, which is also the landing page for
+discount-hunting search traffic. Schedule `expire_coupon_holds` so an abandoned
+checkout hands its seat back on a capped code.
+
+**The AI assistant** is signed-in only, on purpose: every reply costs money, and
+an anonymous endpoint is a free Claude proxy behind your domain. Set
+`ANTHROPIC_API_KEY` to switch it on; without a key the widget still renders and
+falls back to "the team has been notified", so nothing breaks. `ASSISTANT_ENABLED`
+is the kill switch. Tickets work for guests too, gated by a signed link in the
+confirmation email rather than by login, because most buyers never make an
+account.
+
+## 7. Google sign-in
 
 Google Cloud Console → Credentials → OAuth client (Web):
 
@@ -118,7 +159,7 @@ Google Cloud Console → Credentials → OAuth client (Web):
 - Authorised redirect URIs: not needed — this uses Google Identity Services with
   an ID token posted to `/auth/google/`.
 
-## 7. Email — Resend
+## 8. Email, Resend
 
 1. Add and verify `esimsterr.com` (SPF, DKIM, DMARC records).
 2. `RESEND_API_KEY`, and `DEFAULT_FROM_EMAIL` as
@@ -130,30 +171,40 @@ Without a Resend key the app falls back to printing email to the console, so
 nothing crashes; customers just would not receive their QR code by email. Set it
 before taking real orders.
 
-## 8. SEO checklist
+## 9. SEO checklist
 
 Already handled in code: canonical URLs, `robots.txt`, a sitemap covering every
 country, region and article, Open Graph and Twitter cards, `Organization`,
 `Product`/`AggregateOffer`, `FAQPage` and `Article` structured data, and 301s from
 alias hosts.
 
+Every destination already has its own intro, title tag and meta description,
+generated from facts that genuinely differ per country (`seed_country_seo`). The
+programmatic-SEO pages under `apps/seo` cover price, payment-method, comparison,
+education and troubleshooting intent.
+
 What you still do by hand:
 
-1. Google Search Console — verify the domain, submit
+1. Google Search Console: verify the domain, submit
    `https://esimsterr.com/sitemap.xml`.
-2. Bing Webmaster Tools — same.
-3. Replace the placeholder art in `static/img/` with real logos (see the README
-   in that folder; keep the filenames).
+2. Bing Webmaster Tools: the same.
+3. Read `docs/seo/keyword-map.md` and work its waves in order. It also lists the
+   keyword families we deliberately do **not** target and why, which matters more
+   than the ones we do.
 4. Fill `SITE_SAMEAS` with your social profile URLs so they appear in the
    `Organization` markup.
-5. Write country intros for your top destinations in the admin
-   (`Country.intro`, `seo_title`, `seo_description`). Generated copy ranks; hand
-   written copy ranks better.
+5. Hand-write the intro for your top ten destinations in the admin. Generated
+   copy ranks; written copy ranks better, and ten pages is an afternoon.
+6. Set `LEGAL_UPDATED` whenever a policy actually changes.
 
-## 9. Before you take real money
+## 10. Before you take real money
 
-- [ ] One live test purchase on the cheapest plan (~$1.49) end to end, then
+- [ ] One live test purchase on the cheapest plan (about $1.49) end to end, then
       check the eSIM appears in the admin with a QR code.
+- [ ] One live subscription on a cheap unlimited plan, then cancel it from the
+      billing portal, to prove the webhook wiring in both directions.
+- [ ] Apply a coupon at checkout and confirm the order records the discount and
+      the redemption row.
 - [ ] Confirm the QR code email actually arrives.
 - [ ] Trigger a webhook from the Stripe dashboard and confirm the order flips to
       `completed`.
@@ -161,7 +212,7 @@ What you still do by hand:
 - [ ] Partner balance topped up beyond your expected first week of sales.
 - [ ] `ADMIN_NOTIFY_EMAILS` reaches an inbox you actually read.
 
-## 10. Mobile app, later
+## 11. Mobile app, later
 
 The JSON API is at `/api/v1/` with JWT auth: `auth/register`, `auth/login`,
 `auth/google`, `auth/refresh`, `countries`, `regions`, `plans`, `devices`,

@@ -4,6 +4,8 @@ from __future__ import annotations
 import io
 import logging
 
+from decimal import Decimal
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -12,11 +14,13 @@ from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from core.ratelimit import rate_limit
 
 from apps.catalog.models import Plan
+from apps.coupons.services import CouponError, redeem, release, validate_coupon
 from apps.payments import services as payment_services
 from apps.providers.yesim import YesimError
 
@@ -33,6 +37,21 @@ SESSION_ORDERS = "guest_order_refs"
 def _client_ip(request):
     xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
     return (xff.split(",")[0].strip() if xff else request.META.get("REMOTE_ADDR")) or None
+
+
+def _fingerprint(request) -> dict:
+    """Request provenance stored on every order.
+
+    Most buyers never create an account, so without this a guest order is an
+    email address and nothing else. These four fields are what makes a
+    chargeback defensible and lets the operator spot one person working through
+    disposable inboxes."""
+    return {
+        "ip": _client_ip(request),
+        "user_agent": request.META.get("HTTP_USER_AGENT", "")[:300],
+        "accept_language": request.META.get("HTTP_ACCEPT_LANGUAGE", "")[:120],
+        "referrer": request.META.get("HTTP_REFERER", "")[:300],
+    }
 
 
 def _remember_order(request, order):
@@ -52,8 +71,11 @@ def _can_view_order(request, order):
 
 @rate_limit("checkout", limit=12, window=3600)
 def checkout(request, plan_id):
-    """Plan summary + email + payment method. Creates the order, then hands off
-    to Stripe Checkout or a NOWPayments invoice."""
+    """Plan summary, optional coupon, email and payment method.
+
+    Creates the order, reserves the coupon seat, then hands off to Stripe
+    Checkout or a NOWPayments invoice. If the handoff fails the seat is released
+    immediately so an unreachable payment provider cannot burn a capped code."""
     plan = get_object_or_404(
         Plan.objects.live().select_related("country", "region"), pk=plan_id
     )
@@ -64,19 +86,46 @@ def checkout(request, plan_id):
         if topup_esim and request.user.is_authenticated and topup_esim.user_id != request.user.id:
             topup_esim = None
 
-    email = ""
-    if request.user.is_authenticated:
-        email = request.user.email
+    email = request.user.email if request.user.is_authenticated else ""
+    code = (request.GET.get("coupon") or "").strip()
     error = None
+    coupon = None
+    discount = Decimal("0.00")
+    subtotal = Decimal(plan.price)
+
+    # "Apply" re-renders the page with the coupon priced in; it must never create
+    # an order or start a payment.
+    apply_only = request.method == "POST" and "apply_only" in request.POST
 
     if request.method == "POST":
         email = (request.POST.get("email") or email).strip().lower()
+        code = (request.POST.get("coupon") or "").strip()
         method = request.POST.get("method") or "stripe"
         try:
             validate_email(email)
         except ValidationError:
-            error = "Please enter a valid email address — this is where your QR code goes."
-        if not error:
+            if not apply_only:
+                error = _("Please enter a valid email address. This is where your QR code goes.")
+            email = ""
+
+        if not error and code:
+            try:
+                coupon, discount = validate_coupon(
+                    code, amount_usd=subtotal, plan=plan,
+                    user=request.user if request.user.is_authenticated else None,
+                    email=email,
+                )
+            except CouponError as e:
+                # Deliberately stop here rather than quietly charging full price.
+                # Someone who typed a code expects the discount; taking their
+                # money without it is the kind of surprise that becomes a
+                # chargeback. They can clear the field and pay, or fix the code.
+                coupon, discount = None, Decimal("0.00")
+                error = _("%(reason)s Clear the coupon field to continue at the "
+                          "normal price.") % {"reason": e}
+
+        if not error and not apply_only:
+            total = (subtotal - discount).quantize(Decimal("0.01"))
             order = Order.objects.create(
                 user=request.user if request.user.is_authenticated else None,
                 email=email,
@@ -86,30 +135,69 @@ def checkout(request, plan_id):
                 plan_provider_id=plan.provider_plan_id,
                 plan_days=plan.days,
                 plan_data_label=plan.data_label,
-                amount_usd=plan.price,
+                subtotal_usd=subtotal,
+                discount_usd=discount,
+                amount_usd=total,
+                coupon=coupon,
+                coupon_code=coupon.code if coupon else "",
                 cost_amount=plan.cost_amount,
                 cost_currency=plan.cost_currency,
                 target_esim=topup_esim,
-                ip=_client_ip(request),
+                **_fingerprint(request),
             )
             _remember_order(request, order)
-            try:
-                url = payment_services.start_payment(order, method, request)
-            except payment_services.PaymentError as e:
-                order.status = Order.Status.FAILED
-                order.save(update_fields=["status"])
-                error = str(e)
-            else:
-                return redirect(url)
+            if coupon is not None:
+                try:
+                    redeem(coupon, order,
+                           user=request.user if request.user.is_authenticated else None,
+                           email=email, ip=order.ip)
+                except CouponError as e:
+                    order.coupon, order.coupon_code = None, ""
+                    order.discount_usd = Decimal("0.00")
+                    order.amount_usd = subtotal
+                    order.save(update_fields=["coupon", "coupon_code", "discount_usd", "amount_usd"])
+                    error = str(e)
+
+            if not error:
+                try:
+                    url = payment_services.start_payment(order, method, request)
+                except payment_services.PaymentError as e:
+                    release(order)
+                    order.status = Order.Status.FAILED
+                    order.save(update_fields=["status"])
+                    error = str(e)
+                else:
+                    return redirect(url)
+
+    elif code:
+        # Coupon arrived in the URL (a campaign link). Preview it without an
+        # email; per-customer rules are re-checked on POST anyway.
+        try:
+            coupon, discount = validate_coupon(
+                code, amount_usd=subtotal, plan=plan,
+                user=request.user if request.user.is_authenticated else None,
+                email=email,
+            )
+        except CouponError:
+            coupon, discount = None, Decimal("0.00")
 
     ctx = {
         "plan": plan,
         "topup_esim": topup_esim,
         "email": email,
+        "coupon_code": code,
+        "coupon": coupon,
+        "discount": discount,
+        "subtotal": subtotal,
+        "total": (subtotal - discount).quantize(Decimal("0.01")),
         "error": error,
-        "seo_title": f"Checkout — {plan.title}",
+        "seo_title": _("Checkout"),
         "meta_robots": "noindex,nofollow",
-        "breadcrumbs": [("Home", "/"), (plan.target_name, plan.target.get_absolute_url() if plan.target else "/"), ("Checkout", None)],
+        "breadcrumbs": [
+            (_("Home"), "/"),
+            (plan.target_name, plan.target.get_absolute_url() if plan.target else "/"),
+            (_("Checkout"), None),
+        ],
     }
     return render(request, "orders/checkout.html", ctx)
 

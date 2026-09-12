@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block content %}
+<div class="shell">{% include "partials/breadcrumbs.html" %}</div>
+
+<section class="section">
+  <div class="shell mx-auto" style="max-width:760px">
+
+    <div class="row-between mb-3" style="gap:16px;flex-wrap:wrap">
+      <div>
+        <span class="eyebrow">{% trans "Ticket" %} {{ ticket.ref }}</span>
+        <h1 style="font-size:clamp(1.5rem,3vw,2rem)">{{ ticket.subject }}</h1>
+        <p class="muted small mt-1">
+          {{ ticket.get_category_display }} ·
+          {% blocktrans with opened=ticket.created_at|date:"j M Y" %}opened {{ opened }}{% endblocktrans %}
+          {% if ticket.order_ref %} · {{ ticket.order_ref }}{% endif %}
+        </p>
+      </div>
+      <span class="status-dot {% if ticket.status == 'closed' %}status-dead{% elif ticket.status == 'answered' %}status-live{% else %}status-pending{% endif %}">
+        {{ ticket.get_status_display }}
+      </span>
+    </div>
+
+    <div class="card card-solid">
+      <div class="thread">
+        {% for m in thread %}
+        <div class="bubble {% if m.is_staff %}bubble-staff{% else %}bubble-user{% endif %}">
+          {{ m.body }}
+          <div class="bubble-meta">
+            {% if m.is_staff %}{% trans "Support team" %}{% else %}{% trans "You" %}{% endif %} ·
+            {{ m.created_at|date:"j M Y, H:i" }}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if ticket.is_closed %}
+      <div class="alert alert-info mt-4">
+        {% icon "info" size=18 %}
+        <div class="small">{% trans "This ticket is closed. Send a message below and it opens again." %}</div>
+      </div>
+      {% endif %}
+
+      <form method="post" class="stack mt-4">
+        {% csrf_token %}
+        {% if token %}<input type="hidden" name="t" value="{{ token }}">{% endif %}
+        <div class="field">
+          <label for="body">{% trans "Add a reply" %}</label>
+          <textarea class="textarea" id="body" name="body" rows="5" required
+                    placeholder="{% trans 'Tell us what changed since your last message.' %}"></textarea>
+        </div>
+        <div class="row" style="gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" type="submit" name="action" value="reply">
+            {% icon "send" size=18 %} {% trans "Send reply" %}
+          </button>
+          {% if not ticket.is_closed %}
+          <button class="btn btn-ghost" type="submit" name="action" value="close" formnovalidate>
+            {% trans "Close this ticket" %}
+          </button>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+
+    <div class="alert alert-info mt-3">
+      {% icon "mail" size=18 %}
+      <div class="small">{% blocktrans with email=ticket.email %}Everything here is also sent to {{ email }}. Replying to that email reaches the same
+        thread.{% endblocktrans %}</div>
+    </div>
+
+    <p class="center mt-4">
+      <a class="link small" href="{% url 'support' %}">{% trans "Back to support" %}</a>
+    </p>
+  </div>
+</section>
+{% endblock %}

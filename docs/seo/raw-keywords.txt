@@ -1,0 +1,703 @@
+# eSIMsterr raw keyword export
+# Source: owner keyword export (533 keywords) + family expansion across live inventory.
+# Live inventory at time of writing: 148 active countries, 9 regions, 1560 live plans.
+#
+# format: keyword <TAB> volume/cpc or marker <TAB> action
+# action values:
+#   target  = a page is (or will be) optimised for this term
+#   support = covered inside an existing page section; no page of its own
+#   skip    = deliberately not targeted; see keyword-map.md section 5
+# Volumes are only present where the owner export supplied them. Terms marked
+# (expanded, no volume data) were reconstructed from the export's family patterns
+# and must be volume-checked before any of them is promoted to its own page.
+
+# intent: transactional-destination
+# buy/get an eSIM for a named place. Served by /esim/<slug>/ and /esim-region/<slug>/.
+buy esim	9.9K / $7.00	target
+buy esim for europe	260 / $4.94	target
+buy esim canada	260 / $6.63	target
+buy esim online south africa	320 / $1.46	target
+esim satin alma	390 / $2.13	target
+how do i purchase an esim	(expanded, no volume data)	support
+esim store near me	(expanded, no volume data)	skip
+
+# -- buy esim <country>: tier 1 (popular destinations, full family) --
+buy esim egypt	(expanded, no volume data)	target
+buy esim online egypt	(expanded, no volume data)	target
+esim egypt buy	(expanded, no volume data)	target
+buy esim france	(expanded, no volume data)	target
+buy esim online france	(expanded, no volume data)	target
+esim france buy	(expanded, no volume data)	target
+buy esim germany	(expanded, no volume data)	target
+buy esim online germany	(expanded, no volume data)	target
+esim germany buy	(expanded, no volume data)	target
+buy esim greece	(expanded, no volume data)	target
+buy esim online greece	(expanded, no volume data)	target
+esim greece buy	(expanded, no volume data)	target
+buy esim indonesia	(expanded, no volume data)	target
+buy esim online indonesia	(expanded, no volume data)	target
+esim indonesia buy	(expanded, no volume data)	target
+buy esim bali	(expanded, no volume data)	target
+buy esim online bali	(expanded, no volume data)	target
+esim bali buy	(expanded, no volume data)	target
+buy esim italy	(expanded, no volume data)	target
+buy esim online italy	(expanded, no volume data)	target
+esim italy buy	(expanded, no volume data)	target
+buy esim japan	(expanded, no volume data)	target
+buy esim online japan	(expanded, no volume data)	target
+esim japan buy	(expanded, no volume data)	target
+buy esim spain	(expanded, no volume data)	target
+buy esim online spain	(expanded, no volume data)	target
+esim spain buy	(expanded, no volume data)	target
+buy esim thailand	(expanded, no volume data)	target
+buy esim online thailand	(expanded, no volume data)	target
+esim thailand buy	(expanded, no volume data)	target
+buy esim turkey	(expanded, no volume data)	target
+buy esim online turkey	(expanded, no volume data)	target
+esim turkey buy	(expanded, no volume data)	target
+buy esim vietnam	(expanded, no volume data)	target
+buy esim online vietnam	(expanded, no volume data)	target
+esim vietnam buy	(expanded, no volume data)	target
+buy esim united arab emirates	(expanded, no volume data)	target
+buy esim online united arab emirates	(expanded, no volume data)	target
+esim united arab emirates buy	(expanded, no volume data)	target
+buy esim dubai	(expanded, no volume data)	target
+buy esim online dubai	(expanded, no volume data)	target
+esim dubai buy	(expanded, no volume data)	target
+buy esim uae	(expanded, no volume data)	target
+buy esim online uae	(expanded, no volume data)	target
+esim uae buy	(expanded, no volume data)	target
+buy esim australia	(expanded, no volume data)	target
+buy esim online australia	(expanded, no volume data)	target
+esim australia buy	(expanded, no volume data)	target
+buy esim online canada	(expanded, no volume data)	target
+esim canada buy	(expanded, no volume data)	target
+buy esim portugal	(expanded, no volume data)	target
+buy esim online portugal	(expanded, no volume data)	target
+esim portugal buy	(expanded, no volume data)	target
+buy esim south korea	(expanded, no volume data)	target
+buy esim online south korea	(expanded, no volume data)	target
+esim south korea buy	(expanded, no volume data)	target
+buy esim korea	(expanded, no volume data)	target
+buy esim online korea	(expanded, no volume data)	target
+esim korea buy	(expanded, no volume data)	target
+buy esim united kingdom	(expanded, no volume data)	target
+buy esim online united kingdom	(expanded, no volume data)	target
+esim united kingdom buy	(expanded, no volume data)	target
+buy esim uk	(expanded, no volume data)	target
+buy esim online uk	(expanded, no volume data)	target
+esim uk buy	(expanded, no volume data)	target
+buy esim united states	(expanded, no volume data)	target
+buy esim online united states	(expanded, no volume data)	target
+esim united states buy	(expanded, no volume data)	target
+buy esim usa	(expanded, no volume data)	target
+buy esim online usa	(expanded, no volume data)	target
+esim usa buy	(expanded, no volume data)	target
+buy esim america	(expanded, no volume data)	target
+buy esim online america	(expanded, no volume data)	target
+esim america buy	(expanded, no volume data)	target
+buy esim mexico	(expanded, no volume data)	target
+buy esim online mexico	(expanded, no volume data)	target
+esim mexico buy	(expanded, no volume data)	target
+buy esim morocco	(expanded, no volume data)	target
+buy esim online morocco	(expanded, no volume data)	target
+esim morocco buy	(expanded, no volume data)	target
+
+# -- buy esim <country>: remaining live destinations --
+buy esim russia	(expanded, no volume data)	target
+buy esim armenia	(expanded, no volume data)	target
+buy esim belarus	(expanded, no volume data)	target
+buy esim georgia	(expanded, no volume data)	target
+buy esim kazakhstan	(expanded, no volume data)	target
+buy esim montenegro	(expanded, no volume data)	target
+buy esim serbia	(expanded, no volume data)	target
+buy esim uzbekistan	(expanded, no volume data)	target
+buy esim albania	(expanded, no volume data)	target
+buy esim algeria	(expanded, no volume data)	target
+buy esim austria	(expanded, no volume data)	target
+buy esim belgium	(expanded, no volume data)	target
+buy esim bulgaria	(expanded, no volume data)	target
+buy esim croatia	(expanded, no volume data)	target
+buy esim cyprus	(expanded, no volume data)	target
+buy esim czechia	(expanded, no volume data)	target
+buy esim czech republic	(expanded, no volume data)	target
+buy esim denmark	(expanded, no volume data)	target
+buy esim ecuador	(expanded, no volume data)	target
+buy esim faroe islands	(expanded, no volume data)	target
+buy esim hong kong	(expanded, no volume data)	target
+buy esim hungary	(expanded, no volume data)	target
+buy esim ireland	(expanded, no volume data)	target
+buy esim israel	(expanded, no volume data)	target
+buy esim kyrgyzstan	(expanded, no volume data)	target
+buy esim latvia	(expanded, no volume data)	target
+buy esim lithuania	(expanded, no volume data)	target
+buy esim luxembourg	(expanded, no volume data)	target
+buy esim malaysia	(expanded, no volume data)	target
+buy esim malta	(expanded, no volume data)	target
+buy esim moldova	(expanded, no volume data)	target
+buy esim netherlands	(expanded, no volume data)	target
+buy esim amsterdam	(expanded, no volume data)	target
+buy esim new zealand	(expanded, no volume data)	target
+buy esim pakistan	(expanded, no volume data)	target
+buy esim philippines	(expanded, no volume data)	target
+buy esim poland	(expanded, no volume data)	target
+buy esim romania	(expanded, no volume data)	target
+buy esim singapore	(expanded, no volume data)	target
+buy esim slovakia	(expanded, no volume data)	target
+buy esim sri lanka	(expanded, no volume data)	target
+buy esim sweden	(expanded, no volume data)	target
+buy esim switzerland	(expanded, no volume data)	target
+buy esim taiwan	(expanded, no volume data)	target
+buy esim tunisia	(expanded, no volume data)	target
+buy esim ukraine	(expanded, no volume data)	target
+buy esim argentina	(expanded, no volume data)	target
+buy esim azerbaijan	(expanded, no volume data)	target
+buy esim bosnia and herzegovina	(expanded, no volume data)	target
+buy esim bosnia	(expanded, no volume data)	target
+buy esim brazil	(expanded, no volume data)	target
+buy esim china	(expanded, no volume data)	target
+buy esim costa rica	(expanded, no volume data)	target
+buy esim estonia	(expanded, no volume data)	target
+buy esim finland	(expanded, no volume data)	target
+buy esim iceland	(expanded, no volume data)	target
+buy esim india	(expanded, no volume data)	target
+buy esim iraq	(expanded, no volume data)	target
+buy esim laos	(expanded, no volume data)	target
+buy esim liechtenstein	(expanded, no volume data)	target
+buy esim macedonia	(expanded, no volume data)	target
+buy esim north macedonia	(expanded, no volume data)	target
+buy esim malawi	(expanded, no volume data)	target
+buy esim mauritius	(expanded, no volume data)	target
+buy esim nepal	(expanded, no volume data)	target
+buy esim norway	(expanded, no volume data)	target
+buy esim oman	(expanded, no volume data)	target
+buy esim slovenia	(expanded, no volume data)	target
+buy esim uruguay	(expanded, no volume data)	target
+buy esim afghanistan	(expanded, no volume data)	target
+buy esim andorra	(expanded, no volume data)	target
+buy esim bahrain	(expanded, no volume data)	target
+buy esim chile	(expanded, no volume data)	target
+buy esim congo republic	(expanded, no volume data)	target
+buy esim fiji	(expanded, no volume data)	target
+buy esim french guiana	(expanded, no volume data)	target
+buy esim grenada	(expanded, no volume data)	target
+buy esim kenya	(expanded, no volume data)	target
+buy esim kuwait	(expanded, no volume data)	target
+buy esim macau	(expanded, no volume data)	target
+buy esim madagascar	(expanded, no volume data)	target
+buy esim peru	(expanded, no volume data)	target
+buy esim qatar	(expanded, no volume data)	target
+buy esim saudi arabia	(expanded, no volume data)	target
+buy esim south africa	(expanded, no volume data)	target
+buy esim anguilla	(expanded, no volume data)	target
+buy esim antigua and barbuda	(expanded, no volume data)	target
+buy esim bahamas	(expanded, no volume data)	target
+buy esim bangladesh	(expanded, no volume data)	target
+buy esim barbados	(expanded, no volume data)	target
+buy esim belize	(expanded, no volume data)	target
+buy esim bolivia	(expanded, no volume data)	target
+buy esim british virgin islands	(expanded, no volume data)	target
+buy esim cambodia	(expanded, no volume data)	target
+buy esim cape verde	(expanded, no volume data)	target
+buy esim cayman islands	(expanded, no volume data)	target
+buy esim chad	(expanded, no volume data)	target
+buy esim colombia	(expanded, no volume data)	target
+buy esim dr congo	(expanded, no volume data)	target
+buy esim curacao	(expanded, no volume data)	target
+buy esim dominica	(expanded, no volume data)	target
+buy esim dominican republic	(expanded, no volume data)	target
+buy esim el salvador	(expanded, no volume data)	target
+buy esim gabon	(expanded, no volume data)	target
+buy esim ghana	(expanded, no volume data)	target
+buy esim gibraltar	(expanded, no volume data)	target
+buy esim guadeloupe	(expanded, no volume data)	target
+buy esim guam	(expanded, no volume data)	target
+buy esim guatemala	(expanded, no volume data)	target
+buy esim honduras	(expanded, no volume data)	target
+buy esim jamaica	(expanded, no volume data)	target
+buy esim jordan	(expanded, no volume data)	target
+buy esim maldives	(expanded, no volume data)	target
+buy esim mongolia	(expanded, no volume data)	target
+buy esim montserrat	(expanded, no volume data)	target
+buy esim nicaragua	(expanded, no volume data)	target
+buy esim niger	(expanded, no volume data)	target
+buy esim nigeria	(expanded, no volume data)	target
+buy esim palestine	(expanded, no volume data)	target
+buy esim panama	(expanded, no volume data)	target
+buy esim paraguay	(expanded, no volume data)	target
+buy esim puerto rico	(expanded, no volume data)	target
+buy esim reunion	(expanded, no volume data)	target
+buy esim rwanda	(expanded, no volume data)	target
+buy esim saint kitts and nevis	(expanded, no volume data)	target
+buy esim saint lucia	(expanded, no volume data)	target
+buy esim saint vincent and grenadines	(expanded, no volume data)	target
+buy esim senegal	(expanded, no volume data)	target
+buy esim tanzania	(expanded, no volume data)	target
+buy esim turks and caicos islands	(expanded, no volume data)	target
+buy esim uganda	(expanded, no volume data)	target
+buy esim venezuela	(expanded, no volume data)	target
+
+# -- buy esim <region> --
+buy esim global	(expanded, no volume data)	target
+global esim	(expanded, no volume data)	target
+buy esim europe	(expanded, no volume data)	target
+europe esim	(expanded, no volume data)	target
+buy esim asia pacific	(expanded, no volume data)	target
+asia pacific esim	(expanded, no volume data)	target
+buy esim southeast asia	(expanded, no volume data)	target
+southeast asia esim	(expanded, no volume data)	target
+buy esim north america	(expanded, no volume data)	target
+north america esim	(expanded, no volume data)	target
+buy esim latin america	(expanded, no volume data)	target
+latin america esim	(expanded, no volume data)	target
+buy esim middle east	(expanded, no volume data)	target
+middle east esim	(expanded, no volume data)	target
+buy esim balkans	(expanded, no volume data)	target
+balkans esim	(expanded, no volume data)	target
+buy esim cis & caucasus	(expanded, no volume data)	target
+cis & caucasus esim	(expanded, no volume data)	target
+buy esim asia	(expanded, no volume data)	target
+buy esim south east asia	(expanded, no volume data)	target
+buy esim eu	(expanded, no volume data)	target
+
+# intent: transactional-price
+# price-led buying intent. Beachhead. Served by /cheap-esim/ + priced destination pages.
+cheap esim	8.1K / $5.63	target
+cheap esim app	720 / $2.82	target
+cheap esim plans australia	590 / $6.32	target
+cheap esim uk pay as you go	390 / $3.03	target
+cheap esim india	320 / $1.46	target
+cheap esim malaysia	320 / $1.45	target
+cheap esim spain	260 / $3.77	target
+cheapest us esim	260 / $5.68	target
+cheap esim plans usa	260 / $17.84	target
+cheap esim egypt	260 / $2.27	target
+cheap esim indonesia	260 / $2.55	target
+cheap esim ireland	260 / $2.87	target
+esim ucuz	(expanded, no volume data)	target
+how much is an esim plan	(expanded, no volume data)	support
+esim price usa	(expanded, no volume data)	support
+esim price in turkey	(expanded, no volume data)	support
+cheapest esim unlimited data uk	(expanded, no volume data)	target
+cheapest esim europe 30 days	(expanded, no volume data)	target
+cheapest esim thailand 30 days	(expanded, no volume data)	target
+cheapest esim japan reddit	(expanded, no volume data)	skip
+cheapest esim usa plan	(expanded, no volume data)	target
+cheapest esim to uk	(expanded, no volume data)	target
+cheapest esim to australia	(expanded, no volume data)	target
+cheapest esim watch	(expanded, no volume data)	skip
+cheap esim only plans	(expanded, no volume data)	target
+cheap plans with esim	(expanded, no volume data)	target
+cheap esim unlimited data	(expanded, no volume data)	target
+cheap unlimited esim europe	(expanded, no volume data)	target
+
+# -- cheap esim <country>: tier 1 --
+cheapest esim egypt	(expanded, no volume data)	target
+esim egypt price	(expanded, no volume data)	target
+cheap esim france	(expanded, no volume data)	target
+cheapest esim france	(expanded, no volume data)	target
+esim france price	(expanded, no volume data)	target
+cheap esim germany	(expanded, no volume data)	target
+cheapest esim germany	(expanded, no volume data)	target
+esim germany price	(expanded, no volume data)	target
+cheap esim greece	(expanded, no volume data)	target
+cheapest esim greece	(expanded, no volume data)	target
+esim greece price	(expanded, no volume data)	target
+cheapest esim indonesia	(expanded, no volume data)	target
+esim indonesia price	(expanded, no volume data)	target
+cheap esim bali	(expanded, no volume data)	target
+cheapest esim bali	(expanded, no volume data)	target
+esim bali price	(expanded, no volume data)	target
+cheap esim italy	(expanded, no volume data)	target
+cheapest esim italy	(expanded, no volume data)	target
+esim italy price	(expanded, no volume data)	target
+cheap esim japan	(expanded, no volume data)	target
+cheapest esim japan	(expanded, no volume data)	target
+esim japan price	(expanded, no volume data)	target
+cheapest esim spain	(expanded, no volume data)	target
+esim spain price	(expanded, no volume data)	target
+cheap esim thailand	(expanded, no volume data)	target
+cheapest esim thailand	(expanded, no volume data)	target
+esim thailand price	(expanded, no volume data)	target
+cheap esim turkey	(expanded, no volume data)	target
+cheapest esim turkey	(expanded, no volume data)	target
+esim turkey price	(expanded, no volume data)	target
+cheap esim vietnam	(expanded, no volume data)	target
+cheapest esim vietnam	(expanded, no volume data)	target
+esim vietnam price	(expanded, no volume data)	target
+cheap esim united arab emirates	(expanded, no volume data)	target
+cheapest esim united arab emirates	(expanded, no volume data)	target
+esim united arab emirates price	(expanded, no volume data)	target
+cheap esim dubai	(expanded, no volume data)	target
+cheapest esim dubai	(expanded, no volume data)	target
+esim dubai price	(expanded, no volume data)	target
+cheap esim uae	(expanded, no volume data)	target
+cheapest esim uae	(expanded, no volume data)	target
+esim uae price	(expanded, no volume data)	target
+cheap esim australia	(expanded, no volume data)	target
+cheapest esim australia	(expanded, no volume data)	target
+esim australia price	(expanded, no volume data)	target
+cheap esim canada	(expanded, no volume data)	target
+cheapest esim canada	(expanded, no volume data)	target
+esim canada price	(expanded, no volume data)	target
+cheap esim portugal	(expanded, no volume data)	target
+cheapest esim portugal	(expanded, no volume data)	target
+esim portugal price	(expanded, no volume data)	target
+cheap esim south korea	(expanded, no volume data)	target
+cheapest esim south korea	(expanded, no volume data)	target
+esim south korea price	(expanded, no volume data)	target
+cheap esim korea	(expanded, no volume data)	target
+cheapest esim korea	(expanded, no volume data)	target
+esim korea price	(expanded, no volume data)	target
+cheap esim united kingdom	(expanded, no volume data)	target
+cheapest esim united kingdom	(expanded, no volume data)	target
+esim united kingdom price	(expanded, no volume data)	target
+cheap esim uk	(expanded, no volume data)	target
+cheapest esim uk	(expanded, no volume data)	target
+esim uk price	(expanded, no volume data)	target
+cheap esim united states	(expanded, no volume data)	target
+cheapest esim united states	(expanded, no volume data)	target
+esim united states price	(expanded, no volume data)	target
+cheap esim usa	(expanded, no volume data)	target
+cheapest esim usa	(expanded, no volume data)	target
+esim usa price	(expanded, no volume data)	target
+cheap esim america	(expanded, no volume data)	target
+cheapest esim america	(expanded, no volume data)	target
+esim america price	(expanded, no volume data)	target
+cheap esim mexico	(expanded, no volume data)	target
+cheapest esim mexico	(expanded, no volume data)	target
+esim mexico price	(expanded, no volume data)	target
+cheap esim morocco	(expanded, no volume data)	target
+cheapest esim morocco	(expanded, no volume data)	target
+esim morocco price	(expanded, no volume data)	target
+
+# -- cheap esim <country>: remaining live destinations --
+cheap esim russia	(expanded, no volume data)	target
+cheap esim armenia	(expanded, no volume data)	target
+cheap esim belarus	(expanded, no volume data)	target
+cheap esim georgia	(expanded, no volume data)	target
+cheap esim kazakhstan	(expanded, no volume data)	target
+cheap esim montenegro	(expanded, no volume data)	target
+cheap esim serbia	(expanded, no volume data)	target
+cheap esim uzbekistan	(expanded, no volume data)	target
+cheap esim albania	(expanded, no volume data)	target
+cheap esim algeria	(expanded, no volume data)	target
+cheap esim austria	(expanded, no volume data)	target
+cheap esim belgium	(expanded, no volume data)	target
+cheap esim bulgaria	(expanded, no volume data)	target
+cheap esim croatia	(expanded, no volume data)	target
+cheap esim cyprus	(expanded, no volume data)	target
+cheap esim czechia	(expanded, no volume data)	target
+cheap esim czech republic	(expanded, no volume data)	target
+cheap esim denmark	(expanded, no volume data)	target
+cheap esim ecuador	(expanded, no volume data)	target
+cheap esim faroe islands	(expanded, no volume data)	target
+cheap esim hong kong	(expanded, no volume data)	target
+cheap esim hungary	(expanded, no volume data)	target
+cheap esim israel	(expanded, no volume data)	target
+cheap esim kyrgyzstan	(expanded, no volume data)	target
+cheap esim latvia	(expanded, no volume data)	target
+cheap esim lithuania	(expanded, no volume data)	target
+cheap esim luxembourg	(expanded, no volume data)	target
+cheap esim malta	(expanded, no volume data)	target
+cheap esim moldova	(expanded, no volume data)	target
+cheap esim netherlands	(expanded, no volume data)	target
+cheap esim amsterdam	(expanded, no volume data)	target
+cheap esim new zealand	(expanded, no volume data)	target
+cheap esim pakistan	(expanded, no volume data)	target
+cheap esim philippines	(expanded, no volume data)	target
+cheap esim poland	(expanded, no volume data)	target
+cheap esim romania	(expanded, no volume data)	target
+cheap esim singapore	(expanded, no volume data)	target
+cheap esim slovakia	(expanded, no volume data)	target
+cheap esim sri lanka	(expanded, no volume data)	target
+cheap esim sweden	(expanded, no volume data)	target
+cheap esim switzerland	(expanded, no volume data)	target
+cheap esim taiwan	(expanded, no volume data)	target
+cheap esim tunisia	(expanded, no volume data)	target
+cheap esim ukraine	(expanded, no volume data)	target
+cheap esim argentina	(expanded, no volume data)	target
+cheap esim azerbaijan	(expanded, no volume data)	target
+cheap esim bosnia and herzegovina	(expanded, no volume data)	target
+cheap esim bosnia	(expanded, no volume data)	target
+cheap esim brazil	(expanded, no volume data)	target
+cheap esim china	(expanded, no volume data)	target
+cheap esim costa rica	(expanded, no volume data)	target
+cheap esim estonia	(expanded, no volume data)	target
+cheap esim finland	(expanded, no volume data)	target
+cheap esim iceland	(expanded, no volume data)	target
+cheap esim iraq	(expanded, no volume data)	target
+cheap esim laos	(expanded, no volume data)	target
+cheap esim liechtenstein	(expanded, no volume data)	target
+cheap esim macedonia	(expanded, no volume data)	target
+cheap esim north macedonia	(expanded, no volume data)	target
+cheap esim malawi	(expanded, no volume data)	target
+cheap esim mauritius	(expanded, no volume data)	target
+cheap esim nepal	(expanded, no volume data)	target
+cheap esim norway	(expanded, no volume data)	target
+cheap esim oman	(expanded, no volume data)	target
+cheap esim slovenia	(expanded, no volume data)	target
+cheap esim uruguay	(expanded, no volume data)	target
+cheap esim afghanistan	(expanded, no volume data)	target
+cheap esim andorra	(expanded, no volume data)	target
+cheap esim bahrain	(expanded, no volume data)	target
+cheap esim chile	(expanded, no volume data)	target
+cheap esim congo republic	(expanded, no volume data)	target
+cheap esim fiji	(expanded, no volume data)	target
+cheap esim french guiana	(expanded, no volume data)	target
+cheap esim grenada	(expanded, no volume data)	target
+cheap esim kenya	(expanded, no volume data)	target
+cheap esim kuwait	(expanded, no volume data)	target
+cheap esim macau	(expanded, no volume data)	target
+cheap esim madagascar	(expanded, no volume data)	target
+cheap esim peru	(expanded, no volume data)	target
+cheap esim qatar	(expanded, no volume data)	target
+cheap esim saudi arabia	(expanded, no volume data)	target
+cheap esim south africa	(expanded, no volume data)	target
+cheap esim anguilla	(expanded, no volume data)	target
+cheap esim antigua and barbuda	(expanded, no volume data)	target
+cheap esim bahamas	(expanded, no volume data)	target
+cheap esim bangladesh	(expanded, no volume data)	target
+cheap esim barbados	(expanded, no volume data)	target
+cheap esim belize	(expanded, no volume data)	target
+cheap esim bolivia	(expanded, no volume data)	target
+cheap esim british virgin islands	(expanded, no volume data)	target
+cheap esim cambodia	(expanded, no volume data)	target
+cheap esim cape verde	(expanded, no volume data)	target
+cheap esim cayman islands	(expanded, no volume data)	target
+cheap esim chad	(expanded, no volume data)	target
+cheap esim colombia	(expanded, no volume data)	target
+cheap esim dr congo	(expanded, no volume data)	target
+cheap esim curacao	(expanded, no volume data)	target
+cheap esim dominica	(expanded, no volume data)	target
+cheap esim dominican republic	(expanded, no volume data)	target
+cheap esim el salvador	(expanded, no volume data)	target
+cheap esim gabon	(expanded, no volume data)	target
+cheap esim ghana	(expanded, no volume data)	target
+cheap esim gibraltar	(expanded, no volume data)	target
+cheap esim guadeloupe	(expanded, no volume data)	target
+cheap esim guam	(expanded, no volume data)	target
+cheap esim guatemala	(expanded, no volume data)	target
+cheap esim honduras	(expanded, no volume data)	target
+cheap esim jamaica	(expanded, no volume data)	target
+cheap esim jordan	(expanded, no volume data)	target
+cheap esim maldives	(expanded, no volume data)	target
+cheap esim mongolia	(expanded, no volume data)	target
+cheap esim montserrat	(expanded, no volume data)	target
+cheap esim nicaragua	(expanded, no volume data)	target
+cheap esim niger	(expanded, no volume data)	target
+cheap esim nigeria	(expanded, no volume data)	target
+cheap esim palestine	(expanded, no volume data)	target
+cheap esim panama	(expanded, no volume data)	target
+cheap esim paraguay	(expanded, no volume data)	target
+cheap esim puerto rico	(expanded, no volume data)	target
+cheap esim reunion	(expanded, no volume data)	target
+cheap esim rwanda	(expanded, no volume data)	target
+cheap esim saint kitts and nevis	(expanded, no volume data)	target
+cheap esim saint lucia	(expanded, no volume data)	target
+cheap esim saint vincent and grenadines	(expanded, no volume data)	target
+cheap esim senegal	(expanded, no volume data)	target
+cheap esim tanzania	(expanded, no volume data)	target
+cheap esim turks and caicos islands	(expanded, no volume data)	target
+cheap esim uganda	(expanded, no volume data)	target
+cheap esim venezuela	(expanded, no volume data)	target
+
+# -- cheap esim <region> --
+cheap esim global	(expanded, no volume data)	target
+cheap esim europe	(expanded, no volume data)	target
+cheap esim asia pacific	(expanded, no volume data)	target
+cheap esim southeast asia	(expanded, no volume data)	target
+cheap esim north america	(expanded, no volume data)	target
+cheap esim latin america	(expanded, no volume data)	target
+cheap esim middle east	(expanded, no volume data)	target
+cheap esim balkans	(expanded, no volume data)	target
+cheap esim cis & caucasus	(expanded, no volume data)	target
+cheap esim asia	(expanded, no volume data)	target
+cheap esim south east asia	(expanded, no volume data)	target
+cheap esim africa	(expanded, no volume data)	target
+cheap esim eu	(expanded, no volume data)	target
+
+# intent: transactional-payment
+# pay-with-X intent. Only crypto is genuinely supported today (NOWPayments); cards/wallets via Stripe.
+buy esim with crypto	(expanded, no volume data)	target
+buy esim with bitcoin	(expanded, no volume data)	target
+buy esim with usdt	(expanded, no volume data)	target
+buy esim crypto no kyc	(expanded, no volume data)	target
+esim pay with crypto	(expanded, no volume data)	target
+buy esim with apple pay	(expanded, no volume data)	support
+buy esim with google pay	(expanded, no volume data)	support
+buy esim with paypal	(expanded, no volume data)	skip
+buy esim with revolut	(expanded, no volume data)	skip
+buy esim with gcash	(expanded, no volume data)	skip
+buy esim phone number with crypto	(expanded, no volume data)	skip
+anonymous esim crypto	(expanded, no volume data)	skip
+
+# intent: deal-coupon
+# discount intent. Hub is /coupons/. Competitor-code variants are deliberately skipped.
+esim sale	480 / $4.50	target
+esim on sale	(expanded, no volume data)	target
+prepaid esim on sale	(expanded, no volume data)	target
+cheap esim deals	260 / $3.81	target
+esim coupon code	(expanded, no volume data)	target
+esim discount code	(expanded, no volume data)	target
+esim promo code	(expanded, no volume data)	target
+esim deals	(expanded, no volume data)	target
+esim black friday sale	(expanded, no volume data)	target
+esim cyber monday deal	(expanded, no volume data)	target
+travel esim discount	(expanded, no volume data)	target
+esim referral code	(expanded, no volume data)	target
+esim first order discount	(expanded, no volume data)	target
+esim student discount	(expanded, no volume data)	skip
+esim discount code airalo	(expanded, no volume data)	skip
+esim saily coupon	(expanded, no volume data)	skip
+esim saily discount code	(expanded, no volume data)	skip
+china esim sale	(expanded, no volume data)	skip
+mexico esim sale	(expanded, no volume data)	skip
+vietnam esim sale	(expanded, no volume data)	skip
+gomo esim sale	(expanded, no volume data)	skip
+vodafone esim sale	(expanded, no volume data)	skip
+globe esim sale	(expanded, no volume data)	skip
+telstra esim sale	(expanded, no volume data)	skip
+optus esim sale	(expanded, no volume data)	skip
+nomad esim sale	(expanded, no volume data)	skip
+ubigi esim sale	(expanded, no volume data)	skip
+saily esim sale	(expanded, no volume data)	skip
+holafly esim sale	(expanded, no volume data)	skip
+maya esim sale	(expanded, no volume data)	skip
+eskimo esim sale	(expanded, no volume data)	skip
+jetpac esim sale	(expanded, no volume data)	skip
+travelkon esim sale	(expanded, no volume data)	skip
+simify esim sale	(expanded, no volume data)	skip
+orange esim sale	(expanded, no volume data)	skip
+airalo esim sale	(expanded, no volume data)	skip
+
+# intent: comparison-alternative
+# brand-aware research. We target 'alternative to X', never X's own coupon terms.
+esim saily	9.9K / $1.74	support
+saily alternative	(expanded, no volume data)	target
+airalo alternative	(expanded, no volume data)	target
+holafly alternative	(expanded, no volume data)	target
+nomad esim alternative	(expanded, no volume data)	target
+ubigi alternative	(expanded, no volume data)	target
+airalo vs holafly	(expanded, no volume data)	target
+saily vs airalo	(expanded, no volume data)	target
+cheaper than airalo	(expanded, no volume data)	target
+best cheap esim provider	(expanded, no volume data)	target
+esim provider comparison	(expanded, no volume data)	target
+buy esim jio	(expanded, no volume data)	skip
+buy esim airtel	(expanded, no volume data)	skip
+buy esim vodafone	(expanded, no volume data)	skip
+buy esim telstra	(expanded, no volume data)	skip
+buy esim att	(expanded, no volume data)	skip
+buy esim verizon	(expanded, no volume data)	skip
+buy esim t mobile	(expanded, no volume data)	skip
+buy esim three	(expanded, no volume data)	skip
+buy esim ee	(expanded, no volume data)	skip
+buy esim lycamobile	(expanded, no volume data)	skip
+buy esim lebara	(expanded, no volume data)	skip
+buy esim giffgaff	(expanded, no volume data)	skip
+buy esim globe	(expanded, no volume data)	skip
+buy esim smart	(expanded, no volume data)	skip
+buy esim dito	(expanded, no volume data)	skip
+buy esim telkomsel	(expanded, no volume data)	skip
+buy esim indosat	(expanded, no volume data)	skip
+buy esim xl	(expanded, no volume data)	skip
+buy esim maxis	(expanded, no volume data)	skip
+buy esim celcom	(expanded, no volume data)	skip
+buy esim digi	(expanded, no volume data)	skip
+buy esim umobile	(expanded, no volume data)	skip
+buy esim viettel	(expanded, no volume data)	skip
+buy esim mobifone	(expanded, no volume data)	skip
+buy esim du	(expanded, no volume data)	skip
+buy esim etisalat	(expanded, no volume data)	skip
+buy esim stc	(expanded, no volume data)	skip
+buy esim zain	(expanded, no volume data)	skip
+buy esim mobily	(expanded, no volume data)	skip
+buy esim we	(expanded, no volume data)	skip
+buy esim dialog	(expanded, no volume data)	skip
+buy esim grameenphone	(expanded, no volume data)	skip
+buy esim banglalink	(expanded, no volume data)	skip
+buy esim zong	(expanded, no volume data)	skip
+buy esim ufone	(expanded, no volume data)	skip
+buy esim jazz	(expanded, no volume data)	skip
+buy esim magti	(expanded, no volume data)	skip
+buy esim lifecell	(expanded, no volume data)	skip
+buy esim turk telekom	(expanded, no volume data)	skip
+can i buy jio esim online	(expanded, no volume data)	skip
+
+# intent: informational-education
+# top-of-funnel explainers. Served by /what-is-an-esim/, /how-it-works/, /faq/, /blog/.
+esim explained	480 / $1.34	target
+what is an esim	(expanded, no volume data)	target
+how does an esim work	(expanded, no volume data)	target
+esim is good or bad	(expanded, no volume data)	target
+esim vs digital sim	(expanded, no volume data)	target
+esim vs physical sim	(expanded, no volume data)	target
+esim vs roaming	(expanded, no volume data)	target
+esim specifications	(expanded, no volume data)	support
+is esim dual sim	(expanded, no volume data)	support
+example of esim	(expanded, no volume data)	support
+how much data do i need abroad	(expanded, no volume data)	target
+can i keep whatsapp number with esim	(expanded, no volume data)	support
+does esim work without wifi	(expanded, no volume data)	support
+
+# intent: informational-troubleshoot
+# post-purchase and pre-purchase anxiety. Served by /esim-not-working/ and support.
+esim not working	2.4K / $2.25	target
+esim no compatible	(expanded, no volume data)	target
+esim installed but no internet	(expanded, no volume data)	target
+esim no service	(expanded, no volume data)	target
+esim not activating	(expanded, no volume data)	target
+esim qr code not working	(expanded, no volume data)	target
+esim data not working iphone	(expanded, no volume data)	target
+how to delete esim	(expanded, no volume data)	support
+how to reinstall esim	(expanded, no volume data)	support
+esim apn settings	(expanded, no volume data)	support
+
+# intent: compatibility
+# device-check intent. Served by /esim-compatible-devices/ (anchors, not child URLs).
+cheap esim compatible phones	320 / $3.59	target
+cheap esim compatible phones australia	(expanded, no volume data)	support
+cheap esim supported phones	(expanded, no volume data)	support
+cheap esim android phone	(expanded, no volume data)	support
+esim compatible phones list	(expanded, no volume data)	target
+is my phone esim compatible	(expanded, no volume data)	target
+iphone esim compatible models	(expanded, no volume data)	support
+samsung esim compatible models	(expanded, no volume data)	support
+cheap esim tablet	(expanded, no volume data)	support
+esim phones for sale	(expanded, no volume data)	skip
+ee apple watch esim cost	(expanded, no volume data)	skip
+esim watch compatible	(expanded, no volume data)	skip
+
+# intent: local-adjacent-sim-only
+# mostly domestic contract-SIM shoppers. Only the traveller subset is ours.
+cheap sim only deals	27.1K / $2.59	skip
+cheap sim only deals uk	9.9K / $2.12	skip
+cheap sim only plans	8.1K / $2.76	skip
+cheap sim only	1.9K / $2.69	skip
+cheap sim only plans australia	1.3K / $2.46	skip
+cheap sim only plans 365 days	1K / $1.60	skip
+cheap sim only deals unlimited data	720 / $2.14	skip
+cheap sim only deals for travel	(expanded, no volume data)	support
+cheap sim card turkey	(expanded, no volume data)	support
+cheap sim cards turkey	(expanded, no volume data)	support
+cheap sim istanbul	(expanded, no volume data)	support
+cheap sim card istanbul	(expanded, no volume data)	support
+tourist sim card vs esim	(expanded, no volume data)	support
+
+# intent: non-english
+# Turkish and Spanish demand. Blocked until the matching locale has genuinely translated pages.
+# cross-listed above under their primary intent: esim satin alma (transactional-destination),
+# esim ucuz and esim price in turkey (transactional-price).
+esim japonya	(expanded, no volume data)	target
+esim nedir	(expanded, no volume data)	target
+esim nasil kurulur	(expanded, no volume data)	target
+yurt disi esim	(expanded, no volume data)	target
+esim sale sin servicio	(expanded, no volume data)	target
+mi esim sale activando	(expanded, no volume data)	target
+esim me sale sin servicio	(expanded, no volume data)	target
+no me sale esim en iphone	(expanded, no volume data)	target
+porque sale esim no compatible	(expanded, no volume data)	target
+cuanto sale esim movistar	(expanded, no volume data)	skip
+comprar esim barata	(expanded, no volume data)	target
+esim para viajar	(expanded, no volume data)	target

@@ -1,33 +1,48 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <section class="section">
   <div class="shell">
     <div class="section-head center">
-      <span class="eyebrow">Guides</span>
-      <h2>Staying connected, explained</h2>
-      <p class="h-sub">Practical writing about travel data: what things cost, what actually works, and
-        the settings nobody mentions until you are already abroad.</p>
+      <span class="eyebrow">{% trans "Guides" %}</span>
+      <h2>{% trans "Staying connected, explained" %}</h2>
+      <p class="h-sub">{% trans "Practical writing about travel data: what it costs, what actually works, and the settings nobody mentions until you are already abroad." %}</p>
     </div>
 
     {% if posts %}
     <div class="grid g3">
       {% for post in posts %}
       <a class="card card-hover reveal" href="{{ post.get_absolute_url }}">
-        {% if post.cover_url %}<img src="{{ post.cover_url }}" alt="" loading="lazy" style="border-radius:12px;margin-bottom:14px;aspect-ratio:16/9;object-fit:cover">{% endif %}
+        {% if post.cover_url %}
+        <img src="{{ post.cover_url }}" alt="" loading="lazy"
+             style="border-radius:12px;margin-bottom:14px;aspect-ratio:16/9;object-fit:cover">
+        {% endif %}
         <div class="xs muted-3">{{ post.published_at|date:"j F Y" }}</div>
         <h3 class="mt-1">{{ post.title }}</h3>
         <p class="small muted mt-1">{{ post.excerpt|truncatechars:140 }}</p>
-        <span class="link small mt-2" style="display:inline-block">Read →</span>
+
+        {% if post.country or post.region %}
+        <span class="chips mt-2">
+          <span class="chip">
+            {% if post.country %}{% flag post.country.iso2 size=18 %}{{ post.country.name }}
+            {% else %}{% icon "layers" size=14 %}{{ post.region.name }}{% endif %}
+          </span>
+        </span>
+        {% endif %}
+
+        <span class="link small mt-2" style="display:inline-flex;align-items:center;gap:6px">
+          {% trans "Read the guide" %}{% icon "arrow-right" size=15 %}
+        </span>
       </a>
       {% endfor %}
     </div>
     {% else %}
     <div class="empty card">
-      <div class="ico">✍️</div>
-      <h3>Guides are on the way</h3>
-      <p>In the meantime, the <a class="link" href="{% url 'how_it_works' %}">how-it-works page</a>
-        covers everything you need for a first eSIM.</p>
+      <div class="icon-tile v-sky mx-auto">{% icon "list" %}</div>
+      <h3>{% trans "Guides are on the way" %}</h3>
+      {% url 'how_it_works' as how_it_works_url %}
+      <p>{% blocktrans %}Until then, <a class="link" href="{{ how_it_works_url }}">how it works</a> covers everything you need for a first eSIM.{% endblocktrans %}</p>
     </div>
     {% endif %}
   </div>

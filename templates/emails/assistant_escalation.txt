@@ -1,0 +1,15 @@
+A chat needs a human.
+
+Customer: {{ who }}
+Flags: {{ flags|join:", " }}
+Started: {{ conversation.created_at }}
+
+{{ message }}
+
+Open the conversation:
+{{ admin_url }}
+
+Writing a message there as the team takes the conversation over and silences
+the assistant.
+
+-- {{ site_name }}

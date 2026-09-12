@@ -1,0 +1,33 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}Your {{ subscription.target_name }} data has been renewed on the same eSIM.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">{{ subscription.target_name }}: renewed</h1>
+<p style="margin:0 0 18px">
+  We have charged ${{ subscription.price_usd }} and added a fresh unlimited period to the eSIM you already have.
+  Nothing to install, nothing to scan.
+</p>
+
+<table role="presentation" width="100%" style="background:#f7f8fc;border:1px solid #e6e8f4;border-radius:14px;margin:0 0 18px">
+  <tr><td style="padding:18px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8a8fb4;text-transform:uppercase">Plan</div>
+    <div style="font-size:14px;color:#171a3c;margin-top:4px">{{ subscription.title }}</div>
+    {% if subscription.current_period_end %}
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8a8fb4;text-transform:uppercase;margin-top:14px">Next renewal</div>
+    <div style="font-size:14px;color:#171a3c;margin-top:4px">{{ subscription.current_period_end|date:"j M Y" }}</div>
+    {% endif %}
+    {% if esim %}
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8a8fb4;text-transform:uppercase;margin-top:14px">eSIM</div>
+    <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#171a3c;margin-top:4px">{{ esim.iccid }}</div>
+    {% endif %}
+  </td></tr>
+</table>
+
+<a href="{{ detail_url }}"
+   style="display:inline-block;background:#0f74b4;background:linear-gradient(135deg,#0d5c91 0%,#1a8fd1 48%,#35bdea 120%);
+          color:#fff;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:15px">View this renewal</a>
+
+<p style="margin:18px 0 0;font-size:14px;color:#575c86">
+  Not travelling for a while? Cancel from your dashboard and you keep the period you have already paid for.
+</p>
+{% endblock %}
+{% block footer_note %}You are receiving this because you have an active subscription at {{ site_name }}.{% endblock %}

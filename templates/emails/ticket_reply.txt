@@ -1,0 +1,12 @@
+The team replied on your ticket {{ ticket.ref }}.
+
+Subject: {{ ticket.subject }}
+
+{{ body }}
+
+Reply on your ticket:
+{{ ticket_url }}
+
+Replying to this email reaches us as well.
+
+-- {{ site_name }} - {{ support_email }}

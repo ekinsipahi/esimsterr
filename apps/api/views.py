@@ -97,7 +97,8 @@ def countries(request):
         qs = qs.filter(Q(name__icontains=q) | Q(iso2__iexact=q))
     if request.GET.get("popular") == "1":
         qs = qs.filter(is_popular=True)
-    return Response(CountrySerializer(qs.order_by("-is_popular", "name"), many=True).data)
+    return Response(CountrySerializer(qs.order_by("-is_popular", "name"), many=True,
+                                      context={"request": request}).data)
 
 
 @api_view(["GET"])

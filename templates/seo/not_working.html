@@ -1,0 +1,129 @@
+{% extends "seo/_seo_base.html" %}
+{% load i18n ui %}
+
+{% comment %}
+Rescue page: someone reading this is abroad, stressed and probably on hotel
+Wi-Fi. The order of the steps is the order of how often each one is the actual
+cause, so keep data roaming first and do not reorder for tidiness.
+{% endcomment %}
+
+{% block seo_content %}
+<section class="section">
+  <div class="shell">
+    <div class="mx-auto" style="max-width:820px">
+      <span class="eyebrow">{% trans "Troubleshooting" %}</span>
+      <h1 class="mt-2">{% trans "eSIM not working? Work through these in order" %}</h1>
+      <p class="h-sub mt-2">{% blocktrans trimmed %}
+        Almost every eSIM that appears to be broken is a setting rather than a fault. The checks below
+        are ordered by how often each one turns out to be the cause, so start at the top and stop as
+        soon as you have data.
+      {% endblocktrans %}</p>
+
+      <div class="alert alert-warn mt-3">
+        {% icon "alert" size=20 %}
+        <div>
+          <b>{% trans "If you only try one thing: turn data roaming on." %}</b>
+          {% blocktrans trimmed %}
+          A travel eSIM roams on partner networks by design, so with roaming switched off for that
+          line the phone shows signal bars and carries no data. This is the answer more often than
+          everything else on this page combined.
+          {% endblocktrans %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="mx-auto" style="max-width:820px">
+      <ol class="steps" style="list-style:none;padding:0;margin:0">
+        {% for step in steps %}
+        <li class="step">
+          <h3 class="row" style="gap:8px">{% icon step.icon size=18 %}<span>{{ step.title }}</span></h3>
+          {% for p in step.body %}<p>{{ p }}</p>{% endfor %}
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head">
+      <h2>{% trans "What each symptom usually means" %}</h2>
+      <p class="h-sub">{% trans "Find the line that matches what your phone is doing and go straight to the fix." %}</p>
+    </div>
+    <div class="table-wrap">
+      <table class="table compare-table">
+        <thead>
+          <tr>
+            <th>{% trans "Symptom" %}</th>
+            <th>{% trans "Usually means" %}</th>
+            <th>{% trans "What to do" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for symptom, meaning, fix in symptoms %}
+          <tr>
+            <td><b>{{ symptom }}</b></td>
+            <td>{{ meaning }}</td>
+            <td class="muted">{{ fix }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="grid g2" style="align-items:start">
+      <div class="card card-solid">
+        <div class="row" style="gap:10px">
+          <span class="icon-tile v-cyan">{% icon "headset" %}</span>
+          <b>{% trans "When to stop and contact us" %}</b>
+        </div>
+        <p class="muted small mt-3">{% blocktrans trimmed %}
+          If you have switched roaming on, set the eSIM as the data line, restarted the phone and
+          tried a manual network selection with no result, stop guessing. We can see the profile
+          status from our side, including whether the network has activated the plan at all.
+        {% endblocktrans %}</p>
+        <p class="muted small mt-2">{% trans "Send your order reference and a screenshot of the mobile data settings screen. If the eSIM genuinely cannot be made to work, we reissue it or refund it." %}</p>
+        <a class="btn btn-primary mt-3" href="{% url 'support' %}">{% trans "Contact support" %}</a>
+      </div>
+
+      <div class="stack" style="gap:18px">
+        <div class="card">
+          <b class="small">{% trans "Check these first, they are quick" %}</b>
+          <ul class="stack mt-2" style="gap:9px;list-style:none;padding:0">
+            <li class="row small" style="gap:9px">{% icon "check" size=16 %}<span>{% trans "Data roaming is on for the travel line" %}</span></li>
+            <li class="row small" style="gap:9px">{% icon "check" size=16 %}<span>{% trans "The eSIM, not your home SIM, is set as the mobile data line" %}</span></li>
+            <li class="row small" style="gap:9px">{% icon "check" size=16 %}<span>{% trans "You have landed, so the plan has had a chance to start" %}</span></li>
+            <li class="row small" style="gap:9px">{% icon "check" size=16 %}<span>{% trans "Flight mode off and on, then a minute of patience" %}</span></li>
+            <li class="row small" style="gap:9px">{% icon "check" size=16 %}<span>{% trans "The phone is carrier-unlocked" %}</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <b class="small">{% trans "Useful pages" %}</b>
+          <div class="chips mt-2">
+            <a class="chip" href="{% url 'dashboard' %}">{% trans "Your eSIMs and data left" %}</a>
+            <a class="chip" href="{% url 'what_is_esim' %}">{% trans "How eSIM works" %}</a>
+            <a class="chip" href="{% url 'compatible_devices' %}">{% trans "Device compatibility" %}</a>
+            <a class="chip" href="{% url 'faq' %}">{% trans "General FAQ" %}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head center"><h2>{% trans "Common eSIM problems" %}</h2></div>
+    {% include "partials/faq.html" %}
+  </div>
+</section>
+{% endblock %}

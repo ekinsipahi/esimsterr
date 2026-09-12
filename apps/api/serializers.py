@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.catalog.models import Country, Plan, Region
+from apps.common.templatetags.ui import flag_url
 from apps.orders.models import Esim, Order
 
 
@@ -19,12 +20,20 @@ class PlanSerializer(serializers.ModelSerializer):
 
 
 class CountrySerializer(serializers.ModelSerializer):
-    flag_emoji = serializers.CharField(read_only=True)
+    # The app gets a flag IMAGE, never an emoji: emoji flags do not render at all
+    # on several platforms, and the provider's own flag CDN is unreliable, so we
+    # serve the SVG set we vendor ourselves.
+    flag_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Country
-        fields = ("iso2", "iso3", "name", "slug", "flag_url", "flag_emoji", "continent",
+        fields = ("iso2", "iso3", "name", "slug", "flag_url", "continent",
                   "is_popular", "min_price_usd", "plan_count", "has_unlimited")
+
+    def get_flag_url(self, obj):
+        request = self.context.get("request")
+        url = flag_url(obj.iso2)
+        return request.build_absolute_uri(url) if (request and url) else url
 
 
 class RegionSerializer(serializers.ModelSerializer):
@@ -32,7 +41,9 @@ class RegionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Region
-        fields = ("id", "name", "slug", "icon", "description", "country_count",
+        # `icon` is deliberately absent: it holds an emoji, and the app draws its
+        # own glyph for regions.
+        fields = ("id", "name", "slug", "description", "country_count",
                   "min_price_usd", "plan_count", "has_unlimited")
 
 

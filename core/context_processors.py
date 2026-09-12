@@ -1,6 +1,8 @@
 import json
 
 from django.conf import settings
+from django.urls import translate_url
+from django.utils import translation
 
 
 def site(request):
@@ -31,8 +33,30 @@ def site(request):
     if settings.SITE_SAMEAS:
         org["sameAs"] = settings.SITE_SAMEAS
 
+    # hreflang alternates. Only languages actually enabled are advertised, so a
+    # half-translated locale never gets pointed at by a live page.
+    lang = translation.get_language() or settings.LANGUAGE_CODE
+    hreflangs = []
+    if len(settings.LANGUAGES) > 1 and canonical:
+        for code, _name in settings.LANGUAGES:
+            try:
+                hreflangs.append((code, translate_url(canonical, code)))
+            except Exception:  # noqa: BLE001
+                continue
+
     return {
         "site_name": settings.SITE_NAME,
+        "site_tagline": "Connect without borders.",
+        "company_legal_name": settings.COMPANY_LEGAL_NAME,
+        # Legal documents must show the date they were last revised, not today's
+        # date. Bump LEGAL_UPDATED in settings when a policy actually changes.
+        "legal_updated": settings.LEGAL_UPDATED,
+        "current_language": lang,
+        "available_languages": settings.LANGUAGES,
+        "hreflangs": hreflangs,
+        "is_rtl": lang.split("-")[0] in settings.RTL_LANGUAGES,
+        "subscriptions_enabled": settings.SUBSCRIPTIONS_ENABLED and bool(settings.STRIPE_SECRET_KEY),
+        "assistant_enabled": settings.ASSISTANT_ENABLED,
         "site_url": site_url,
         "support_email": settings.SUPPORT_EMAIL,
         "default_description": settings.DEFAULT_DESCRIPTION,

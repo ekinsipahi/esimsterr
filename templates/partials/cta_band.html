@@ -1,15 +1,15 @@
+{% load i18n %}
 <section class="section">
   <div class="shell">
     <div class="cta-band reveal">
       <div class="row-between">
         <div>
-          <h2>Land with data already working.</h2>
-          <p>Pick your destination, pay by card or crypto, and the QR code is in your inbox
-             before you close the tab. No queues at the airport kiosk, no roaming bill.</p>
+          <h2>{% trans "Land with data already working." %}</h2>
+          <p>{% trans "Pick your destination, pay by card or crypto, and the QR code is in your inbox before you close the tab. No airport kiosk, no roaming bill, no borders." %}</p>
         </div>
         <div class="row">
-          <a class="btn btn-dark btn-lg" href="{% url 'destinations' %}">Find your destination</a>
-          <a class="btn btn-ghost btn-lg" href="{% url 'how_it_works' %}">How it works</a>
+          <a class="btn btn-dark btn-lg" href="{% url 'destinations' %}">{% trans "Find your destination" %}</a>
+          <a class="btn btn-ghost btn-lg" href="{% url 'how_it_works' %}">{% trans "How it works" %}</a>
         </div>
       </div>
     </div>

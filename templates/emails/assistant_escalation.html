@@ -1,0 +1,21 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}A chat needs a human.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:20px;font-weight:800;color:#171a3c">A chat needs a human</h1>
+<p style="margin:0 0 14px;font-size:14px">
+  Customer: <b>{{ who }}</b><br>
+  Flags: <b>{{ flags|join:", " }}</b><br>
+  Started: {{ conversation.created_at }}
+</p>
+
+<table role="presentation" width="100%" style="background:#f7f8fc;border:1px solid #e6e8f4;border-radius:14px">
+  <tr><td style="padding:16px;font-size:13px;color:#575c86;white-space:pre-wrap">{{ message }}</td></tr>
+</table>
+
+<p style="margin:18px 0 0">
+  <a href="{{ admin_url }}" style="display:inline-block;padding:12px 22px;border-radius:12px;background:#0f74b4;color:#fff;text-decoration:none;font-weight:700;font-size:14px">Open the conversation</a>
+</p>
+<p style="margin:12px 0 0;font-size:12px;color:#8a8fb4">Writing a message there as the team takes the
+conversation over and silences the assistant.</p>
+{% endblock %}
+{% block footer_note %}Operator alert. Nobody outside the team receives this.{% endblock %}

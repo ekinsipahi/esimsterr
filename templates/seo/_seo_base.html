@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% comment %}
+JSON-LD: base.html already prints org_schema_json, faq_jsonld, product_jsonld and
+breadcrumb_jsonld, so the views here only have to build them. If base.html ever
+stops emitting breadcrumb_jsonld, override the schema block in this file rather
+than repeating a script tag in every page.
+{% endcomment %}
+
+{% block content %}
+<div class="shell">{% include "partials/breadcrumbs.html" %}</div>
+
+{% block seo_content %}{% endblock %}
+
+{% if hub_links %}
+<section class="section-sm section-alt">
+  <div class="shell">
+    <div class="row" style="gap:10px;flex-wrap:wrap">
+      <span class="small bold muted">{% trans "Keep browsing" %}</span>
+      {% for label, url in hub_links %}{% if url != request.path %}<a class="chip" href="{{ url }}">{{ label }}</a>{% endif %}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% include "partials/cta_band.html" %}
+{% endblock %}

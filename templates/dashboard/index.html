@@ -1,14 +1,15 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <section class="section">
   <div class="shell">
     <div class="dash-head">
       <div>
-        <h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">My eSIMs</h1>
+        <h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">{% trans "My eSIMs" %}</h1>
         <p class="muted mt-1">{{ user.email }}</p>
       </div>
-      <a class="btn btn-primary" href="{% url 'destinations' %}">Buy a new eSIM</a>
+      <a class="btn btn-primary" href="{% url 'destinations' %}">{% trans "Buy a new eSIM" %}</a>
     </div>
 
     {% include "partials/dash_tabs.html" %}
@@ -21,37 +22,58 @@
 
     {% if not active_esims and not inactive_esims %}
     <div class="empty card">
-      <div class="ico">🌍</div>
-      <h3>No eSIMs yet</h3>
-      <p>Pick a destination and your first eSIM lands here within seconds of paying.</p>
-      <a class="btn btn-primary mt-3" href="{% url 'destinations' %}">Browse destinations</a>
+      <div class="icon-tile mx-auto">{% icon "globe" %}</div>
+      <h3>{% trans "No eSIMs yet" %}</h3>
+      <p>{% trans "Pick a destination and your first eSIM lands here within seconds of paying." %}</p>
+      <a class="btn btn-primary mt-3" href="{% url 'destinations' %}">{% trans "Browse destinations" %}</a>
+    </div>
+    {% endif %}
+
+    {% if subscriptions_enabled %}
+    <div class="card row-between mt-4" style="gap:16px;flex-wrap:wrap">
+      <div class="row" style="gap:14px">
+        <div class="icon-tile v-mint">{% icon "repeat" %}</div>
+        <div class="flex-1">
+          <b>{% trans "Unlimited plans can renew on their own" %}</b>
+          <p class="small muted mt-1">{% trans "Put an unlimited plan on a repeating cycle and it renews before it runs out, so you keep the same eSIM. Cancel it yourself the moment you stop travelling." %}</p>
+        </div>
+      </div>
+      <a class="btn btn-ghost btn-sm ml-auto" href="{% url 'subscriptions_list' %}">{% trans "View subscriptions" %}</a>
     </div>
     {% endif %}
 
     {% if inactive_esims %}
-    <h3 class="mt-5 mb-2">Expired & inactive</h3>
+    <h3 class="mt-5 mb-2">{% trans "Expired and inactive" %}</h3>
     <div class="grid g2">
       {% for esim in inactive_esims %}{% include "partials/esim_card.html" %}{% endfor %}
     </div>
     {% endif %}
 
     {% if orders %}
-    <h3 class="mt-5 mb-2">Recent orders</h3>
+    <h3 class="mt-5 mb-2">{% trans "Recent orders" %}</h3>
     <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>Order</th><th>Plan</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+        <thead>
+          <tr>
+            <th>{% trans "Order" %}</th>
+            <th>{% trans "Plan" %}</th>
+            <th>{% trans "Amount" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th></th>
+          </tr>
+        </thead>
         <tbody>
           {% for order in orders %}
           <tr>
             <td class="nowrap"><b>{{ order.ref }}</b><div class="xs muted-3">{{ order.created_at|date:"j M Y" }}</div></td>
             <td>{{ order.plan_title }}</td>
-            <td class="nowrap">${{ order.amount_usd }}</td>
+            <td class="nowrap">{{ order.amount_usd|usd }}</td>
             <td>
               <span class="status-dot {% if order.status == 'completed' %}status-live{% elif order.status == 'pending' or order.status == 'paid' %}status-pending{% else %}status-dead{% endif %}">
                 {{ order.get_status_display }}
               </span>
             </td>
-            <td class="nowrap"><a class="link small" href="{{ order.get_absolute_url }}">View</a></td>
+            <td class="nowrap"><a class="link small" href="{{ order.get_absolute_url }}">{% trans "View" %}</a></td>
           </tr>
           {% endfor %}
         </tbody>

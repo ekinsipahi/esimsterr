@@ -1,56 +1,61 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <section class="section">
   <div class="shell">
     <div class="dash-head">
       <div>
-        <a class="link small" href="{% url 'dashboard' %}">← All eSIMs</a>
+        <a class="link small row" style="gap:6px" href="{% url 'dashboard' %}">{% icon "chevron-right" size=15 cls="flip-back" %}{% trans "All eSIMs" %}</a>
         <h1 class="mt-1" style="font-size:clamp(1.6rem,3vw,2.1rem)">{{ esim.display_name }}</h1>
-        <div class="iccid mt-1">ICCID {{ esim.iccid }}</div>
+        <div class="iccid mt-1">{% trans "ICCID" %} {{ esim.iccid }}</div>
       </div>
       <div class="row" style="gap:8px">
-        <a class="btn btn-primary" href="{% url 'esim_topup' esim.pk %}">Add data</a>
+        <a class="btn btn-primary" href="{% url 'esim_topup' esim.pk %}">{% trans "Add data" %}</a>
       </div>
     </div>
 
     <div class="grid g4 mb-4">
       <div class="stat">
-        <div class="k">Status</div>
+        <div class="k">{% trans "Status" %}</div>
         <div class="v" style="font-size:1.15rem">
           <span class="status-dot {% if esim.is_active %}status-live{% elif esim.is_expired %}status-dead{% else %}status-pending{% endif %}">
-            {% if esim.is_expired %}Expired{% else %}{{ esim.get_status_qr_display }}{% endif %}
+            {% if esim.is_expired %}{% trans "Expired" %}{% else %}{{ esim.get_status_qr_display }}{% endif %}
           </span>
         </div>
       </div>
       <div class="stat">
-        <div class="k">Data left</div>
-        <div class="v">{% if esim.is_unlimited %}∞{% elif esim.data_left_gb != None %}{{ esim.data_left_gb }} GB{% else %}—{% endif %}</div>
+        <div class="k">{% trans "Data left" %}</div>
+        <div class="v">
+          {% if esim.is_unlimited %}{% icon "infinity" size=28 %}
+          {% elif esim.data_left_gb != None %}{{ esim.data_left_gb }} GB
+          {% else %}—{% endif %}
+        </div>
       </div>
       <div class="stat">
-        <div class="k">Days left</div>
+        <div class="k">{% trans "Days left" %}</div>
         <div class="v">{% if esim.days_left != None %}{{ esim.days_left }}{% else %}—{% endif %}</div>
       </div>
       <div class="stat">
-        <div class="k">Expires</div>
-        <div class="v" style="font-size:1.05rem">{% if esim.plan_expires_at %}{{ esim.plan_expires_at|date:"j M Y, H:i" }} UTC{% else %}Not started{% endif %}</div>
+        <div class="k">{% trans "Expires" %}</div>
+        <div class="v" style="font-size:1.05rem">{% if esim.plan_expires_at %}{{ esim.plan_expires_at|date:"j M Y, H:i" }} UTC{% else %}{% trans "Not started" %}{% endif %}</div>
       </div>
     </div>
 
     {% if not esim.is_unlimited and esim.data_package_mb %}
     <div class="card mb-4">
       <div class="row-between mb-2">
-        <b>Data usage</b>
-        <span class="small muted">{{ esim.data_used_mb }} MB of {{ esim.data_package_mb }} MB used</span>
+        <b>{% trans "Data usage" %}</b>
+        <span class="small muted">{% blocktrans with used=esim.data_used_mb|data_size total=esim.data_package_mb|data_size %}{{ used }} of {{ total }} used{% endblocktrans %}</span>
       </div>
       <div class="meter {% if esim.data_used_pct >= 100 %}is-out{% elif esim.data_used_pct >= 80 %}is-low{% endif %}">
         <span style="width:{{ esim.data_used_pct }}%"></span>
       </div>
       {% if esim.data_used_pct >= 80 %}
+      {% url 'esim_topup' esim.pk as topup_url %}
       <div class="alert alert-warn mt-3">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
-        <div>You have used {{ esim.data_used_pct }}% of this plan.
-          <a class="link" href="{% url 'esim_topup' esim.pk %}">Add data</a> and it lands on this same eSIM.</div>
+        {% icon "alert" %}
+        <div>{% blocktrans with pct=esim.data_used_pct %}You have used {{ pct }}% of this plan. <a class="link" href="{{ topup_url }}">Add data</a> and it lands on this same eSIM.{% endblocktrans %}</div>
       </div>
       {% endif %}
     </div>
@@ -58,31 +63,32 @@
 
     {% if esim.network_info %}
     <div class="card mb-4">
-      <b>Last network seen</b>
+      <b>{% trans "Last network seen" %}</b>
       <div class="row small muted mt-2" style="gap:20px">
-        {% if esim.network_info.lastRat %}<span>Technology: <b>{{ esim.network_info.lastRat }}</b></span>{% endif %}
-        {% if esim.network_info.model %}<span>Device: <b>{{ esim.network_info.model }}</b></span>{% endif %}
-        {% if esim.network_info.time %}<span>At: {{ esim.network_info.time }} UTC</span>{% endif %}
+        {% if esim.network_info.lastRat %}<span>{% trans "Technology" %}: <b>{{ esim.network_info.lastRat }}</b></span>{% endif %}
+        {% if esim.network_info.model %}<span>{% trans "Device" %}: <b>{{ esim.network_info.model }}</b></span>{% endif %}
+        {% if esim.network_info.time %}<span>{% trans "At" %}: {{ esim.network_info.time }} UTC</span>{% endif %}
       </div>
     </div>
     {% endif %}
 
-    <h3 class="mb-2">Installation</h3>
+    <h3 class="mb-2">{% trans "Installation" %}</h3>
     {% include "partials/esim_install.html" with esim=esim %}
 
     <div class="card mt-4">
       <form method="post" action="{% url 'esim_rename' esim.pk %}" class="row" style="gap:10px;align-items:flex-end">
         {% csrf_token %}
         <div class="field flex-1">
-          <label for="label">Nickname for this eSIM</label>
-          <input class="input" id="label" name="label" value="{{ esim.label }}" maxlength="80" placeholder="e.g. Italy trip, May">
+          <label for="label">{% trans "Nickname for this eSIM" %}</label>
+          <input class="input" id="label" name="label" value="{{ esim.label }}" maxlength="80"
+                 placeholder="{% trans 'For example: Italy trip, May' %}">
         </div>
-        <button class="btn btn-ghost" type="submit">Save</button>
+        <button class="btn btn-ghost" type="submit">{% trans "Save" %}</button>
       </form>
     </div>
 
     {% if topup_plans %}
-    <h3 class="mt-5 mb-2">Add more data to this eSIM</h3>
+    <h3 class="mt-5 mb-2">{% trans "Add more data to this eSIM" %}</h3>
     <div class="grid g3">
       {% for plan in topup_plans %}{% include "partials/plan_card.html" with topup_esim=esim %}{% endfor %}
     </div>

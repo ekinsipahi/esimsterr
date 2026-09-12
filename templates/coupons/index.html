@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block content %}
+<div class="shell">{% include "partials/breadcrumbs.html" %}</div>
+
+<section class="section" style="padding-top:26px">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">{% icon "tag" size=14 %} {% trans "Coupons" %}</span>
+      <h1 style="font-size:clamp(1.9rem,4vw,2.8rem)">
+        {% if best_pct %}
+          {% blocktrans with pct=best_pct %}Up to {{ pct }}% off your travel data{% endblocktrans %}
+        {% else %}
+          {% trans "eSIM coupon codes" %}
+        {% endif %}
+      </h1>
+      <p class="h-sub">
+        {% trans "Every working code we have is on this page. No hunting through coupon sites, no dead codes, no email address required to see them. Copy one, paste it at checkout, and the new total is shown before you pay." %}
+      </p>
+    </div>
+
+    {% if coupons %}
+    <div class="grid g3 mt-4">
+      {% for c in coupons %}
+      <div class="card card-hover">
+        <div class="row-between">
+          <span class="off-badge off-badge-lg">{% icon "percent" size=14 %} {{ c.public_label }}</span>
+          {% if c.first_order_only %}<span class="badge badge-mint">{% trans "First order" %}</span>{% endif %}
+        </div>
+
+        {% if c.description %}
+        <p class="mt-2"{% if copy_is_foreign %} lang="{{ copy_language }}"{% endif %}>{{ c.description }}</p>
+        {% endif %}
+
+        <div class="coupon-box mt-3">
+          <span class="coupon-code">{{ c.code }}</span>
+          <button type="button" class="btn btn-sm btn-ghost ml-auto" data-copy="{{ c.code }}">
+            {% trans "Copy" %}
+          </button>
+        </div>
+
+        {% if c.conditions_label %}
+        <p class="xs muted-3 mt-2">{{ c.conditions_label }}</p>
+        {% endif %}
+
+        {% if c.max_redemptions and c.redemptions_left < 50 %}
+        <p class="xs mt-1 row" style="gap:6px">{% icon "clock" size=13 %}
+          {% blocktrans count left=c.redemptions_left %}{{ left }} use left{% plural %}{{ left }} uses left{% endblocktrans %}</p>
+        {% endif %}
+
+        <a class="btn btn-ghost btn-block mt-3" href="{% url 'destinations' %}">
+          {% trans "Use this code" %} {% icon "arrow-right" size=16 %}
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if copy_is_foreign %}
+    <p class="xs muted-3 mt-3 center">
+      {% trans "The offer descriptions above are our campaign wording and are not translated. The discount, the conditions and the total you pay are all shown in your language." %}
+    </p>
+    {% endif %}
+    {% else %}
+    <div class="empty mt-4">
+      {% icon "tag" size=28 %}
+      <h3 class="mt-2">{% trans "No public codes at the moment" %}</h3>
+      <p class="muted small mt-1">
+        {% trans "Our prices are set low all year rather than inflated and discounted on a schedule, so there are stretches with no code to give. The plan prices you see are the real ones." %}
+      </p>
+      <a class="btn btn-primary mt-3" href="{% url 'destinations' %}">{% trans "See plan prices" %}</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head center">
+      <h2>{% trans "How to use a code" %}</h2>
+      <p class="h-sub">{% trans "Three steps, about forty seconds, no account needed." %}</p>
+    </div>
+    <div class="mx-auto" style="max-width:720px">
+      <div class="steps">
+        <div class="step reveal">
+          <h3>{% trans "Pick your destination and plan" %}</h3>
+          <p>{% trans "Choose the country or region you are travelling to, then the amount of data and the number of days you need." %}</p>
+        </div>
+        <div class="step reveal">
+          <h3>{% trans "Paste the code at checkout" %}</h3>
+          <p>{% trans "The coupon box sits under your email address on the checkout page. Paste the code, apply it, and the order summary updates with the discount shown as its own line." %}</p>
+        </div>
+        <div class="step reveal">
+          <h3>{% trans "Pay and install" %}</h3>
+          <p>{% trans "Pay by card or crypto. The QR code appears on the next screen and lands in your inbox, so you can install on Wi-Fi before you fly." %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="grid g3">
+      <div class="card">
+        <span class="icon-tile v-gold">{% icon "percent" size=20 %}</span>
+        <h3 class="mt-2">{% trans "The discount comes off a low price" %}</h3>
+        <p class="muted small mt-1">
+          {% trans "We do not buy app-install ads, and on the well-known eSIM apps that spending is a large part of what you pay. A code here takes money off a price that is already cut close." %}
+        </p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-mint">{% icon "check-circle" size=20 %}</span>
+        <h3 class="mt-2">{% trans "One code per order, stated plainly" %}</h3>
+        <p class="muted small mt-1">
+          {% trans "Codes do not stack. Each card above carries its own conditions, and checkout tells you exactly why a code was refused rather than failing in silence." %}
+        </p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-cyan">{% icon "shield" size=20 %}</span>
+        <h3 class="mt-2">{% trans "No subscription behind the discount" %}</h3>
+        <p class="muted small mt-1">
+          {% trans "A plan is a one-off purchase. Nothing renews, nothing is charged later, and a coupon never signs you up for anything." %}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">{% trans "FAQ" %}</span>
+      <h2>{% trans "Coupon questions" %}</h2>
+    </div>
+    {% include "partials/faq.html" %}
+  </div>
+</section>
+
+{% include "partials/cta_band.html" %}
+{% endblock %}

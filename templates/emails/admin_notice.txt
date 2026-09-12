@@ -1,5 +1,6 @@
 {{ subject }}
 
 {% for line in lines %}{{ line }}
+{% empty %}(no detail supplied)
 {% endfor %}
 Admin: {{ site_url }}/admin/

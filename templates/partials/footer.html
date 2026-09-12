@@ -1,64 +1,96 @@
-{% load static %}
+{% load static i18n ui %}
 <footer class="footer">
   <div class="shell">
     <div class="footer-grid">
       <div>
-        <a href="{% url 'home' %}" class="brand mb-2"><span class="brand-mark">e</span><span>eSIM<span class="grad-text">sterr</span></span></a>
-        <p class="small muted" style="max-width:34ch">
-          Prepaid travel eSIMs for 150+ countries. Instant QR delivery, local networks,
-          and prices that undercut the big eSIM apps.
+        <a href="{% url 'home' %}" class="brand mb-2">
+          <img class="brand-logo logo-on-light" src="{% static 'img/logo-wordmark-on-light.png' %}"
+               alt="{{ site_name }}" width="140" height="44" style="height:44px">
+          <img class="brand-logo logo-on-dark" src="{% static 'img/logo-wordmark-on-dark.png' %}"
+               alt="{{ site_name }}" width="140" height="44" style="height:44px">
+        </a>
+        <p class="small muted" style="max-width:36ch">
+          {% trans "Connect without borders. Prepaid travel eSIM data on local networks, delivered the moment you pay, at prices the big eSIM apps cannot match." %}
         </p>
         <div class="row mt-3">
           {% if app_store_url %}
           <a class="store-badge" href="{{ app_store_url }}" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 12.5c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.7 1.1 8.9.8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.8-2.2.9-1.3 1.2-2.5 1.2-2.6 0 0-2.4-.9-2.4-3.3zM14.8 5.6c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2.1-.5 2.7-1.3z"/></svg>
-            <span><small>Download on the</small>App Store</span>
+            {% icon "smartphone" size=20 %}
+            <span><small>{% trans "Download on the" %}</small>App Store</span>
           </a>
           {% endif %}
           {% if play_store_url %}
           <a class="store-badge" href="{{ play_store_url }}" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.3c-.3.3-.5.8-.5 1.4v16.6c0 .6.2 1.1.5 1.4l.1.1 9.3-9.3v-.2L3.7 2.2l-.1.1zm12.5 6.2L13 11.6v.2l3.1 3.1.1-.1 3.7-2.1c1-.6 1-1.6 0-2.2l-3.7-2.1zM12.4 12.5l-9 9c.3.4.9.4 1.5.1l10.7-6.1-3.2-3zM12.4 11.5l3.2-3.1L4.9 2.4c-.6-.4-1.2-.3-1.5.1l9 9z"/></svg>
-            <span><small>Get it on</small>Google Play</span>
+            {% icon "smartphone" size=20 %}
+            <span><small>{% trans "Get it on" %}</small>Google Play</span>
           </a>
           {% endif %}
         </div>
       </div>
 
       <div>
-        <h4>Destinations</h4>
-        <a href="{% url 'destinations' %}">All countries</a>
-        <a href="{% url 'regions' %}">Regional plans</a>
-        <a href="{% url 'unlimited' %}">Unlimited data</a>
-        <a href="/esim/united-states/">United States eSIM</a>
-        <a href="/esim/turkey/">Turkey eSIM</a>
-        <a href="/esim-region/europe/">Europe eSIM</a>
+        <h4>{% trans "Destinations" %}</h4>
+        <a href="{% url 'destinations' %}">{% trans "All countries" %}</a>
+        <a href="{% url 'regions' %}">{% trans "Regional plans" %}</a>
+        <a href="{% url 'unlimited' %}">{% trans "Unlimited data" %}</a>
+        <a href="{% url 'prices' %}">{% trans "All prices" %}</a>
+        <a href="/esim/united-states/">{% trans "United States eSIM" %}</a>
+        <a href="/esim/turkey/">{% trans "Turkey eSIM" %}</a>
+        <a href="/esim-region/europe/">{% trans "Europe eSIM" %}</a>
       </div>
 
       <div>
-        <h4>Learn</h4>
-        <a href="{% url 'how_it_works' %}">How eSIM works</a>
-        <a href="{% url 'compatible_devices' %}">Compatible devices</a>
-        <a href="{% url 'faq' %}">FAQ</a>
-        <a href="{% url 'blog:index' %}">Travel guides</a>
+        <h4>{% trans "Learn" %}</h4>
+        <a href="{% url 'what_is_esim' %}">{% trans "What is an eSIM" %}</a>
+        <a href="{% url 'how_it_works' %}">{% trans "How it works" %}</a>
+        <a href="{% url 'compatible_devices' %}">{% trans "Compatible devices" %}</a>
+        <a href="{% url 'esim_not_working' %}">{% trans "eSIM not working" %}</a>
+        <a href="{% url 'faq' %}">{% trans "FAQ" %}</a>
+        <a href="{% url 'blog:index' %}">{% trans "Travel guides" %}</a>
       </div>
 
       <div>
-        <h4>Company</h4>
-        <a href="{% url 'about' %}">About us</a>
-        <a href="{% url 'support' %}">Support</a>
+        <h4>{% trans "Buy" %}</h4>
+        <a href="{% url 'cheap_esim' %}">{% trans "Cheap eSIM plans" %}</a>
+        <a href="{% url 'prices' %}">{% trans "Price list" %}</a>
+        <a href="{% url 'coupons' %}">{% trans "Coupons and deals" %}</a>
+        <a href="{% url 'payment_method' 'crypto' %}">{% trans "Pay with crypto" %}</a>
+        <a href="{% url 'payment_method' 'card' %}">{% trans "Pay by card" %}</a>
+      </div>
+
+      <div>
+        <h4>{% trans "For travellers" %}</h4>
+        <a href="{% url 'use_case' 'travel' %}">{% trans "Holiday travel" %}</a>
+        <a href="{% url 'use_case' 'digital-nomads' %}">{% trans "Digital nomads" %}</a>
+        <a href="{% url 'use_case' 'business-trips' %}">{% trans "Business trips" %}</a>
+        <a href="{% url 'use_case' 'backpacking' %}">{% trans "Backpacking" %}</a>
+        <a href="{% url 'use_case' 'students' %}">{% trans "Students abroad" %}</a>
+        <a href="{% url 'use_case' 'long-stays' %}">{% trans "Long stays" %}</a>
+      </div>
+
+      <div>
+        <h4>{% trans "Compare" %}</h4>
+        <a href="{% url 'alternative' 'airalo' %}">{% trans "Airalo alternative" %}</a>
+        <a href="{% url 'alternative' 'holafly' %}">{% trans "Holafly alternative" %}</a>
+        <a href="{% url 'alternative' 'saily' %}">{% trans "Saily alternative" %}</a>
+        <a href="{% url 'alternative' 'nomad' %}">{% trans "Nomad alternative" %}</a>
+        <a href="{% url 'alternative' 'ubigi' %}">{% trans "Ubigi alternative" %}</a>
+        <a href="{% url 'alternative' 'cellesim' %}">{% trans "Cellesim alternative" %}</a>
+      </div>
+
+      <div>
+        <h4>{% trans "Company" %}</h4>
+        <a href="{% url 'about' %}">{% trans "About us" %}</a>
+        <a href="{% url 'support' %}">{% trans "Support" %}</a>
         <a href="mailto:{{ support_email }}">{{ support_email }}</a>
-      </div>
-
-      <div>
-        <h4>Legal</h4>
-        <a href="{% url 'terms' %}">Terms of service</a>
-        <a href="{% url 'privacy' %}">Privacy policy</a>
-        <a href="{% url 'refund' %}">Refund policy</a>
+        <a href="{% url 'terms' %}">{% trans "Terms of service" %}</a>
+        <a href="{% url 'privacy' %}">{% trans "Privacy policy" %}</a>
+        <a href="{% url 'refund' %}">{% trans "Refund policy" %}</a>
       </div>
     </div>
 
     <div class="footer-bottom">
-      <div>© {% now "Y" %} {{ site_name }}. All rights reserved.</div>
+      <div>&copy; {% now "Y" %} {{ site_name }}. {% trans "All rights reserved." %}</div>
       <div class="pay-icons">
         {% if stripe_enabled %}<span>VISA</span><span>Mastercard</span><span>Amex</span><span>Apple&nbsp;Pay</span>{% endif %}
         {% if crypto_enabled %}<span>BTC</span><span>USDT</span><span>ETH</span>{% endif %}

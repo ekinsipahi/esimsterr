@@ -1,12 +1,13 @@
 {% extends "emails/_shell.html" %}
 {% block preheader %}{{ subject }}{% endblock %}
 {% block body %}
+{% comment %}Operator mail: dense and factual, no decoration.{% endcomment %}
 <h1 style="margin:0 0 14px;font-size:19px;font-weight:800;color:#171a3c">{{ subject }}</h1>
 <table role="presentation" width="100%" style="background:#f7f8fc;border:1px solid #e6e8f4;border-radius:14px">
-  <tr><td style="padding:16px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#171a3c">
-    {% for line in lines %}{{ line }}<br>{% endfor %}
+  <tr><td style="padding:16px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#171a3c;word-break:break-word">
+    {% for line in lines %}{{ line }}<br>{% empty %}(no detail supplied){% endfor %}
   </td></tr>
 </table>
-<p style="margin:16px 0 0"><a href="{{ site_url }}/admin/" style="color:#4f46e5;font-weight:600">Open the admin</a></p>
+<p style="margin:16px 0 0"><a href="{{ site_url }}/admin/" style="color:#0f74b4;font-weight:600">Open the admin</a></p>
 {% endblock %}
-{% block footer_note %}Operational notice from {{ site_name }}.{% endblock %}
+{% block footer_note %}Operational notice from {{ site_name }}. Sent to the operator addresses only.{% endblock %}

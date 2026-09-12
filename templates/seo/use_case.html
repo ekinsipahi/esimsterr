@@ -1,0 +1,125 @@
+{% extends "seo/_seo_base.html" %}
+{% load i18n ui %}
+
+{% comment %}
+The shortlist below is a live catalogue query driven by rec_gb / rec_days in
+apps/seo/data.py, not a written list. A destination going out of stock removes
+its row instead of leaving a dead link.
+{% endcomment %}
+
+{% block seo_content %}
+<section class="section">
+  <div class="shell">
+    <div class="mx-auto" style="max-width:820px">
+      <span class="eyebrow">{{ case.eyebrow }}</span>
+      <h1 class="mt-2">{% blocktrans with h=case.h1 p=from_price_str %}{{ h }}, from just ${{ p }}{% endblocktrans %}</h1>
+      <p class="h-sub mt-2">{{ case.lead }}</p>
+      <div class="row mt-3" style="gap:10px;flex-wrap:wrap;align-items:center">
+        <span class="badge badge-mint">{% icon "check-circle" size=15 %} {{ case.rec_label }}</span>
+        <a class="btn btn-primary" href="{% url 'destinations' %}">{% trans "Find your destination" %}</a>
+        <a class="btn btn-ghost" href="{% url 'prices' %}">{% trans "See every price" %}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-sm section-alt">
+  <div class="shell">
+    <div class="grid g3">
+      {% for ico, title, text in case.tips %}
+      <div class="card">
+        <span class="icon-tile v-sky">{% icon ico %}</span>
+        <h3 class="mt-2">{{ title }}</h3>
+        <p class="muted small mt-1">{{ text }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell prose mx-auto">
+    {% for heading, paragraphs in case.sections %}
+    <h2>{{ heading }}</h2>
+    {% for p in paragraphs %}<p>{{ p }}</p>{% endfor %}
+    {% endfor %}
+  </div>
+</section>
+
+{% if rows %}
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head">
+      <span class="eyebrow">{% trans "Live prices" %}</span>
+      <h2>{% blocktrans with h=case.h1 %}Destinations that suit {{ h }}{% endblocktrans %}</h2>
+      <p class="h-sub">{% blocktrans with r=case.rec_label %}The cheapest live plan in each that fits the recommendation of {{ r }}, or the closest we sell where nothing does. Open a destination for the full range of sizes and durations.{% endblocktrans %}</p>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{% trans "Destination" %}</th>
+            <th>{% trans "Suggested plan" %}</th>
+            <th>{% trans "Validity" %}</th>
+            <th>{% trans "Price" %}</th>
+            <th>{% trans "Per day" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c, plan in rows %}
+          <tr>
+            <td><a class="row" style="gap:9px" href="{{ c.get_absolute_url }}">{% flag c.iso2 size=22 %}<b>{{ c.name }}</b></a></td>
+            <td>{{ plan.data_label }}{% if not plan.fits_ask %}<span class="xs muted-3" style="display:block">{% blocktrans with r=case.rec_label %}below {{ r }}, the closest we sell here{% endblocktrans %}</span>{% endif %}</td>
+            <td class="nowrap">{% blocktrans count days=plan.days %}{{ days }} day{% plural %}{{ days }} days{% endblocktrans %}</td>
+            <td class="bold nowrap">{{ plan.price|usd }}</td>
+            <td class="muted nowrap">{{ plan.per_day_usd|usd }}</td>
+            <td class="nowrap"><a class="link" href="{{ c.get_absolute_url }}">{% trans "All plans" %}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if regions %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <h2>{% trans "One plan across several countries" %}</h2>
+      <p class="h-sub">{% trans "If the route crosses borders, a regional plan is usually cheaper and always less admin." %}</p>
+    </div>
+    <div class="grid g3">
+      {% for r in regions %}
+      <a class="card card-hover" href="{{ r.get_absolute_url }}">
+        <div class="row-between">
+          <b>{{ r.name }}</b>
+          {% if r.min_price_usd %}<span class="badge badge-mint">{% blocktrans with amount=r.min_price_usd|usd %}from {{ amount }}{% endblocktrans %}</span>{% endif %}
+        </div>
+        <p class="muted small mt-2">{% blocktrans count n=r.country_count %}{{ n }} country on one profile{% plural %}{{ n }} countries on one profile{% endblocktrans %}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% include "seo/_related_pages.html" %}
+
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head center"><h2>{% blocktrans with h=case.h1 %}{{ h }}: common questions{% endblocktrans %}</h2></div>
+    {% include "partials/faq.html" %}
+    {% if others %}
+    <div class="center mt-4">
+      <p class="small muted mb-2">{% trans "Travelling for something else?" %}</p>
+      <div class="chips" style="justify-content:center">
+        {% for key, name in others %}<a class="chip" href="{% url 'use_case' key %}">{{ name }}</a>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

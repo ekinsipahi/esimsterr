@@ -18,22 +18,52 @@ class EsimInline(admin.TabularInline):
         return False
 
 
+class GuestFilter(admin.SimpleListFilter):
+    """Guest orders are the ones with no account behind them, and the ones most
+    worth eyeballing: they are where card fraud and coupon abuse show up."""
+
+    title = "buyer"
+    parameter_name = "buyer"
+
+    def lookups(self, request, model_admin):
+        return (("guest", "Guest (no account)"), ("account", "Signed-in account"))
+
+    def queryset(self, request, queryset):
+        if self.value() == "guest":
+            return queryset.filter(user__isnull=True)
+        if self.value() == "account":
+            return queryset.filter(user__isnull=False)
+        return queryset
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("ref", "created_at", "email", "plan_title", "amount_col",
-                    "margin_col", "status", "kind", "attempts_col")
-    list_filter = ("status", "kind", "created_at")
-    search_fields = ("ref", "email", "plan_title", "user__email", "esims__iccid")
+    list_display = ("ref", "created_at", "buyer_col", "plan_title", "amount_col",
+                    "margin_col", "status", "kind", "ip", "attempts_col")
+    list_filter = ("status", "kind", GuestFilter, "created_at", "coupon")
+    search_fields = ("ref", "email", "plan_title", "user__email", "esims__iccid",
+                     "ip", "coupon_code")
     readonly_fields = ("id", "ref", "created_at", "paid_at", "completed_at", "margin_col",
-                       "plan_provider_id", "cost_amount", "cost_currency", "ip",
+                       "plan_provider_id", "cost_amount", "cost_currency",
+                       "ip", "user_agent", "accept_language", "referrer",
+                       "subtotal_usd", "discount_usd", "coupon_code",
                        "fulfillment_attempts", "fulfillment_error")
     list_select_related = ("plan", "user")
     inlines = [EsimInline]
     actions = ["action_fulfill", "action_mark_paid"]
     date_hierarchy = "created_at"
 
+    @admin.display(description="Buyer", ordering="email")
+    def buyer_col(self, obj):
+        if obj.user_id:
+            return format_html('{} <span style="color:#888">(account)</span>', obj.email)
+        return format_html('{} <span style="color:#b45309">(guest)</span>', obj.email)
+
     @admin.display(description="Amount", ordering="amount_usd")
     def amount_col(self, obj):
+        if obj.discount_usd and obj.discount_usd > 0:
+            return format_html('<b>${}</b> <span style="color:#16a34a">-${} {}</span>',
+                               f"{obj.amount_usd}", f"{obj.discount_usd}", obj.coupon_code)
         return f"${obj.amount_usd}"
 
     @admin.display(description="Margin")
@@ -109,3 +139,42 @@ class WebhookEventAdmin(admin.ModelAdmin):
     list_filter = ("source", "event_type", "processed")
     search_fields = ("iccid", "payload")
     readonly_fields = ("source", "event_type", "iccid", "payload", "processed", "error", "created_at")
+
+
+class GuestOrder(Order):
+    """Admin-only proxy: the guest-checkout audit trail in one screen.
+
+    The owner asked to be able to see who bought what without an account, so this
+    view leads with the request fingerprint (IP, user agent, referrer) rather
+    than with the product.
+    """
+
+    class Meta:
+        proxy = True
+        verbose_name = "Guest order (audit)"
+        verbose_name_plural = "Guest orders (audit)"
+
+
+@admin.register(GuestOrder)
+class GuestOrderAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "ip", "email", "amount_col", "status",
+                    "plan_title", "coupon_code", "ua_col")
+    list_filter = ("status", "created_at")
+    search_fields = ("ip", "email", "ref", "user_agent", "referrer", "coupon_code")
+    date_hierarchy = "created_at"
+    readonly_fields = [f.name for f in Order._meta.fields]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(user__isnull=True)
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.display(description="Paid", ordering="amount_usd")
+    def amount_col(self, obj):
+        return f"${obj.amount_usd}"
+
+    @admin.display(description="Device / referrer")
+    def ua_col(self, obj):
+        return format_html('<span title="{}">{}</span>',
+                           obj.referrer or "no referrer", (obj.user_agent or "-")[:60])

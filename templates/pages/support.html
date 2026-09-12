@@ -1,96 +1,202 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
+<div class="shell">{% include "partials/breadcrumbs.html" %}</div>
+
 <section class="section">
   <div class="shell">
     <div class="section-head center">
-      <span class="eyebrow">Support</span>
-      <h2>Something not working? Let's fix it.</h2>
-      <p class="h-sub">Most problems are one setting. Check the quick fixes first — if none of them
-        apply, send us a message and we reply by email.</p>
+      <span class="eyebrow">{% trans "Support" %}</span>
+      <h1 class="grad-text">{% trans "Something not working? Let us fix it." %}</h1>
+      <p class="h-sub">{% blocktrans %}Nearly every fault is one setting on the phone. Try the quick checks below first — if
+        none of them apply, open a ticket and we answer by email. You do not need an account.{% endblocktrans %}</p>
     </div>
 
-    <div class="grid g3 mb-4">
-      <div class="card">
-        <span class="icon-tile v-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 12h3M19 12h3M12 2v3M12 19v3"/><circle cx="12" cy="12" r="4"/></svg></span>
-        <h3 class="mt-2">Bars but no internet</h3>
-        <p class="muted small mt-1">Turn <b>Data Roaming ON</b> for the eSIM line, and set it as the
-          line for mobile data. That fixes this nine times out of ten.</p>
+    {# Ordered by how often each one is the actual cause, not by how clever it sounds. #}
+    <div class="grid g3">
+      <div class="card card-hover">
+        <span class="icon-tile v-amber">{% icon "signal" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Bars, but no internet" %}</h3>
+        <p class="muted small mt-1">{% blocktrans %}Turn <b>Data Roaming ON</b> for the eSIM line, then set that line as the one
+          used for mobile data. This is the fix roughly nine times out of ten.{% endblocktrans %}</p>
       </div>
-      <div class="card">
-        <span class="icon-tile v-sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/><path d="M21 3v6h-6"/></svg></span>
-        <h3 class="mt-2">No network at all</h3>
-        <p class="muted small mt-1">Toggle airplane mode, then pick the carrier manually in network
-          settings. Restart once — the profile registers on the next boot.</p>
+      <div class="card card-hover">
+        <span class="icon-tile v-sky">{% icon "smartphone" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Data is using the wrong line" %}</h3>
+        <p class="muted small mt-1">{% blocktrans %}Your home SIM stays active on purpose, so calls and bank codes keep working.
+          Check that mobile data is pointed at the eSIM and not at your home line.{% endblocktrans %}</p>
       </div>
-      <div class="card">
-        <span class="icon-tile v-pink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
-        <h3 class="mt-2">Data ran out</h3>
-        <p class="muted small mt-1">Top up from your dashboard — the data attaches to the same eSIM, so
-          there is nothing to reinstall.</p>
+      <div class="card card-hover">
+        <span class="icon-tile v-cyan">{% icon "refresh" size=22 %}</span>
+        <h3 class="mt-2">{% trans "No service or not registered" %}</h3>
+        <p class="muted small mt-1">{% blocktrans %}Toggle flight mode, restart the phone once, then pick the carrier by hand in
+          network settings. The profile registers on the next boot.{% endblocktrans %}</p>
+      </div>
+      <div class="card card-hover">
+        <span class="icon-tile v-mint">{% icon "calendar" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Data or days ran out" %}</h3>
+        <p class="muted small mt-1">{% blocktrans %}Validity starts on the first connection at your destination, not at purchase.
+          Top up from the dashboard and the data attaches to the same eSIM.{% endblocktrans %}</p>
+      </div>
+      <div class="card card-hover">
+        <span class="icon-tile v-gold">{% icon "lock" size=22 %}</span>
+        <h3 class="mt-2">{% trans "The phone is carrier-locked" %}</h3>
+        <p class="muted small mt-1">{% blocktrans %}A locked phone refuses any other network, eSIM included. Your carrier unlocks
+          it, usually free once the contract is paid off.{% endblocktrans %}</p>
+      </div>
+      <div class="card card-hover">
+        <span class="icon-tile v-cyan">{% icon "qr" size=22 %}</span>
+        <h3 class="mt-2">{% trans "The QR code will not scan" %}</h3>
+        <p class="muted small mt-1">{% blocktrans %}Scan it from another screen, or use manual entry with the activation details on
+          your eSIM page. One profile installs on one device only.{% endblocktrans %}</p>
       </div>
     </div>
 
+    {% url 'how_it_works' as how_url %}{% url 'faq' as faq_url %}
+    <p class="center muted small mt-4">
+      {% blocktrans %}Step-by-step install guides live on the <a class="link" href="{{ how_url }}">how it works</a>
+      and <a class="link" href="{{ faq_url }}">FAQ</a> pages.{% endblocktrans %}
+    </p>
+  </div>
+</section>
+
+{% if my_tickets %}
+<section class="section-sm section-alt">
+  <div class="shell">
+    <div class="row-between mb-3">
+      <h2 style="font-size:1.4rem">{% trans "Your tickets" %}</h2>
+      <span class="badge badge-muted">{% trans "Signed in as" %} {{ user.email }}</span>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{% trans "Reference" %}</th>
+            <th>{% trans "Subject" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Last activity" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in my_tickets %}
+          <tr>
+            <td class="nowrap bold">{{ t.ref }}</td>
+            <td class="truncate">{{ t.subject }}</td>
+            <td class="nowrap">
+              <span class="status-dot {% if t.status == 'closed' %}status-dead{% elif t.status == 'answered' %}status-live{% else %}status-pending{% endif %}">{{ t.get_status_display }}</span>
+            </td>
+            <td class="nowrap muted small">{{ t.updated_at|date:"j M Y, H:i" }}</td>
+            <td class="nowrap"><a class="link small" href="{{ t.get_absolute_url }}">{% trans "Open" %}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section">
+  <div class="shell">
     <div class="grid g2" style="gap:40px;align-items:start">
-      <div class="card card-solid">
-        <h3>Send us a message</h3>
-        <p class="small muted mt-1">Include the ICCID or order reference and we can look at the actual
-          line rather than guessing.</p>
+      <div class="card card-solid" id="ticket">
+        <h2 style="font-size:1.4rem">{% trans "Open a ticket" %}</h2>
+        <p class="small muted mt-1">{% blocktrans %}Give us the order reference or the ICCID and we can look at the real line
+          instead of guessing. You get a reference back and we reply by email.{% endblocktrans %}</p>
+
         <form method="post" class="stack mt-3">
           {% csrf_token %}
           {% if not user.is_authenticated %}
           <div class="field">
-            <label for="email">Your email</label>
-            <input class="input" type="email" id="email" name="email" required autocomplete="email">
+            <label for="email">{% trans "Your email" %}</label>
+            <input class="input" type="email" id="email" name="email" required autocomplete="email"
+                   value="{{ form.email }}" placeholder="{% trans 'The address you bought with' %}">
+            <span class="hint">{% trans "Use the address from your order so we can match it. We email you a private link to the thread." %}</span>
           </div>
           {% endif %}
+
           <div class="field">
-            <label for="category">What is this about?</label>
+            <label for="category">{% trans "What is this about?" %}</label>
             <select class="select" id="category" name="category">
-              {% for value, label in categories %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+              {% for value, label in categories %}<option value="{{ value }}"{% if value == form.category %} selected{% endif %}>{{ label }}</option>{% endfor %}
             </select>
           </div>
+
           <div class="field">
-            <label for="subject">Subject</label>
-            <input class="input" id="subject" name="subject" required maxlength="160">
+            <label for="subject">{% trans "Subject" %}</label>
+            <input class="input" id="subject" name="subject" required maxlength="160" value="{{ form.subject }}">
           </div>
+
           <div class="row" style="gap:12px">
             <div class="field flex-1">
-              <label for="order_ref">Order reference (optional)</label>
-              <input class="input" id="order_ref" name="order_ref" placeholder="ES-XXXXXXX">
+              <label for="order_ref">{% trans "Order reference" %}</label>
+              <input class="input" id="order_ref" name="order_ref" placeholder="ES-XXXXXXX" maxlength="12"
+                     value="{{ form.order_ref }}">
             </div>
             <div class="field flex-1">
-              <label for="iccid">ICCID (optional)</label>
-              <input class="input" id="iccid" name="iccid" placeholder="894865...">
+              <label for="iccid">{% trans "ICCID (optional)" %}</label>
+              <input class="input" id="iccid" name="iccid" placeholder="894865..." maxlength="32" inputmode="numeric"
+                     value="{{ form.iccid }}">
             </div>
           </div>
+
           <div class="field">
-            <label for="body">What is happening?</label>
-            <textarea class="textarea" id="body" name="body" required
-                      placeholder="Phone model, where you are, what you see on screen..."></textarea>
+            <label for="body">{% trans "What is happening?" %}</label>
+            <textarea class="textarea" id="body" name="body" required rows="6"
+                      placeholder="{% trans 'Phone model, which country you are in, and what the screen says.' %}">{{ form.body }}</textarea>
           </div>
-          <button class="btn btn-primary btn-block" type="submit">Send message</button>
+
+          <button class="btn btn-primary btn-block" type="submit">{% icon "send" size=18 %} {% trans "Send message" %}</button>
         </form>
       </div>
 
       <div class="stack" style="gap:20px">
         <div class="card">
-          <h3>Email us directly</h3>
-          <p class="small muted mt-1">Prefer your own mail client?</p>
-          <a class="btn btn-ghost mt-2" href="mailto:{{ support_email }}">{{ support_email }}</a>
-        </div>
-        <div class="card">
-          <h3>Before you write</h3>
-          <div class="stack mt-2" style="gap:10px">
-            <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Data roaming is ON for the eSIM line</span>
-            <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> The eSIM is selected for mobile data</span>
-            <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> You restarted the phone once</span>
-            <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> The phone is carrier-unlocked</span>
+          <span class="icon-tile v-cyan">{% icon "chat" size=22 %}</span>
+          <h3 class="mt-2">{% trans "Chat with the assistant" %}</h3>
+          {% if user.is_authenticated %}
+          <p class="small muted mt-1">{% blocktrans %}The chat button sits in the bottom corner of every page. It can see your own
+            eSIMs and orders, so it answers about your line rather than in general.{% endblocktrans %}</p>
+          {% else %}
+          <p class="small muted mt-1">{% blocktrans %}The assistant is for signed-in customers only, because it reads your eSIM and
+            order data to answer. Without an account, the ticket form is the way in.{% endblocktrans %}</p>
+          <div class="row mt-2" style="gap:10px">
+            <a class="btn btn-ghost btn-sm" href="{% url 'login' %}">{% trans "Sign in" %}</a>
+            <a class="btn btn-ghost btn-sm" href="{% url 'signup' %}">{% trans "Create an account" %}</a>
           </div>
-          <a class="link small mt-3" style="display:inline-block" href="{% url 'faq' %}">Read the full FAQ →</a>
+          {% endif %}
+        </div>
+
+        <div class="card">
+          <span class="icon-tile v-mint">{% icon "check-circle" size=22 %}</span>
+          <h3 class="mt-2">{% trans "Before you write" %}</h3>
+          <div class="stack mt-2" style="gap:10px">
+            <span class="row small" style="gap:8px">{% icon "check" size=16 %} {% trans "Data roaming is ON for the eSIM line" %}</span>
+            <span class="row small" style="gap:8px">{% icon "check" size=16 %} {% trans "The eSIM is selected for mobile data" %}</span>
+            <span class="row small" style="gap:8px">{% icon "check" size=16 %} {% trans "You restarted the phone once" %}</span>
+            <span class="row small" style="gap:8px">{% icon "check" size=16 %} {% trans "The phone is carrier-unlocked" %}</span>
+            <span class="row small" style="gap:8px">{% icon "check" size=16 %} {% trans "You have arrived at the destination" %}</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="icon-tile v-gold">{% icon "mail" size=22 %}</span>
+          <h3 class="mt-2">{% trans "Prefer your own mail client?" %}</h3>
+          <p class="small muted mt-1">{% trans "Write to us directly and we open the ticket on your behalf." %}</p>
+          <a class="btn btn-ghost btn-sm mt-2" href="mailto:{{ support_email }}">{{ support_email }}</a>
+        </div>
+
+        <div class="alert alert-info">
+          {% icon "info" size=18 %}
+          <div class="small">{% blocktrans %}Bought as a guest? Your ticket link arrives by email and opens the thread without a
+            password — keep that message, it is the only way back in.{% endblocktrans %}</div>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+{% include "partials/cta_band.html" %}
 {% endblock %}

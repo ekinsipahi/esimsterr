@@ -1,45 +1,63 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <section class="section">
   <div class="shell">
     <div class="section-head">
-      <span class="eyebrow">About</span>
-      <h2>Travel data should cost what it costs</h2>
+      <span class="eyebrow">{% trans "About" %}</span>
+      <h2>{% trans "Connect without borders" %}</h2>
+      <p class="h-sub">{% trans "The internet should follow you, not your carrier's billing department." %}</p>
     </div>
     <div class="prose">
-      <p>{{ site_name }} sells prepaid travel eSIMs. We buy wholesale data from the same carrier
-        aggregators the well-known eSIM apps use, add a thin margin, and pass the rest to you. That is
-        the entire business model.</p>
+      <p>{% blocktrans %}{{ site_name }} sells prepaid travel eSIMs. We buy wholesale data from the same carrier aggregators the well-known eSIM apps use, add a thin margin, and pass the rest to you. That is the entire business model, and it is the reason the prices look the way they do.{% endblocktrans %}</p>
 
-      <h2>Why we exist</h2>
-      <p>Roaming is the obvious villain, but the eSIM apps that replaced it are quietly expensive too.
-        A 10 GB plan that costs a few dollars wholesale routinely retails for four or five times that,
-        because the money goes into app-install ads rather than into the data.</p>
-      <p>We took the opposite approach: no ad budget, no influencer codes, no artificial "sale" prices
-        that are really the normal price. Every plan page shows the cost per gigabyte and per day, so
-        you can compare us with anyone else in ten seconds.</p>
+      <h2>{% trans "Three kinds of freedom" %}</h2>
+      <p>{% trans "Freedom from the roaming bill, which is a price set by a carrier that already has your card details and no reason to be kind. Freedom from carrier lock-in, because a travel eSIM is a second line you own for the length of a trip and nothing more. And freedom to land anywhere and already be online, before the queue at passport control has moved." %}</p>
 
-      <h2>What you actually get</h2>
+      <h2>{% trans "Why we exist" %}</h2>
+      <p>{% trans "Roaming is the obvious villain, but the eSIM apps that replaced it are quietly expensive too. A plan that costs a few dollars wholesale routinely retails for four or five times that, because the money goes into app-install ads rather than into the data." %}</p>
+      <p>{% trans "We took the opposite approach: no ad budget, no influencer codes, no invented discount that was never a real price. The figure we strike through on a plan is the going market rate for the same wholesale data elsewhere, not a former price of ours. Every plan page shows the cost per gigabyte and per day, so you can compare us with anyone in ten seconds." %}</p>
+
+      <h2>{% trans "What you actually get" %}</h2>
       <ul>
-        <li><strong>Local networks.</strong> Your eSIM connects to real carriers at your destination,
-          not to a slow reseller pipe.</li>
-        <li><strong>Instant delivery.</strong> The QR code appears as soon as the payment clears, day
-          or night.</li>
-        <li><strong>No identity checks.</strong> An email address is all we need. No passport upload,
-          no KYC.</li>
-        <li><strong>No subscriptions.</strong> Every plan is one-off. Nothing renews behind your back.</li>
+        <li>{% blocktrans %}<strong>Local networks.</strong> Your eSIM connects to real carriers at your destination, not to a slow reseller pipe. We publish the partner operators for every country we sell.{% endblocktrans %}</li>
+        <li>{% blocktrans %}<strong>Instant delivery.</strong> The QR code appears as soon as the payment clears, day or night, and lands in your inbox as well.{% endblocktrans %}</li>
+        <li>{% blocktrans %}<strong>No identity checks.</strong> An email address is all we need. No passport upload, no KYC, no account required to buy.{% endblocktrans %}</li>
+        {% if crypto_enabled %}
+        <li>{% blocktrans %}<strong>Crypto accepted.</strong> Pay by card if that suits you, or in cryptocurrency if you would rather not hand a card number to another website.{% endblocktrans %}</li>
+        {% endif %}
+        {% if subscriptions_enabled %}
+        <li>{% blocktrans %}<strong>Renewal is a choice.</strong> Every plan is one-off by default. Auto-renewal exists for people who live abroad and want the line to stay up, and you can stop it from your dashboard at any time.{% endblocktrans %}</li>
+        {% else %}
+        <li>{% blocktrans %}<strong>No subscriptions.</strong> Every plan is one-off. Nothing renews behind your back.{% endblocktrans %}</li>
+        {% endif %}
       </ul>
 
-      <h2>How we handle your data</h2>
-      <p>We never see your traffic. What we store is what selling and supporting an eSIM requires: your
-        email, your orders, and the usage counter the network reports back to us. There is no tracking
-        pixel farm on this site.</p>
+      <h2>{% trans "How we handle your data" %}</h2>
+      {% url 'privacy' as privacy_url %}
+      <p>{% blocktrans %}We never see your traffic. What we store is what selling and supporting an eSIM requires: your email, your orders, and the usage counter the network reports back to us. There is no tracking pixel farm on this site. The <a href="{{ privacy_url }}">privacy policy</a> sets out the detail, including what we keep for fraud and chargeback defence.{% endblocktrans %}</p>
 
-      <h2>Talk to us</h2>
-      <p>Support is email, answered by the people who built this:
-        <a href="mailto:{{ support_email }}">{{ support_email }}</a>. If an eSIM does not work, we fix
-        it or refund it.</p>
+      <h2>{% trans "Talk to us" %}</h2>
+      <p>{% blocktrans %}Support is email, answered by the people who built this: <a href="mailto:{{ support_email }}">{{ support_email }}</a>. If an eSIM does not work, we fix it or refund it.{% endblocktrans %}</p>
+    </div>
+
+    <div class="grid g3 mt-4">
+      <div class="card">
+        <span class="icon-tile v-gold">{% icon "tag" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Wholesale in, thin margin out" %}</h3>
+        <p class="muted small mt-1">{% trans "The price per GB is printed on every plan. Nothing is hidden behind a clever label." %}</p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-mint">{% icon "shield" size=22 %}</span>
+        <h3 class="mt-2">{% trans "An email is the whole signup" %}</h3>
+        <p class="muted small mt-1">{% trans "No identity documents, no KYC, no account needed to check out as a guest." %}</p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-cyan">{% icon "globe" size=22 %}</span>
+        <h3 class="mt-2">{% trans "One line, many borders" %}</h3>
+        <p class="muted small mt-1">{% trans "Regional and global plans cover a whole trip, so crossing a border does not mean buying again." %}</p>
+      </div>
     </div>
   </div>
 </section>

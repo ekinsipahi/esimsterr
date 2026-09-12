@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block og_type %}article{% endblock %}
 
@@ -15,23 +16,47 @@
 
       <div class="prose mt-4">{{ post.body|safe }}</div>
 
+      {# Cross-sell: send the reader from the guide to the plans it is about. #}
       {% if post.country or post.region %}
+      {% with target=post.country|default:post.region %}
       <div class="card mt-5">
         <div class="row-between">
-          <div>
-            <h3>{% if post.country %}{{ post.country.name }}{% else %}{{ post.region.name }}{% endif %} eSIM plans</h3>
-            <p class="small muted mt-1">Instant QR delivery, local networks, from
-              ${% if post.country %}{{ post.country.min_price_usd }}{% else %}{{ post.region.min_price_usd }}{% endif %}.</p>
+          <div class="row" style="gap:14px">
+            {% if post.country %}{% flag post.country.iso2 size=34 cls="flag-lg" %}
+            {% else %}<span class="icon-tile v-sky">{% icon "layers" %}</span>{% endif %}
+            <div>
+              <h3>{% blocktrans with name=target.name %}{{ name }} eSIM plans{% endblocktrans %}</h3>
+              <p class="small muted mt-1">
+                {% if target.min_price_usd %}
+                  {% blocktrans with price=target.min_price_usd|usd %}Local networks, no roaming bill, from {{ price }}. The QR code lands in your inbox within minutes.{% endblocktrans %}
+                {% else %}
+                  {% trans "Local networks, no roaming bill. The QR code lands in your inbox within minutes." %}
+                {% endif %}
+              </p>
+              {% if target.plan_count or target.has_unlimited %}
+              <div class="chips mt-2">
+                {% if target.plan_count %}
+                <span class="chip">{% blocktrans count n=target.plan_count %}{{ n }} plan{% plural %}{{ n }} plans{% endblocktrans %}</span>
+                {% endif %}
+                {% if target.has_unlimited %}
+                <span class="chip">{% icon "infinity" size=14 %}{% trans "Unlimited available" %}</span>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
           </div>
-          <a class="btn btn-primary" href="{% if post.country %}{{ post.country.get_absolute_url }}{% else %}{{ post.region.get_absolute_url }}{% endif %}">See plans</a>
+          <a class="btn btn-primary" href="{{ target.get_absolute_url }}">
+            {% trans "See plans" %}{% icon "arrow-right" size=17 %}
+          </a>
         </div>
       </div>
+      {% endwith %}
       {% endif %}
     </div>
 
     {% if related %}
     <div class="mx-auto mt-5" style="max-width:760px">
-      <h3 class="mb-2">Keep reading</h3>
+      <h3 class="mb-2">{% trans "Keep reading" %}</h3>
       <div class="stack" style="gap:10px">
         {% for r in related %}
         <a class="card card-hover" href="{{ r.get_absolute_url }}" style="padding:16px 20px">

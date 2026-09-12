@@ -43,9 +43,28 @@ def retail_usd(cost_amount, currency: str = "EUR", *, is_unlimited: bool = False
     return charm(price.quantize(CENT, rounding=ROUND_HALF_UP))
 
 
-def compare_at_usd(retail: Decimal, *, is_unlimited: bool = False) -> Decimal:
-    """A conservative 'what others charge' figure for the strike-through: the big
-    apps are typically 2–3x our retail for the same allowance. We show 1.9x for
-    data plans and 1.6x for unlimited so the claim stays defensible."""
-    factor = Decimal("1.6") if is_unlimited else Decimal("1.9")
-    return charm((retail * factor).quantize(CENT, rounding=ROUND_HALF_UP))
+def compare_at_usd(cost_amount, currency: str = "EUR", **_ignored) -> Decimal:
+    """The list price: what the same wholesale data costs at a normal retail margin.
+
+    Anchored to COST, not to our own price, so it tracks the market rather than
+    drifting with our discounting. The big eSIM apps run roughly a 4x margin on
+    the same wholesale supply — a spot check against Cellesim's Italy 10 GB plan
+    ($16.65) lands within a dollar of this formula — so `PRICING_COMPARE_MULTIPLIER`
+    defaults to 4.0 and we sell at `PRICING_MARKUP` (1.65). The gap between the
+    two is the percentage the customer sees.
+
+    Note for whoever tunes this: the strike-through is presented as the going
+    market rate, not as a former eSIMsterr price. Keep the label honest in the
+    templates, and keep the multiplier defensible — if the market moves, move it.
+    """
+    cost = cost_to_usd(cost_amount, currency)
+    factor = _d(getattr(settings, "PRICING_COMPARE_MULTIPLIER", "4.0"))
+    listed = max(cost * factor, _d(settings.PRICING_MIN_PRICE_USD) + _d("1.50"))
+    return charm(listed.quantize(CENT, rounding=ROUND_HALF_UP))
+
+
+def discount_pct(price: Decimal, compare_at: Decimal) -> int:
+    """Whole-number percentage off the list price, floored at 0."""
+    if not compare_at or compare_at <= price:
+        return 0
+    return int(((compare_at - price) / compare_at * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))

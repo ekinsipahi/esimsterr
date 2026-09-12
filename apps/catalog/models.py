@@ -120,10 +120,10 @@ class Plan(models.Model):
                                              help_text="Manual retail price; wins over the formula")
     compare_at_usd = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
-        help_text="Estimated typical price on competing eSIM apps. Shown as an explicit "
-                  "comparison ('the big apps typically charge ~$X'), never as a "
-                  "strike-through of our own price — that would imply a former price we "
-                  "never charged.")
+        help_text="List price: the same wholesale data at a normal retail margin "
+                  "(cost x PRICING_COMPARE_MULTIPLIER). Shown struck through as the "
+                  "going market rate, which is what the discount percentage is "
+                  "calculated against.")
 
     is_active = models.BooleanField(default=True, db_index=True)
     provider_active = models.BooleanField(default=True, db_index=True,
@@ -183,9 +183,11 @@ class Plan(models.Model):
 
     @property
     def savings_pct(self):
-        if self.compare_at_usd and self.compare_at_usd > self.price:
-            return int(round((1 - self.price / self.compare_at_usd) * 100))
-        return None
+        """Whole percent off the list price — the number the shopper actually reads."""
+        from .pricing import discount_pct
+
+        pct = discount_pct(self.price, self.compare_at_usd)
+        return pct or None
 
     def get_absolute_url(self):
         return reverse("checkout", kwargs={"plan_id": self.pk})

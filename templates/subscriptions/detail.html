@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="dash-head">
+      <div>
+        <a class="link small" href="{% url 'subscriptions_list' %}">&larr; {% trans "All subscriptions" %}</a>
+        <h1 class="mt-1" style="font-size:clamp(1.6rem,3vw,2.1rem)">
+          {% blocktrans with place=sub.target_name %}{{ place }} unlimited{% endblocktrans %}
+        </h1>
+        <p class="muted mt-1">
+          {% blocktrans with price=sub.price_usd|usd count days=sub.interval_days %}{{ price }} every {{ days }} day, renewed automatically.{% plural %}{{ price }} every {{ days }} days, renewed automatically.{% endblocktrans %}
+        </p>
+      </div>
+      <form method="post" action="{% url 'billing_portal' %}">
+        {% csrf_token %}
+        <input type="hidden" name="subscription" value="{{ sub.pk }}">
+        <button class="btn btn-ghost" type="submit">{% icon "credit-card" size=16 %} {% trans "Manage billing or cancel" %}</button>
+      </form>
+    </div>
+
+    {% if just_started and not sub.esim %}
+    <div class="alert alert-info mb-4">
+      {% icon "clock" size=18 %}
+      <div>
+        <b>{% trans "Setting your eSIM up." %}</b>
+        {% trans "Payment confirmed. Issuing the eSIM takes a few seconds — refresh this page shortly and the QR code will be waiting." %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if sub.needs_attention %}
+    <div class="alert alert-warn mb-4">
+      {% icon "alert" size=18 %}
+      <div>
+        <b>{% trans "The last payment was declined." %}</b>
+        {% trans "Your card issuer refused the renewal. Update the card and the line keeps running — Stripe retries automatically for a few days before the subscription stops." %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if sub.cancel_at_period_end and sub.current_period_end %}
+    <div class="alert alert-info mb-4">
+      {% icon "info" size=18 %}
+      <div>{% blocktrans with date=sub.current_period_end|date:"j M Y" %}This subscription is set to end on {{ date }}. You keep the data you have paid for until then, and nothing further is charged.{% endblocktrans %}</div>
+    </div>
+    {% endif %}
+
+    <div class="grid g4 mb-4">
+      <div class="stat">
+        <div class="k">{% trans "Status" %}</div>
+        <div class="v" style="font-size:1.15rem">
+          <span class="status-dot {% if sub.is_live %}status-live{% elif sub.needs_attention %}status-dead{% else %}status-pending{% endif %}">
+            {{ sub.get_status_display }}
+          </span>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="k">{% if sub.cancel_at_period_end %}{% trans "Ends" %}{% else %}{% trans "Next renewal" %}{% endif %}</div>
+        <div class="v" style="font-size:1.05rem">
+          {% if sub.current_period_end %}{{ sub.current_period_end|date:"j M Y" }}{% else %}&mdash;{% endif %}
+        </div>
+      </div>
+      <div class="stat">
+        <div class="k">{% trans "Days to go" %}</div>
+        <div class="v">{% if sub.days_until_renewal != None %}{{ sub.days_until_renewal }}{% else %}&mdash;{% endif %}</div>
+      </div>
+      <div class="stat">
+        <div class="k">{% trans "Renewals so far" %}</div>
+        <div class="v">{{ sub.renewals_count }}</div>
+      </div>
+    </div>
+
+    <div class="grid g2" style="align-items:start">
+      <div class="card">
+        <h3>{% trans "The eSIM this keeps alive" %}</h3>
+        {% if sub.esim %}
+        <p class="small muted mt-1">{% trans "Every renewal adds the new period to this same line. Nothing to reinstall, ever." %}</p>
+        <div class="row-between mt-3">
+          <div>
+            <b>{{ sub.esim.display_name }}</b>
+            <div class="mono-block mt-1">{% trans "ICCID" %} {{ sub.esim.iccid }}</div>
+          </div>
+          <span class="status-dot {% if sub.esim.is_active %}status-live{% elif sub.esim.is_expired %}status-dead{% else %}status-pending{% endif %}">
+            {% if sub.esim.is_expired %}{% trans "Expired" %}{% else %}{{ sub.esim.get_status_qr_display }}{% endif %}
+          </span>
+        </div>
+        <a class="btn btn-primary btn-sm mt-3" href="{{ sub.esim.get_absolute_url }}">{% trans "Open eSIM and QR code" %}</a>
+        {% else %}
+        <p class="small muted mt-1">{% trans "No eSIM issued yet. The first paid period creates it, and you will get the QR code by email the moment it exists." %}</p>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <h3>{% trans "What you are paying for" %}</h3>
+        <ul class="stack small mt-3" style="gap:10px;list-style:none;padding:0;margin:0">
+          <li class="row-between"><span class="muted">{% trans "Plan" %}</span><b>{{ sub.plan.data_label }} · {{ sub.plan.days }} {% trans "days" %}</b></li>
+          <li class="row-between"><span class="muted">{% trans "Destination" %}</span><b>{{ sub.target_name }}</b></li>
+          <li class="row-between"><span class="muted">{% trans "Per cycle" %}</span><b>{{ sub.price_usd|usd }}</b></li>
+          <li class="row-between"><span class="muted">{% trans "One-off price" %}</span><b>{{ sub.plan.price|usd }}</b></li>
+          <li class="row-between"><span class="muted">{% trans "Started" %}</span><b>{% if sub.started_at %}{{ sub.started_at|date:"j M Y" }}{% else %}&mdash;{% endif %}</b></li>
+        </ul>
+        <p class="xs muted-3 mt-3">{% trans "Cards are handled by Stripe. We never see or store your card number." %}</p>
+      </div>
+    </div>
+
+    <h3 class="mt-5 mb-2">{% trans "Billing history" %}</h3>
+    {% if cycles %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{% trans "Period" %}</th>
+            <th>{% trans "Amount" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Order" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cycle in cycles %}
+          <tr>
+            <td class="nowrap">
+              {% if cycle.period_start %}{{ cycle.period_start|date:"j M Y" }}{% endif %}
+              {% if cycle.period_end %}<span class="muted-3">&ndash;</span> {{ cycle.period_end|date:"j M Y" }}{% endif %}
+            </td>
+            <td class="nowrap">{{ cycle.amount_usd|usd }}</td>
+            <td>
+              <span class="status-dot {% if cycle.status == 'paid' %}status-live{% else %}status-dead{% endif %}">
+                {{ cycle.get_status_display }}
+              </span>
+            </td>
+            <td class="nowrap">{% if cycle.order %}{{ cycle.order.ref }}{% else %}&mdash;{% endif %}</td>
+            <td class="nowrap">
+              {% if cycle.order %}<a class="link small" href="{{ cycle.order.get_absolute_url }}">{% trans "View" %}</a>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="muted small">{% trans "No billed periods yet. The first one appears here as soon as the payment clears." %}</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

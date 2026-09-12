@@ -1,6 +1,10 @@
+{% load i18n %}
 <div class="dash-tabs">
-  <a class="dash-tab {% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}" href="{% url 'dashboard' %}">My eSIMs</a>
-  <a class="dash-tab {% if request.resolver_match.url_name == 'orders_list' %}is-active{% endif %}" href="{% url 'orders_list' %}">Orders</a>
-  <a class="dash-tab {% if request.resolver_match.url_name == 'account' %}is-active{% endif %}" href="{% url 'account' %}">Account</a>
-  <a class="dash-tab" href="{% url 'support' %}">Support</a>
+  <a class="dash-tab {% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}" href="{% url 'dashboard' %}">{% trans "My eSIMs" %}</a>
+  {% if subscriptions_enabled %}
+  <a class="dash-tab {% if request.resolver_match.url_name == 'subscriptions_list' %}is-active{% endif %}" href="{% url 'subscriptions_list' %}">{% trans "Subscriptions" %}</a>
+  {% endif %}
+  <a class="dash-tab {% if request.resolver_match.url_name == 'orders_list' %}is-active{% endif %}" href="{% url 'orders_list' %}">{% trans "Orders" %}</a>
+  <a class="dash-tab {% if request.resolver_match.url_name == 'account' %}is-active{% endif %}" href="{% url 'account' %}">{% trans "Account" %}</a>
+  <a class="dash-tab" href="{% url 'support' %}">{% trans "Support" %}</a>
 </div>

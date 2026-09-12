@@ -60,6 +60,9 @@ DEFAULT_DESCRIPTION = (
     "unlimited plans, pay by card or crypto. Cheaper than roaming — and cheaper than the other eSIM apps."
 )
 SITE_SAMEAS = env_list("SITE_SAMEAS", [])
+# Shown as "last updated" on the legal pages. Bump it when a policy really
+# changes; rendering today's date would claim a daily revision that never happened.
+LEGAL_UPDATED = env("LEGAL_UPDATED", "12 September 2026")
 APP_STORE_URL = env("APP_STORE_URL", "")
 PLAY_STORE_URL = env("PLAY_STORE_URL", "")
 
@@ -104,6 +107,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     # local
+    "apps.common",
     "apps.accounts",
     "apps.catalog",
     "apps.orders",
@@ -112,6 +116,9 @@ INSTALLED_APPS = [
     "apps.api",
     "apps.blog",
     "apps.support",
+    "apps.coupons",
+    "apps.subscriptions",
+    "apps.seo",
 ]
 
 MIDDLEWARE = [
@@ -198,13 +205,41 @@ AUTH_PASSWORD_VALIDATORS = [
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", "")
 
+# Django defaults to three days, which is a long time for a link that grants
+# account access from an inbox. Three hours matches what the reset pages tell
+# the customer, and a fresh link is one click away.
+PASSWORD_RESET_TIMEOUT = int(env("PASSWORD_RESET_TIMEOUT", str(60 * 60 * 3)))
+
 # ---- I18N / TZ ---------------------------------------------------------------
 LANGUAGE_CODE = "en"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
-LANGUAGES = [("en", "English")]
 LOCALE_PATHS = [BASE_DIR / "locale"]
+
+# Every string in the project is wrapped for translation, but a locale only goes
+# live once its .po file is actually translated: publishing /tr/ pages full of
+# English is duplicate content, not localisation. So the catalogue of languages
+# we are prepared to serve lives here, and ENABLED_LANGUAGES decides which of
+# them Django actually offers. Translate a locale, add its code to the env var,
+# redeploy — no code change.
+SUPPORTED_LANGUAGES = {
+    "en": "English", "tr": "Türkçe", "es": "Español", "pt": "Português",
+    "fr": "Français", "de": "Deutsch", "it": "Italiano", "ru": "Русский",
+    "ar": "العربية", "fa": "فارسی", "hi": "हिन्दी", "id": "Bahasa Indonesia",
+    "ms": "Bahasa Melayu", "vi": "Tiếng Việt", "th": "ไทย", "ko": "한국어",
+    "ja": "日本語", "zh-hans": "简体中文", "zh-hant": "繁體中文", "pl": "Polski",
+    "nl": "Nederlands", "uk": "Українська", "ro": "Română", "cs": "Čeština",
+    "el": "Ελληνικά", "sv": "Svenska", "he": "עברית", "az": "Azərbaycanca",
+    "kk": "Қазақша", "uz": "Oʻzbekcha", "bn": "বাংলা", "ur": "اردو",
+}
+_enabled = [c for c in env_list("ENABLED_LANGUAGES", ["en"]) if c in SUPPORTED_LANGUAGES]
+if "en" not in _enabled:
+    _enabled.insert(0, "en")
+LANGUAGES = [(code, SUPPORTED_LANGUAGES[code]) for code in _enabled]
+RTL_LANGUAGES = {"ar", "fa", "he", "ur"}
+LANGUAGE_COOKIE_NAME = "esimsterr_lang"
+LANGUAGE_COOKIE_SAMESITE = "Lax"
 
 # ---- Static / media ------------------------------------------------------------
 STATIC_URL = "/static/"
@@ -267,7 +302,16 @@ EUR_USD_RATE = env("EUR_USD_RATE", "1.10")
 PRICING_MARKUP = env("PRICING_MARKUP", "1.65")
 PRICING_MIN_MARGIN_USD = env("PRICING_MIN_MARGIN_USD", "0.60")
 PRICING_MIN_PRICE_USD = env("PRICING_MIN_PRICE_USD", "1.49")
+# The struck-through list price is cost x this. It represents the going retail
+# rate for the same wholesale data (the big eSIM apps run roughly 4x), which is
+# what the advertised discount percentage is measured against.
+PRICING_COMPARE_MULTIPLIER = env("PRICING_COMPARE_MULTIPLIER", "4.0")
 DISPLAY_CURRENCY = "USD"
+
+# Subscriptions: a standing discount is the reason to subscribe rather than
+# re-buy an unlimited plan every month.
+SUBSCRIPTION_DISCOUNT_PCT = env("SUBSCRIPTION_DISCOUNT_PCT", "15")
+SUBSCRIPTIONS_ENABLED = env_bool("SUBSCRIPTIONS_ENABLED", True)
 
 # ---- Payments ------------------------------------------------------------------
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", "")
@@ -280,6 +324,15 @@ NOWPAYMENTS_API_BASE = env("NOWPAYMENTS_API_BASE", "https://api.nowpayments.io/v
 
 # Shared secret for the HTTP cron trigger (/cron/<task>/?token=...).
 CRON_SECRET = env("CRON_SECRET", "")
+
+# --- In-site AI assistant (signed-in customers only) -------------------------
+# Every reply costs money, so the endpoint is behind authentication and an
+# hourly cap. Without a key the widget still renders and falls back to "the team
+# has been notified", so nothing breaks when it is unset.
+ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", "").strip()
+ASSISTANT_MODEL = env("ASSISTANT_MODEL", "claude-haiku-4-5-20251001").strip()
+ASSISTANT_ENABLED = env_bool("ASSISTANT_ENABLED", True)
+SUPPORT_FORWARD_EMAIL = env("SUPPORT_FORWARD_EMAIL", "") or SUPPORT_EMAIL
 
 # ---- Analytics -----------------------------------------------------------------
 GA_MEASUREMENT_ID = env("GA_MEASUREMENT_ID", "")

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <section class="section">
@@ -6,55 +7,58 @@
 
     {% if order.status == 'completed' and esim %}
       <div class="center mb-4">
-        <span class="badge badge-mint">Payment confirmed</span>
-        <h1 class="mt-2">Your eSIM is ready 🎉</h1>
-        <p class="h-sub">{{ order.plan_title }} · order {{ order.ref }}. We also emailed this page to
-          {{ order.email }}.</p>
+        <span class="badge badge-mint">{% icon "check-circle" size=14 %} {% trans "Payment confirmed" %}</span>
+        <h1 class="mt-2">{% trans "Your eSIM is ready" %}</h1>
+        <p class="h-sub">
+          {% blocktrans with title=order.plan_title ref=order.ref address=order.email %}{{ title }}, order {{ ref }}. We emailed this page to {{ address }} as well.{% endblocktrans %}
+        </p>
       </div>
 
       {% include "partials/esim_install.html" with esim=esim %}
 
       <div class="row mt-4" style="justify-content:center;gap:10px">
         {% if user.is_authenticated %}
-          <a class="btn btn-primary" href="{% url 'dashboard' %}">Go to my eSIMs</a>
+          <a class="btn btn-primary" href="{% url 'dashboard' %}">{% trans "Go to my eSIMs" %}</a>
         {% else %}
-          <a class="btn btn-primary" href="{% url 'signup' %}">Create an account to manage it</a>
+          <a class="btn btn-primary" href="{% url 'signup' %}">{% trans "Create an account to manage it" %}</a>
         {% endif %}
-        <a class="btn btn-ghost" href="{% url 'destinations' %}">Buy another destination</a>
+        <a class="btn btn-ghost" href="{% url 'destinations' %}">{% trans "Buy another destination" %}</a>
       </div>
 
     {% elif order.status == 'paid' %}
       <div class="card center" data-poll-url="{% url 'order_status' order.ref %}">
-        <div style="font-size:2.4rem">⚡</div>
-        <h2 class="mt-2">Payment received — building your eSIM</h2>
-        <p class="muted mt-1">This usually takes a few seconds. The page refreshes by itself, and the
-          QR code is emailed to {{ order.email }} either way.</p>
+        <span class="icon-tile mx-auto">{% icon "zap" size=22 %}</span>
+        <h2 class="mt-2">{% trans "Payment received, building your eSIM" %}</h2>
+        <p class="muted mt-1">
+          {% blocktrans with address=order.email %}This usually takes a few seconds. The page refreshes by itself, and the QR code is emailed to {{ address }} either way.{% endblocktrans %}
+        </p>
         <div class="row mt-3" style="justify-content:center"><span class="spinner"></span></div>
-        <p class="small muted-3 mt-3">Order {{ order.ref }} · ${{ order.amount_usd }}</p>
+        <p class="small muted-3 mt-3">{% blocktrans with ref=order.ref amount=order.amount_usd|usd %}Order {{ ref }} &middot; {{ amount }}{% endblocktrans %}</p>
       </div>
 
     {% elif order.status == 'pending' %}
       <div class="card center" data-poll-url="{% url 'order_status' order.ref %}">
-        <div style="font-size:2.4rem">⏳</div>
-        <h2 class="mt-2">Waiting for your payment</h2>
-        <p class="muted mt-1">Finish the payment in the window that opened. Crypto payments confirm as
-          soon as the network does. This page updates on its own.</p>
+        <span class="icon-tile v-amber mx-auto">{% icon "clock" size=22 %}</span>
+        <h2 class="mt-2">{% trans "Waiting for your payment" %}</h2>
+        <p class="muted mt-1">{% trans "Finish the payment in the window that opened. Crypto payments confirm as soon as the network does. This page updates on its own." %}</p>
         {% for payment in order.payments.all|slice:":1" %}
           {% if payment.checkout_url %}
-          <a class="btn btn-primary mt-3" href="{{ payment.checkout_url }}">Reopen the payment page</a>
+          <a class="btn btn-primary mt-3" href="{{ payment.checkout_url }}">{% trans "Reopen the payment page" %}</a>
           {% endif %}
         {% endfor %}
-        <p class="small muted-3 mt-3">Order {{ order.ref }} · ${{ order.amount_usd }}</p>
+        <p class="small muted-3 mt-3">{% blocktrans with ref=order.ref amount=order.amount_usd|usd %}Order {{ ref }} &middot; {{ amount }}{% endblocktrans %}</p>
       </div>
 
     {% else %}
       <div class="card center">
-        <div style="font-size:2.4rem">😕</div>
-        <h2 class="mt-2">This order is {{ order.get_status_display|lower }}</h2>
-        <p class="muted mt-1">Nothing was delivered. If money left your account, email
-          <a class="link" href="mailto:{{ support_email }}">{{ support_email }}</a> with order
-          {{ order.ref }} and we will sort it out the same day.</p>
-        <a class="btn btn-primary mt-3" href="{% url 'destinations' %}">Try again</a>
+        <span class="icon-tile v-amber mx-auto">{% icon "alert" size=22 %}</span>
+        <h2 class="mt-2">
+          {% blocktrans with state=order.get_status_display|lower %}This order is {{ state }}{% endblocktrans %}
+        </h2>
+        <p class="muted mt-1">
+          {% blocktrans with ref=order.ref address=support_email %}Nothing was delivered. If money left your account, email <a class="link" href="mailto:{{ address }}">{{ address }}</a> with order {{ ref }} and we will sort it out the same day.{% endblocktrans %}
+        </p>
+        <a class="btn btn-primary mt-3" href="{% url 'destinations' %}">{% trans "Try again" %}</a>
       </div>
     {% endif %}
 

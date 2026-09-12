@@ -1,0 +1,18 @@
+We have your message. Your reference is {{ ticket.ref }}.
+
+Subject: {{ ticket.subject }}
+Category: {{ ticket.get_category_display }}{% if ticket.order_ref %}
+Order: {{ ticket.order_ref }}{% endif %}
+
+{{ body }}
+
+Open your ticket:
+{{ ticket_url }}
+
+This link is personal to you. It opens the thread without a password, so please
+do not forward it.
+
+While you wait: if you have bars but no internet, turn Data Roaming ON for the
+eSIM line and set that line for mobile data. That is the fix in most cases.
+
+-- {{ site_name }} - {{ support_email }}

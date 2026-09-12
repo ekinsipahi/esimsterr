@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <div class="shell">{% include "partials/breadcrumbs.html" %}</div>
@@ -8,43 +9,51 @@
     <div class="grid g2" style="gap:44px;align-items:start">
       <div>
         <div class="row" style="gap:14px">
-          <span style="font-size:3rem;line-height:1">{% if country.flag_url %}<img src="{{ country.flag_url }}" alt="{{ country.name }} flag" width="56" height="42" style="border-radius:7px">{% else %}{{ country.flag_emoji }}{% endif %}</span>
+          {% flag country.iso2 size=56 cls="flag-lg" %}
           <div>
-            <h1 style="font-size:clamp(1.9rem,4vw,2.8rem)">{{ country.name }} eSIM</h1>
+            <h1 style="font-size:clamp(1.9rem,4vw,2.8rem)">{% blocktrans with name=country.name %}{{ name }} eSIM{% endblocktrans %}</h1>
             <div class="row small muted mt-1" style="gap:14px">
-              {% if country.min_price_usd %}<span>from <b style="color:var(--text)">${{ country.min_price_usd }}</b></span>{% endif %}
-              <span>{{ country.plan_count }} plan{{ country.plan_count|pluralize }}</span>
-              {% if country.has_unlimited %}<span class="badge badge-hot">Unlimited available</span>{% endif %}
+              {% if country.min_price_usd %}<span>{% trans "from" %} <b style="color:var(--text)">{{ country.min_price_usd|usd }}</b></span>{% endif %}
+              <span>{% blocktrans count n=country.plan_count %}{{ n }} plan{% plural %}{{ n }} plans{% endblocktrans %}</span>
+              {% if country.has_unlimited %}<span class="badge badge-hot">{% trans "Unlimited available" %}</span>{% endif %}
             </div>
           </div>
         </div>
 
+        {% with cheapest=data_plans|dictsort:"price"|first %}
+        {% if cheapest.savings_pct and cheapest.compare_at_usd %}
+        <div class="row mt-3" style="gap:12px">
+          <span class="off-badge off-badge-lg">{% icon "percent" size=15 %}{% blocktrans with pct=cheapest.savings_pct %}{{ pct }}% OFF{% endblocktrans %}</span>
+          <span class="small muted">
+            {% blocktrans with data=cheapest.data_label price=cheapest.price|usd was=cheapest.compare_at_usd|usd %}{{ data }} for {{ price }}, against a typical market price of {{ was }} for the same wholesale data.{% endblocktrans %}
+          </span>
+        </div>
+        {% endif %}
+        {% endwith %}
+
         <p class="h-sub mt-3">
-          {% if country.intro %}{{ country.intro }}{% else %}
-          Prepaid data for {{ country.name }} on the local networks, delivered as a QR code the moment
-          you pay. Install it before you fly and the plan only starts when you land.
-          {% endif %}
+          {% if country.intro %}{{ country.intro }}{% else %}{% blocktrans with name=country.name %}Prepaid data for {{ name }} on the local networks, delivered as a QR code the moment you pay. Install it before you fly and the plan only starts when you land.{% endblocktrans %}{% endif %}
         </p>
 
         <div class="row mt-3" style="gap:10px">
-          <a class="btn btn-primary" href="#plans">See {{ country.name }} plans</a>
-          <a class="btn btn-ghost" href="{% url 'compatible_devices' %}">Check my device</a>
+          <a class="btn btn-primary" href="#plans">{% blocktrans with name=country.name %}See {{ name }} plans{% endblocktrans %}</a>
+          <a class="btn btn-ghost" href="{% url 'compatible_devices' %}">{% trans "Check my device" %}</a>
         </div>
       </div>
 
       <div class="card">
-        <h3>Networks in {{ country.name }}</h3>
-        <p class="small muted mt-1">Your eSIM picks the strongest available partner network automatically.</p>
+        <h3>{% blocktrans with name=country.name %}Networks in {{ name }}{% endblocktrans %}</h3>
+        <p class="small muted mt-1">{% trans "Your eSIM picks the strongest available partner network automatically." %}</p>
         {% if country.operator_list %}
         <div class="chips mt-2">
-          {% for op in country.operator_list|slice:":8" %}<span class="chip">{{ op }}</span>{% endfor %}
+          {% for op in country.operator_list|slice:":8" %}<span class="chip">{% icon "signal" size=14 %}{{ op }}</span>{% endfor %}
         </div>
         {% endif %}
         <hr class="divider">
         <div class="stack" style="gap:10px">
-          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Data-only plan, hotspot allowed</span>
-          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Your physical SIM stays active</span>
-          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> No passport, no contract, no auto-renewal</span>
+          <span class="check">{% icon "check" size=19 %}{% trans "Data-only plan, hotspot allowed" %}</span>
+          <span class="check">{% icon "check" size=19 %}{% trans "Your physical SIM stays active" %}</span>
+          <span class="check">{% icon "check" size=19 %}{% trans "No passport, no contract, and nothing renews unless you choose a subscription" %}</span>
         </div>
       </div>
     </div>
@@ -54,10 +63,9 @@
 <section class="section" style="padding-top:0">
   <div class="shell">
     <div class="section-head">
-      <span class="eyebrow">Plans</span>
-      <h2>{{ country.name }} data plans</h2>
-      <p class="h-sub">Every card shows the price per GB and per day, so the cheapest option is
-        obvious rather than buried.</p>
+      <span class="eyebrow">{% trans "Plans" %}</span>
+      <h2>{% blocktrans with name=country.name %}{{ name }} data plans{% endblocktrans %}</h2>
+      <p class="h-sub">{% trans "Every card shows the price per GB and per day, plus the usual price elsewhere for the same data, so the cheapest option is obvious rather than buried." %}</p>
     </div>
     {% include "partials/plan_tabs.html" %}
   </div>
@@ -67,10 +75,9 @@
   <div class="shell">
     <div class="grid g2" style="gap:56px;align-items:center">
       <div>
-        <span class="eyebrow">Setup</span>
-        <h2 class="mt-2">Installing your {{ country.name }} eSIM</h2>
-        <p class="h-sub">Do this at home on Wi-Fi. It takes about two minutes and nothing starts
-          counting until you arrive.</p>
+        <span class="eyebrow">{% trans "Setup" %}</span>
+        <h2 class="mt-2">{% blocktrans with name=country.name %}Installing your {{ name }} eSIM{% endblocktrans %}</h2>
+        <p class="h-sub">{% trans "Do this at home on Wi-Fi. It takes about two minutes and nothing starts counting until you arrive." %}</p>
       </div>
       {% include "partials/steps.html" %}
     </div>
@@ -81,16 +88,19 @@
 <section class="section">
   <div class="shell">
     <div class="section-head">
-      <h2>Visiting more than {{ country.name }}?</h2>
-      <p class="h-sub">These regional plans include {{ country.name }} and its neighbours on one profile.</p>
+      <h2>{% blocktrans with name=country.name %}Visiting more than {{ name }}?{% endblocktrans %}</h2>
+      <p class="h-sub">{% blocktrans with name=country.name %}These regional plans include {{ name }} and its neighbours on one profile.{% endblocktrans %}</p>
     </div>
     <div class="grid g3">
       {% for r in regions %}
       <a class="region-card" href="{{ r.get_absolute_url }}">
-        <div class="ico">{{ r.icon }}</div>
+        <span class="icon-tile v-cyan">{% icon "layers" size=26 %}</span>
         <h3>{{ r.name }}</h3>
-        <p>{{ r.country_count }} countries on a single eSIM</p>
-        <div class="foot"><span class="price">${{ r.min_price_usd|default:"—" }}</span><span class="small muted">from</span></div>
+        <p>{% blocktrans count n=r.country_count %}{{ n }} country on a single eSIM{% plural %}{{ n }} countries on a single eSIM{% endblocktrans %}</p>
+        <div class="foot">
+          <span class="price">{% if r.min_price_usd %}{{ r.min_price_usd|usd }}{% else %}&mdash;{% endif %}</span>
+          <span class="small muted">{% trans "from" %}</span>
+        </div>
       </a>
       {% endfor %}
     </div>
@@ -101,8 +111,8 @@
 <section class="section {% if not regions %}section-alt{% endif %}">
   <div class="shell">
     <div class="section-head center">
-      <span class="eyebrow">FAQ</span>
-      <h2>{{ country.name }} eSIM questions</h2>
+      <span class="eyebrow">{% trans "FAQ" %}</span>
+      <h2>{% blocktrans with name=country.name %}{{ name }} eSIM questions{% endblocktrans %}</h2>
     </div>
     {% include "partials/faq.html" %}
   </div>
@@ -111,9 +121,13 @@
 {% if nearby %}
 <section class="section-sm">
   <div class="shell">
-    <h3 class="mb-2">Nearby destinations</h3>
+    <h3 class="mb-2">{% trans "Nearby destinations" %}</h3>
     <div class="chips">
-      {% for c in nearby %}<a class="chip" href="{{ c.get_absolute_url }}">{{ c.flag_emoji }} {{ c.name }}{% if c.min_price_usd %} · ${{ c.min_price_usd }}{% endif %}</a>{% endfor %}
+      {% for c in nearby %}
+      <a class="chip" href="{{ c.get_absolute_url }}">
+        {% flag c.iso2 size=18 %}{{ c.name }}{% if c.min_price_usd %} &middot; {% blocktrans with p=c.min_price_usd|usd %}from {{ p }}{% endblocktrans %}{% endif %}
+      </a>
+      {% endfor %}
     </div>
   </div>
 </section>

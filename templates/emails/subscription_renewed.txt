@@ -1,0 +1,15 @@
+{{ subscription.target_name }}: renewed.
+
+We have charged ${{ subscription.price_usd }} and added a fresh unlimited period to
+the eSIM you already have. Nothing to install, nothing to scan.
+
+Plan: {{ subscription.title }}
+{% if subscription.current_period_end %}Next renewal: {{ subscription.current_period_end|date:"j M Y" }}{% endif %}
+{% if esim %}ICCID: {{ esim.iccid }}{% endif %}
+
+View this renewal: {{ detail_url }}
+
+Not travelling for a while? Cancel from your dashboard and you keep the period
+you have already paid for.
+
+-- {{ site_name }} · {{ support_email }}

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <div class="shell">{% include "partials/breadcrumbs.html" %}</div>
@@ -8,58 +9,80 @@
     <div class="grid g2" style="gap:44px;align-items:start">
       <div>
         <h1 style="font-size:clamp(1.7rem,3.4vw,2.3rem)">
-          {% if topup_esim %}Top up your eSIM{% else %}Checkout{% endif %}
+          {% if topup_esim %}{% trans "Top up your eSIM" %}{% else %}{% trans "Checkout" %}{% endif %}
         </h1>
         <p class="muted mt-1">
-          {% if topup_esim %}The data is added to <b>{{ topup_esim.display_name }}</b> — no new QR code to scan.
-          {% else %}Pay, and the QR code appears on the next screen and in your inbox.{% endif %}
+          {% if topup_esim %}
+            {% blocktrans with name=topup_esim.display_name %}The data is added to {{ name }}. No new QR code to scan.{% endblocktrans %}
+          {% else %}
+            {% trans "Pay, and the QR code appears on the next screen and in your inbox." %}
+          {% endif %}
         </p>
 
         {% if error %}
         <div class="alert alert-error mt-3">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-          <div>{{ error }}</div>
+          {% icon "alert" %}<div>{{ error }}</div>
         </div>
         {% endif %}
 
-        <form method="post" class="stack mt-3" style="gap:22px">
+        <form method="post" class="stack mt-3" style="gap:22px" id="checkout-form">
           {% csrf_token %}
           {% if topup_esim %}<input type="hidden" name="esim" value="{{ topup_esim.pk }}">{% endif %}
 
           <div class="field">
-            <label for="email">Email for your eSIM</label>
+            <label for="email">{% trans "Email for your eSIM" %}</label>
             <input class="input" type="email" id="email" name="email" value="{{ email }}" required
-                   placeholder="you@example.com" autocomplete="email" {% if user.is_authenticated %}readonly{% endif %}>
-            <span class="hint">This is where the QR code and receipt go. Double-check it.</span>
+                   placeholder="you@example.com" autocomplete="email"
+                   {% if user.is_authenticated %}readonly{% endif %}>
+            <span class="hint">{% trans "This is where the QR code and receipt go. Double-check it." %}</span>
+          </div>
+
+          <div class="field">
+            <label for="coupon">{% trans "Coupon code" %} <span class="muted-3">{% trans "(optional)" %}</span></label>
+            <div class="row" style="gap:8px;flex-wrap:nowrap">
+              <input class="input flex-1" type="text" id="coupon" name="coupon" value="{{ coupon_code }}"
+                     placeholder="BORDERLESS20" autocomplete="off" spellcheck="false"
+                     style="text-transform:uppercase">
+              <button class="btn btn-ghost" type="submit" formnovalidate name="apply_only" value="1">
+                {% trans "Apply" %}
+              </button>
+            </div>
+            {% if coupon and discount %}
+            <span class="coupon-applied">{% icon "check-circle" size=16 %}
+              {% blocktrans with code=coupon.code amount=discount|usd %}{{ code }} applied, {{ amount }} off{% endblocktrans %}
+            </span>
+            {% else %}
+            <span class="hint"><a class="link" href="{% url 'coupons' %}">{% trans "See current coupons" %}</a></span>
+            {% endif %}
           </div>
 
           <div>
-            <label class="small bold" style="display:block;margin-bottom:10px">Payment method</label>
+            <label class="small bold" style="display:block;margin-bottom:10px">{% trans "Payment method" %}</label>
             <div class="stack" style="gap:10px">
               {% if stripe_enabled %}
               <label class="radio-card">
                 <input type="radio" name="method" value="stripe" checked>
                 <span class="flex-1">
-                  <span class="t">Card</span>
-                  <span class="d">Visa, Mastercard, Amex, Apple Pay and Google Pay via Stripe</span>
+                  <span class="t">{% trans "Card" %}</span>
+                  <span class="d">{% trans "Visa, Mastercard, Amex, Apple Pay and Google Pay via Stripe" %}</span>
                 </span>
-                <span class="pay-icons"><span>VISA</span><span>MC</span></span>
+                {% icon "credit-card" size=22 cls="muted-3" %}
               </label>
               {% endif %}
               {% if crypto_enabled %}
               <label class="radio-card">
                 <input type="radio" name="method" value="crypto" {% if not stripe_enabled %}checked{% endif %}>
                 <span class="flex-1">
-                  <span class="t">Crypto</span>
-                  <span class="d">BTC, ETH, USDT, TRX and 100+ others via NOWPayments</span>
+                  <span class="t">{% trans "Crypto" %}</span>
+                  <span class="d">{% trans "Bitcoin, Ethereum, USDT, TRON and 100 more via NOWPayments" %}</span>
                 </span>
-                <span class="pay-icons"><span>BTC</span><span>USDT</span></span>
+                {% icon "bitcoin" size=22 cls="muted-3" %}
               </label>
               {% endif %}
               {% if not stripe_enabled and not crypto_enabled %}
               <div class="alert alert-warn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
-                <div>Payments are not configured yet. Add your Stripe or NOWPayments keys to start selling.</div>
+                {% icon "alert" %}
+                <div>{% trans "Payments are not configured yet. Add your Stripe or NOWPayments keys to start selling." %}</div>
               </div>
               {% endif %}
             </div>
@@ -67,56 +90,85 @@
 
           <button class="btn btn-primary btn-lg btn-block" type="submit"
                   {% if not stripe_enabled and not crypto_enabled %}disabled{% endif %}>
-            Pay ${{ plan.price }}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            {% blocktrans with amount=total|usd %}Pay {{ amount }}{% endblocktrans %}
+            {% icon "arrow-right" %}
           </button>
 
           <div class="row small muted" style="gap:16px;justify-content:center">
-            <span class="row" style="gap:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Secure checkout</span>
-            <span>Instant delivery</span>
-            <span>No subscription</span>
+            <span class="row" style="gap:6px">{% icon "lock" size=15 %} {% trans "Secure checkout" %}</span>
+            <span class="row" style="gap:6px">{% icon "zap" size=15 %} {% trans "Instant delivery" %}</span>
+            <span class="row" style="gap:6px">{% icon "check" size=15 %} {% trans "No subscription" %}</span>
           </div>
 
           <p class="xs muted-3 center">
-            By paying you accept our <a href="{% url 'terms' %}" class="link">terms</a> and
-            <a href="{% url 'refund' %}" class="link">refund policy</a>. An installed eSIM cannot be refunded.
+            {% url 'terms' as terms_url %}{% url 'refund' as refund_url %}
+            {% blocktrans %}By paying you accept our <a href="{{ terms_url }}" class="link">terms</a> and <a href="{{ refund_url }}" class="link">refund policy</a>. An installed eSIM cannot be refunded.{% endblocktrans %}
           </p>
         </form>
       </div>
 
       <div class="card card-solid" style="position:sticky;top:96px">
-        <h3>Order summary</h3>
+        <h3>{% trans "Order summary" %}</h3>
         <hr class="divider">
         <div class="row-between">
           <div>
             <div class="bold">{{ plan.target_name }}</div>
-            <div class="small muted">{{ plan.data_label }} · {{ plan.days }} day{{ plan.days|pluralize }}</div>
+            <div class="small muted">{{ plan.data_label }} &middot;
+              {% blocktrans count days=plan.days %}{{ days }} day{% plural %}{{ days }} days{% endblocktrans %}</div>
           </div>
-          <span style="font-size:1.9rem">{% if plan.country %}{{ plan.country.flag_emoji }}{% else %}{{ plan.region.icon }}{% endif %}</span>
+          {% if plan.country %}{% flag plan.country.iso2 size=38 cls="flag-lg" %}
+          {% else %}<span class="icon-tile v-cyan">{% icon "layers" size=20 %}</span>{% endif %}
         </div>
 
         <div class="stack mt-3" style="gap:9px">
-          <div class="row-between small"><span class="muted">Data</span><b>{{ plan.data_label }}</b></div>
-          <div class="row-between small"><span class="muted">Validity</span><b>{{ plan.days }} days from first connection</b></div>
-          {% if plan.per_gb_usd %}<div class="row-between small"><span class="muted">Price per GB</span><b>${{ plan.per_gb_usd }}</b></div>{% endif %}
-          <div class="row-between small"><span class="muted">Type</span><b>Data only · hotspot allowed</b></div>
+          <div class="row-between small"><span class="muted">{% trans "Data" %}</span><b>{{ plan.data_label }}</b></div>
+          <div class="row-between small"><span class="muted">{% trans "Validity" %}</span>
+            <b>{% blocktrans count days=plan.days %}{{ days }} day from first connection{% plural %}{{ days }} days from first connection{% endblocktrans %}</b></div>
+          {% if plan.per_gb_usd %}
+          <div class="row-between small"><span class="muted">{% trans "Price per GB" %}</span><b>{{ plan.per_gb_usd|usd }}</b></div>
+          {% endif %}
+          <div class="row-between small"><span class="muted">{% trans "Type" %}</span>
+            <b>{% trans "Data only, hotspot allowed" %}</b></div>
+        </div>
+
+        <hr class="divider">
+        <div class="stack" style="gap:8px">
+          {% if plan.compare_at_usd and plan.savings_pct %}
+          <div class="row-between small">
+            <span class="muted">{% trans "Usual price elsewhere" %}</span>
+            <span class="price-was">{{ plan.compare_at_usd|usd }}</span>
+          </div>
+          {% endif %}
+          <div class="row-between small">
+            <span class="muted">{% trans "Our price" %}</span><b>{{ subtotal|usd }}</b>
+          </div>
+          {% if discount %}
+          <div class="row-between small">
+            <span class="muted">{% trans "Coupon" %} <span class="badge badge-gold">{{ coupon.code }}</span></span>
+            <b style="color:var(--mint)">-{{ discount|usd }}</b>
+          </div>
+          {% endif %}
         </div>
 
         <hr class="divider">
         <div class="row-between">
-          <span class="bold">Total</span>
-          <span style="font-size:1.6rem;font-weight:800">${{ plan.price }}</span>
+          <span class="bold">{% trans "Total" %}</span>
+          <span style="font-size:1.7rem;font-weight:800">{{ total|usd }}</span>
         </div>
         {% if plan.savings_pct %}
-        <p class="xs muted-3 mt-2">Comparable plans on the well-known eSIM apps typically run around
-          ${{ plan.compare_at_usd }} for this much data.</p>
+        <div class="mt-2 center">
+          <span class="off-badge off-badge-lg">{% icon "percent" size=15 %}
+            {% blocktrans with pct=plan.savings_pct %}You save {{ pct }}% on the usual market price{% endblocktrans %}
+          </span>
+        </div>
         {% endif %}
 
         <hr class="divider">
         <div class="stack" style="gap:9px">
-          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> QR code delivered instantly</span>
-          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> One-off payment, no renewal</span>
-          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Keep your own number</span>
+          <span class="check">{% icon "check" size=18 %} {% trans "QR code delivered instantly" %}</span>
+          <span class="check">{% icon "check" size=18 %} {% trans "One-off payment, nothing renews" %}</span>
+          <span class="check">{% icon "check" size=18 %} {% trans "Keep your own number" %}</span>
+          <span class="check">{% icon "check" size=18 %} {% trans "No passport, no identity check" %}</span>
         </div>
       </div>
     </div>

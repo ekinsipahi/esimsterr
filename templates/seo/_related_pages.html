@@ -1,0 +1,35 @@
+{% load i18n %}
+
+{% comment %}
+Contextual links into the comparison and use-case pages. Those twelve pages sit
+two clicks from the homepage and are otherwise reachable only from the footer,
+which is the weakest internal link a page can give another page. Every view in
+this app that a searcher actually lands on passes whichever of the two lists is
+relevant, so the deep pages are linked from body copy that ranks.
+Expects related_use_cases / related_alternatives as (label, url) pairs.
+{% endcomment %}
+
+{% if related_use_cases or related_alternatives %}
+<section class="section-sm">
+  <div class="shell">
+    <div class="stack" style="gap:18px">
+      {% if related_use_cases %}
+      <div>
+        <p class="small muted mb-2">{% trans "Buying for a particular kind of trip? These pages narrow the catalogue to what suits it." %}</p>
+        <div class="chips">
+          {% for label, url in related_use_cases %}<a class="chip" href="{{ url }}">{{ label }}</a>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% if related_alternatives %}
+      <div>
+        <p class="small muted mb-2">{% trans "Weighing us up against something you already use? Each comparison sets out what we do differently and how to check it for yourself." %}</p>
+        <div class="chips">
+          {% for label, url in related_alternatives %}<a class="chip" href="{{ url }}">{{ label }}</a>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}

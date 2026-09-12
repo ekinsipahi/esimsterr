@@ -92,6 +92,32 @@ services:
       - key: CRON_SECRET
         generateValue: true
 
+      # --- Languages: only serve a locale once its .po file is translated ---
+      - key: ENABLED_LANGUAGES
+        value: "en"
+
+      # --- Subscriptions (Stripe recurring, unlimited plans) ---
+      - key: SUBSCRIPTIONS_ENABLED
+        value: "True"
+      - key: SUBSCRIPTION_DISCOUNT_PCT
+        value: "15"
+
+      # --- Struck-through list price = wholesale cost x this ---
+      - key: PRICING_COMPARE_MULTIPLIER
+        value: "4.0"
+
+      # --- In-site AI assistant (signed-in customers only) ---
+      - key: ASSISTANT_ENABLED
+        value: "True"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SUPPORT_FORWARD_EMAIL
+        sync: false
+
+      # Shown as "last updated" on the legal pages; bump on a real revision.
+      - key: LEGAL_UPDATED
+        sync: false
+
   # Refresh eSIM usage + retry any order stuck after a provider hiccup.
   - type: cron
     name: esimsterr-usage-sync
@@ -99,7 +125,7 @@ services:
     plan: free
     schedule: "*/20 * * * *"
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python manage.py sync_usage && python manage.py retry_orders"
+    startCommand: "python manage.py sync_usage && python manage.py retry_orders && python manage.py expire_coupon_holds"
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.3"
@@ -132,7 +158,7 @@ services:
     plan: free
     schedule: "30 3 * * *"
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python manage.py sync_plans"
+    startCommand: "python manage.py sync_plans && python manage.py seed_country_seo && python manage.py purge_fingerprints"
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.3"

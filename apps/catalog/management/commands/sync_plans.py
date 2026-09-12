@@ -101,14 +101,14 @@ class Command(BaseCommand):
             )
             obj, was_created = Plan.objects.get_or_create(provider_plan_id=pid, defaults=defaults)
             if was_created:
-                obj.compare_at_usd = compare_at_usd(price, is_unlimited=is_unlimited)
+                obj.compare_at_usd = compare_at_usd(cost, cur)
                 obj.save(update_fields=["compare_at_usd"])
                 created += 1
             else:
                 for k, v in defaults.items():
                     setattr(obj, k, v)
                 if obj.compare_at_usd is None:
-                    obj.compare_at_usd = compare_at_usd(price, is_unlimited=is_unlimited)
+                    obj.compare_at_usd = compare_at_usd(cost, cur)
                 obj.save()
                 updated += 1
 
@@ -158,8 +158,10 @@ class Command(BaseCommand):
     def _reprice(self):
         n = 0
         for plan in Plan.objects.all():
-            plan.price_usd = retail_usd(plan.cost_amount, plan.cost_currency, is_unlimited=plan.is_unlimited)
-            plan.save(update_fields=["price_usd"])
+            plan.price_usd = retail_usd(plan.cost_amount, plan.cost_currency,
+                                        is_unlimited=plan.is_unlimited)
+            plan.compare_at_usd = compare_at_usd(plan.cost_amount, plan.cost_currency)
+            plan.save(update_fields=["price_usd", "compare_at_usd"])
             n += 1
         return n
 

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 def _ref():
@@ -16,16 +17,16 @@ def _ref():
 
 class Order(models.Model):
     class Status(models.TextChoices):
-        PENDING = "pending", "Awaiting payment"
-        PAID = "paid", "Paid — provisioning"
-        COMPLETED = "completed", "Completed"
-        FAILED = "failed", "Failed"
-        REFUNDED = "refunded", "Refunded"
-        CANCELLED = "cancelled", "Cancelled"
+        PENDING = "pending", _("Awaiting payment")
+        PAID = "paid", _("Paid, provisioning")
+        COMPLETED = "completed", _("Completed")
+        FAILED = "failed", _("Failed")
+        REFUNDED = "refunded", _("Refunded")
+        CANCELLED = "cancelled", _("Cancelled")
 
     class Kind(models.TextChoices):
-        NEW = "new", "New eSIM"
-        TOPUP = "topup", "Top-up"
+        NEW = "new", _("New eSIM")
+        TOPUP = "topup", _("Top-up")
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ref = models.CharField(max_length=12, unique=True, default=_ref, db_index=True)
@@ -42,7 +43,14 @@ class Order(models.Model):
     plan_days = models.PositiveIntegerField(default=0)
     plan_data_label = models.CharField(max_length=32, blank=True)
 
+    # subtotal -> discount -> amount. amount_usd is always what we actually charge.
+    subtotal_usd = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0"))
+    discount_usd = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0"))
     amount_usd = models.DecimalField(max_digits=10, decimal_places=2)
+    coupon = models.ForeignKey("coupons.Coupon", null=True, blank=True,
+                               on_delete=models.SET_NULL, related_name="orders")
+    coupon_code = models.CharField(max_length=32, blank=True,
+                                   help_text="Frozen copy: the coupon row may be edited later")
     cost_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0"))
     cost_currency = models.CharField(max_length=3, default="EUR")
     currency = models.CharField(max_length=3, default="USD")
@@ -58,7 +66,12 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
-    ip = models.GenericIPAddressField(null=True, blank=True)
+    # Guest checkout has no account behind it, so the request fingerprint is the
+    # only handle we have for fraud review, chargeback defence and abuse tracing.
+    ip = models.GenericIPAddressField(null=True, blank=True, db_index=True)
+    user_agent = models.CharField(max_length=300, blank=True)
+    accept_language = models.CharField(max_length=120, blank=True)
+    referrer = models.CharField(max_length=300, blank=True)
 
     class Meta:
         db_table = "orders"
@@ -78,6 +91,10 @@ class Order(models.Model):
         return (self.amount_usd - cost_usd).quantize(Decimal("0.01"))
 
     @property
+    def is_guest(self):
+        return self.user_id is None
+
+    @property
     def is_payable(self):
         return self.status == self.Status.PENDING
 
@@ -92,11 +109,11 @@ class Esim(models.Model):
     """A provisioned eSIM profile. One row per ICCID we ever hand to a customer."""
 
     class Status(models.TextChoices):
-        RELEASED = "Released", "Ready to install"
-        INSTALLED = "Installed", "Installed"
-        ENABLED = "Enabled", "Active"
-        DISABLED = "Disabled", "Disabled"
-        DELETED = "Deleted", "Removed from device"
+        RELEASED = "Released", _("Ready to install")
+        INSTALLED = "Installed", _("Installed")
+        ENABLED = "Enabled", _("Active")
+        DISABLED = "Disabled", _("Disabled")
+        DELETED = "Deleted", _("Removed from device")
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
@@ -160,10 +177,29 @@ class Esim(models.Model):
         return min(100, round(float(pct)))
 
     @property
+    def remaining_mb(self):
+        """Megabytes left.
+
+        The provider reports package, used and left as three separate fields and
+        does not always send all three, so a missing `left` is derived rather
+        than rendered as nothing. Callers can rely on this being a number
+        whenever we know the package size at all."""
+        if self.data_left_mb is not None:
+            return self.data_left_mb
+        if self.data_package_mb is not None and self.data_used_mb is not None:
+            return max(Decimal("0"), self.data_package_mb - self.data_used_mb)
+        return None
+
+    @property
     def data_left_gb(self):
-        if self.data_left_mb is None:
+        left = self.remaining_mb
+        return None if left is None else round(float(left) / 1024, 2)
+
+    @property
+    def data_used_gb(self):
+        if self.data_used_mb is None:
             return None
-        return round(float(self.data_left_mb) / 1024, 2)
+        return round(float(self.data_used_mb) / 1024, 2)
 
     @property
     def data_package_gb(self):

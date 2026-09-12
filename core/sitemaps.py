@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from apps.blog.models import Post
 from apps.catalog.models import Country, Region
+from apps.seo.sitemaps import SEO_SITEMAPS
 
 
 class StaticSitemap(Sitemap):
@@ -12,6 +13,7 @@ class StaticSitemap(Sitemap):
         ("destinations", "daily", 0.9),
         ("regions", "weekly", 0.8),
         ("unlimited", "weekly", 0.8),
+        ("coupons", "weekly", 0.7),
         ("how_it_works", "monthly", 0.6),
         ("compatible_devices", "monthly", 0.6),
         ("faq", "monthly", 0.6),
@@ -77,4 +79,5 @@ SITEMAPS = {
     "countries": CountrySitemap,
     "regions": RegionSitemap,
     "blog": BlogSitemap,
+    **SEO_SITEMAPS,
 }

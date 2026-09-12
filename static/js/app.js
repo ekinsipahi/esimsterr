@@ -63,20 +63,30 @@
     var input = search.querySelector("input");
     var box = search.parentElement.querySelector("[data-search-results]");
     var timer = null, activeIndex = -1, items = [];
+    // Strings rendered by JS still have to translate, so the template supplies
+    // them as data attributes rather than the script hardcoding English.
+    var fromLabel = search.getAttribute("data-label-from") || "from";
+    var emptyLabel = search.getAttribute("data-label-empty") ||
+      "No destination matches that name.";
 
     function render(results, q) {
       if (!results.length) {
-        box.innerHTML = '<div class="search-empty">No destination matches “' +
-          escapeHtml(q) + '”. Try a country name.</div>';
+        box.innerHTML = '<div class="search-empty">' + escapeHtml(emptyLabel) + "</div>";
         box.hidden = false;
         items = [];
         return;
       }
       box.innerHTML = results.map(function (r, i) {
-        var price = r.from ? '<span class="price">from $' + r.from + "</span>" : "";
+        var price = r.from ? '<span class="price">' + fromLabel + " $" + r.from + "</span>" : "";
         var note = r.note ? '<span class="note">' + escapeHtml(r.note) + "</span>" : "";
+        // Flags are SVG images, never emoji: Windows renders emoji flags as the
+        // bare country code. Regions have no flag, so they get a globe glyph.
+        var mark = r.flag_url
+          ? '<img class="flag" src="' + escapeHtml(r.flag_url) + '" width="26" height="20" alt="">'
+          : '<span class="flag flag-unknown" style="width:26px;height:20px">' +
+            escapeHtml((r.iso2 || "").slice(0, 2)) + "</span>";
         return '<a class="search-result" data-i="' + i + '" href="' + r.url + '">' +
-          '<span class="flag">' + r.flag + "</span>" +
+          mark +
           '<span><span class="name">' + escapeHtml(r.name) + "</span>" + note + "</span>" +
           price + "</a>";
       }).join("");
@@ -148,7 +158,7 @@
     var done = function () {
       var old = btn.dataset.label || btn.textContent;
       btn.dataset.label = old;
-      btn.textContent = "Copied";
+      btn.textContent = btn.dataset.copiedLabel || document.documentElement.dataset.labelCopied || "Copied";
       setTimeout(function () { btn.textContent = old; }, 1600);
     };
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(done).catch(done);
@@ -171,6 +181,23 @@
     revealables.forEach(function (el) { io.observe(el); });
   } else {
     revealables.forEach(function (el) { el.classList.add("in"); });
+  }
+
+  /* ---------- hero film ---------------------------------------------------- */
+  var film = document.querySelector(".hero-film");
+  if (film) {
+    var video = film.querySelector("video");
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (video && reduce && reduce.matches) {
+      // Someone who asked the OS for less motion gets the poster frame instead
+      // of a looping film behind the headline.
+      film.classList.add("is-static");
+      film.style.backgroundImage = "url('" + (video.getAttribute("poster") || "") + "')";
+      film.style.backgroundSize = "cover";
+      film.style.backgroundPosition = "center";
+      video.removeAttribute("autoplay");
+      try { video.pause(); } catch (e) {}
+    }
   }
 
   /* ---------- order status polling ---------------------------------------- */

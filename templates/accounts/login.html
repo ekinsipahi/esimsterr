@@ -1,66 +1,75 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <section class="section">
   <div class="shell auth-side">
     <div class="auth-wrap w-full">
       <div class="center mb-3">
-        <h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">Welcome back</h1>
-        <p class="muted mt-1">Sign in to see your eSIMs, QR codes and data left.</p>
+        <h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">{% trans "Welcome back" %}</h1>
+        <p class="muted mt-1">{% trans "Sign in to see your eSIMs, your QR codes and the data you have left." %}</p>
       </div>
 
       <div class="card card-solid">
         {% if form.non_field_errors %}
         <div class="alert alert-error mb-3">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          {% icon "alert" %}
           <div>{{ form.non_field_errors.0 }}</div>
         </div>
         {% endif %}
 
         {% if GOOGLE_CLIENT_ID %}
-        <div id="g_id_onload" data-client_id="{{ GOOGLE_CLIENT_ID }}"
-             data-callback="esimsterrGoogle" data-auto_prompt="false"></div>
-        <div class="g_id_signin" data-type="standard" data-theme="outline" data-size="large"
-             data-text="signin_with" data-shape="pill" data-logo_alignment="left" data-width="360"></div>
-        <form method="post" action="{% url 'google_finish' %}" id="google-form" hidden>
-          {% csrf_token %}
-          <input type="hidden" name="credential">
-          <input type="hidden" name="next" value="{{ next }}">
-        </form>
-        <div class="divider-or mt-3 mb-3">or with email</div>
+        <div class="center">
+          <div id="g_id_onload" data-client_id="{{ GOOGLE_CLIENT_ID }}"
+               data-callback="esimsterrGoogle" data-auto_prompt="false"></div>
+          <div class="g_id_signin" data-type="standard" data-theme="outline" data-size="large"
+               data-text="signin_with" data-shape="pill" data-logo_alignment="left" data-width="360"></div>
+          <form method="post" action="{% url 'google_finish' %}" id="google-form" hidden>
+            {% csrf_token %}
+            <input type="hidden" name="credential">
+            <input type="hidden" name="next" value="{{ next }}">
+          </form>
+          <p class="xs muted-3 mt-2">{% trans "One tap, no password to remember." %}</p>
+        </div>
+        <div class="divider-or mt-3 mb-3">{% trans "or with email" %}</div>
+        {% else %}
+        <p class="small muted center">{% trans "Sign in with your email address below." %}</p>
+        <div class="divider"></div>
         {% endif %}
 
         <form method="post" class="stack">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ next }}">
           <div class="field">
-            <label for="email">Email</label>
+            <label for="email">{% trans "Email" %}</label>
             <input class="input" type="email" id="email" name="email" required autocomplete="email"
                    value="{{ form.email.value|default:'' }}">
+            {% if form.email.errors %}<span class="err">{{ form.email.errors.0 }}</span>{% endif %}
           </div>
           <div class="field">
-            <label for="password">Password</label>
+            <label for="password">{% trans "Password" %}</label>
             <input class="input" type="password" id="password" name="password" required autocomplete="current-password">
-            <a class="hint link" href="{% url 'password_reset' %}">Forgot your password?</a>
+            {% if form.password.errors %}<span class="err">{{ form.password.errors.0 }}</span>{% endif %}
+            <a class="hint link" href="{% url 'password_reset' %}">{% trans "Forgotten your password?" %}</a>
           </div>
-          <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+          <button class="btn btn-primary btn-block" type="submit">{% trans "Sign in" %}</button>
         </form>
       </div>
 
+      {% url 'signup' as signup_url %}{% url 'destinations' as guest_url %}
       <p class="center small muted mt-3">
-        No account? <a class="link" href="{% url 'signup' %}">Create one</a> — or just
-        <a class="link" href="{% url 'destinations' %}">buy as a guest</a>.
+        {% blocktrans %}No account yet? <a class="link" href="{{ signup_url }}">Create one</a>, or <a class="link" href="{{ guest_url }}">buy as a guest</a>.{% endblocktrans %}
       </p>
     </div>
 
     <div class="aside">
-      <span class="eyebrow">Your account</span>
-      <h2 class="mt-2">Everything in one place</h2>
+      <span class="eyebrow">{% trans "Your account" %}</span>
+      <h2 class="mt-2">{% trans "Everything in one place" %}</h2>
       <div class="stack mt-3" style="gap:14px">
-        <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Every QR code, ready to reinstall</span>
-        <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Live data usage and days remaining</span>
-        <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> One-tap top-ups onto the same eSIM</span>
-        <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Receipts for every order</span>
+        <span class="check">{% icon "check" %} {% trans "Every QR code, ready to install again" %}</span>
+        <span class="check">{% icon "check" %} {% trans "Data used and days remaining, live" %}</span>
+        <span class="check">{% icon "check" %} {% trans "Top up the eSIM already in your phone" %}</span>
+        <span class="check">{% icon "check" %} {% trans "A receipt for every order" %}</span>
       </div>
     </div>
   </div>

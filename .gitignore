@@ -8,3 +8,7 @@ node_modules/
 media/
 .DS_Store
 *.log
+
+# Source artwork the owner supplied; the web-ready derivatives in static/ are
+# what the site serves. Keep these out of the deploy image, they are large.
+assets-src/

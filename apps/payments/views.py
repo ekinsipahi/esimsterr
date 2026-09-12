@@ -16,6 +16,23 @@ from . import nowpayments, services, stripe_client
 
 log = logging.getLogger(__name__)
 
+# Event types the subscriptions app owns. Everything else falls through to the
+# one-off payment path.
+SUBSCRIPTION_EVENTS = {
+    "checkout.session.completed",
+    # A delayed payment method (some bank redirects) settles after the session
+    # closes; without this the first cycle would never provision.
+    "checkout.session.async_payment_succeeded",
+    "invoice.paid",
+    "invoice.payment_succeeded",
+    "invoice.payment_failed",
+    "customer.subscription.created",
+    "customer.subscription.updated",
+    "customer.subscription.deleted",
+    "customer.subscription.paused",
+    "customer.subscription.resumed",
+}
+
 
 @csrf_exempt
 @require_POST
@@ -30,8 +47,29 @@ def stripe_webhook(request):
         log.warning("Rejected Stripe webhook: bad signature")
         return HttpResponseForbidden("invalid signature")
 
-    if event["type"] in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
+    etype = event["type"]
+
+    # Subscriptions own their whole lifecycle, including the checkout that starts
+    # them. Routing on session mode keeps one-off and recurring payments from
+    # settling each other's orders.
+    if etype in SUBSCRIPTION_EVENTS:
+        obj = event["data"]["object"]
+        if etype.startswith("checkout.session") and obj.get("mode") != "subscription":
+            pass  # a one-off checkout, handled below
+        else:
+            try:
+                from apps.subscriptions.services import handle_stripe_event
+
+                handle_stripe_event(event)
+            except Exception:  # noqa: BLE001
+                log.exception("Stripe subscription event failed: %s", etype)
+                return HttpResponse("error", status=500)
+            return JsonResponse({"received": True})
+
+    if etype in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
         session = event["data"]["object"]
+        if session.get("mode") == "subscription":
+            return JsonResponse({"received": True})
         if session.get("payment_status") in ("paid", "no_payment_required"):
             try:
                 services.settle_stripe_session(session)
@@ -133,6 +171,12 @@ def cron(request, task):
     if task == "sync-plans":
         from django.core.management import call_command
         call_command("sync_plans", "--no-devices")
+        return JsonResponse({"task": task, "status": "ok"})
+
+    if task == "purge-fingerprints":
+        # Enforces the retention window the privacy policy publishes.
+        from django.core.management import call_command
+        call_command("purge_fingerprints")
         return JsonResponse({"task": task, "status": "ok"})
 
     return JsonResponse({"error": "unknown task"}, status=404)

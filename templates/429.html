@@ -1,15 +1,23 @@
 {% extends "base.html" %}
+{% load i18n ui %}
+
+{% block title %}{% trans "Too many requests" %} — {{ site_name }}{% endblock %}
+
 {% block content %}
 <section class="section">
   <div class="shell auth-wrap center">
     <div class="card card-solid">
-      <div style="font-size:2.2rem">🐢</div>
-      <h1 class="mt-2" style="font-size:1.6rem">Slow down a moment</h1>
-      <p class="muted mt-2">That is more requests than we allow from one place in a short window.
-        Try again in about {{ retry_after }} second{{ retry_after|pluralize }}.</p>
-      <p class="small muted-3 mt-2">If you think this is wrong, email
-        <a class="link" href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
-      <a class="btn btn-ghost mt-3" href="{% url 'home' %}">Back to the site</a>
+      <div class="icon-tile v-amber mx-auto">{% icon "clock" %}</div>
+      <h1 class="mt-2" style="font-size:1.6rem">{% trans "Slow down a moment" %}</h1>
+      <p class="muted mt-2">
+        {% trans "That is more requests than we allow from one place in a short window." %}
+        {% blocktrans count secs=retry_after|default:60 %}Try again in about {{ secs }} second.{% plural %}Try again in about {{ secs }} seconds.{% endblocktrans %}
+      </p>
+      <p class="small muted-3 mt-2">
+        {% url 'support' as support_url %}
+        {% blocktrans %}If you think this is wrong, <a class="link" href="mailto:{{ support_email }}">email us</a> or open a <a class="link" href="{{ support_url }}">support ticket</a>.{% endblocktrans %}
+      </p>
+      <a class="btn btn-ghost mt-3" href="{% url 'home' %}">{% trans "Back to the site" %}</a>
     </div>
   </div>
 </section>

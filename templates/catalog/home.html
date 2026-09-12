@@ -1,72 +1,43 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n ui %}
 
 {% block content %}
 <section class="hero">
+  <div class="hero-film" aria-hidden="true">
+    <video autoplay muted loop playsinline preload="none"
+           poster="{% static 'video/hero-poster.jpg' %}">
+      <source src="{% static 'video/hero.webm' %}" type="video/webm">
+      <source src="{% static 'video/hero.mp4' %}" type="video/mp4">
+    </video>
+  </div>
+
   <div class="shell">
-    <div class="hero-grid">
+    <div class="hero-copy">
       <div>
-        <span class="eyebrow">{{ country_count }} destinations · instant delivery</span>
-        <h1>Data abroad,<br><span class="grad-text">without the roaming bill.</span></h1>
+        <span class="eyebrow">
+          {% blocktrans count n=country_count %}{{ n }} destination, one tap{% plural %}{{ n }} destinations, one tap{% endblocktrans %}
+        </span>
+        <h1>{% trans "Connect" %}<br><span class="grad-text">{% trans "without borders." %}</span></h1>
         <p class="hero-lead">
-          Pick where you are going, pay, and scan one QR code. Your eSIM connects to the local
-          network the moment you land, and your own number keeps working the whole time.
+          {% trans "Data abroad without the roaming bill. Pick where you are going, pay, and scan one QR code. Your eSIM joins the local network the moment you land, and your own number keeps working the whole time." %}
         </p>
 
-        <div class="search" data-search>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input type="search" placeholder="Where are you travelling? e.g. Italy, Japan, Europe"
-                 aria-label="Search destinations" autocomplete="off" spellcheck="false">
-          <a class="btn btn-primary" href="{% url 'destinations' %}">Browse<span>&nbsp;all</span></a>
+        <div style="position:relative">
+          <div class="search" data-search
+               data-label-from="{% trans 'from' %}"
+               data-label-empty="{% trans 'No destination matches that name. Try the country in English.' %}">
+            {% icon "search" size=21 %}
+            <input type="search" placeholder="{% trans 'Where are you travelling? Italy, Japan, Europe' %}"
+                   aria-label="{% trans 'Search destinations' %}" autocomplete="off" spellcheck="false">
+            <a class="btn btn-primary" href="{% url 'destinations' %}">{% trans "Browse all" %}</a>
+          </div>
+          <div class="search-results" data-search-results hidden></div>
         </div>
-        <div class="search-results" data-search-results hidden></div>
 
         <div class="trust-row">
-          <span class="item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
-            No roaming fees
-          </span>
-          <span class="item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
-            Keep your WhatsApp number
-          </span>
-          <span class="item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
-            Card or crypto
-          </span>
-        </div>
-      </div>
-
-      <div class="hide-sm" style="position:relative" aria-hidden="true">
-        <div class="hero-glow"></div>
-        <div class="ring ring-1"></div>
-        <div class="ring ring-2"></div>
-        <div class="phone float">
-          <div class="phone-notch"></div>
-          <div class="phone-screen">
-            <div class="phone-status"><span>9:41</span><span>5G ▮▮▮</span></div>
-            <div class="phone-hero">
-              <div style="font-size:.72rem;opacity:.85;font-weight:700;letter-spacing:.08em">ACTIVE eSIM</div>
-              <div style="font-size:1.28rem;font-weight:800;margin-top:6px">🇮🇹 Italy · 10 GB</div>
-              <div style="font-size:.78rem;opacity:.9;margin-top:3px">21 days left</div>
-              <div style="height:7px;border-radius:99px;background:rgba(255,255,255,.28);margin-top:12px;overflow:hidden">
-                <span style="display:block;height:100%;width:62%;background:#fff;border-radius:99px"></span>
-              </div>
-              <div style="font-size:.72rem;opacity:.9;margin-top:6px">6.2 GB of 10 GB left</div>
-            </div>
-            <div class="phone-card">
-              <div style="font-size:.7rem;color:var(--text-3);font-weight:700">NEXT TRIP</div>
-              <div style="font-size:.95rem;font-weight:700;margin-top:4px">🇯🇵 Japan · 5 GB</div>
-              <div style="font-size:.75rem;color:var(--text-2)">Ready to install</div>
-            </div>
-            <div class="phone-card" style="display:flex;align-items:center;gap:10px">
-              <span style="width:34px;height:34px;border-radius:10px;background:var(--grad-mint);display:grid;place-content:center;color:#fff;font-weight:800">✓</span>
-              <div>
-                <div style="font-size:.85rem;font-weight:700">Connected</div>
-                <div style="font-size:.72rem;color:var(--text-2)">TIM · 5G</div>
-              </div>
-            </div>
-          </div>
+          <span class="item">{% icon "check" size=17 %}{% trans "No roaming fees" %}</span>
+          <span class="item">{% icon "check" size=17 %}{% trans "Keep your WhatsApp number" %}</span>
+          <span class="item">{% icon "check" size=17 %}{% trans "Card or crypto" %}</span>
         </div>
       </div>
     </div>
@@ -76,11 +47,11 @@
 <section class="section-sm">
   <div class="shell">
     <div class="strip">
-      <span>Instant QR delivery</span>
-      <span>150+ countries</span>
-      <span>Local 4G / 5G</span>
-      <span>No KYC</span>
-      <span>24/7 support</span>
+      <span>{% trans "Instant QR delivery" %}</span>
+      <span>{% blocktrans count n=country_count %}{{ n }} destination{% plural %}{{ n }} destinations{% endblocktrans %}</span>
+      <span>{% trans "Local 4G / 5G" %}</span>
+      <span>{% trans "No ID checks" %}</span>
+      <span>{% trans "Support around the clock" %}</span>
     </div>
   </div>
 </section>
@@ -89,14 +60,14 @@
   <div class="shell">
     <div class="row-between section-head">
       <div>
-        <span class="eyebrow">Popular right now</span>
-        <h2>Where travellers are heading</h2>
+        <span class="eyebrow">{% trans "Popular right now" %}</span>
+        <h2>{% trans "Where travellers are heading" %}</h2>
       </div>
-      <a class="btn btn-ghost" href="{% url 'destinations' %}">All destinations</a>
+      <a class="btn btn-ghost" href="{% url 'destinations' %}">{% trans "All destinations" %}</a>
     </div>
     <div class="grid g4">
       {% for c in popular %}{% include "partials/dest_card.html" %}{% empty %}
-      <p class="muted">The catalogue is syncing. Check back in a minute.</p>
+      <p class="muted">{% trans "The catalogue is syncing. Check back in a minute." %}</p>
       {% endfor %}
     </div>
   </div>
@@ -106,20 +77,19 @@
 <section class="section section-alt">
   <div class="shell">
     <div class="section-head center">
-      <span class="eyebrow">One eSIM, many borders</span>
-      <h2>Regional & global plans</h2>
-      <p class="h-sub">Crossing more than one country? A regional plan is almost always cheaper than
-        buying each destination separately, and you never reinstall anything at the border.</p>
+      <span class="eyebrow">{% trans "One eSIM, many borders" %}</span>
+      <h2>{% trans "Regional and global plans" %}</h2>
+      <p class="h-sub">{% trans "Crossing more than one country? A regional plan is almost always cheaper than buying each destination separately, and you never reinstall anything at the border." %}</p>
     </div>
     <div class="grid g3">
       {% for r in regions %}
       <a class="region-card reveal" href="{{ r.get_absolute_url }}">
-        <div class="ico">{{ r.icon }}</div>
+        <span class="icon-tile v-cyan">{% icon "layers" size=26 %}</span>
         <h3>{{ r.name }}</h3>
-        <p>{{ r.description|default:r.country_count|truncatechars:110 }}</p>
+        <p>{% if r.description %}{{ r.description|truncatechars:110 }}{% else %}{% blocktrans count n=r.country_count %}{{ n }} country on one profile{% plural %}{{ n }} countries on one profile{% endblocktrans %}{% endif %}</p>
         <div class="foot">
-          <span class="price">${{ r.min_price_usd|default:"—" }}</span>
-          <span class="small muted">from · {{ r.country_count }} countries</span>
+          <span class="price">{% if r.min_price_usd %}{{ r.min_price_usd|usd }}{% else %}&mdash;{% endif %}</span>
+          <span class="small muted">{% blocktrans count n=r.country_count %}from &middot; {{ n }} country{% plural %}from &middot; {{ n }} countries{% endblocktrans %}</span>
         </div>
       </a>
       {% endfor %}
@@ -131,8 +101,8 @@
 <section class="section">
   <div class="shell">
     <div class="section-head center">
-      <span class="eyebrow">Why eSIMsterr</span>
-      <h2>The boring parts, done properly</h2>
+      <span class="eyebrow">{% trans "Why eSIMsterr" %}</span>
+      <h2>{% trans "The boring parts, done properly" %}</h2>
     </div>
     {% include "partials/trust_features.html" %}
   </div>
@@ -142,10 +112,10 @@
   <div class="shell">
     <div class="grid g2" style="gap:56px;align-items:center">
       <div>
-        <span class="eyebrow">Four steps</span>
-        <h2 class="mt-2">From checkout to connected</h2>
-        <p class="h-sub">No shop, no plastic, no waiting. The whole thing happens on your phone.</p>
-        <a class="btn btn-primary mt-3" href="{% url 'destinations' %}">Start with your destination</a>
+        <span class="eyebrow">{% trans "Four steps" %}</span>
+        <h2 class="mt-2">{% trans "From checkout to connected" %}</h2>
+        <p class="h-sub">{% trans "No shop, no plastic, no waiting. The whole thing happens on your phone." %}</p>
+        <a class="btn btn-primary mt-3" href="{% url 'destinations' %}">{% trans "Start with your destination" %}</a>
       </div>
       {% include "partials/steps.html" %}
     </div>
@@ -156,22 +126,29 @@
 <section class="section">
   <div class="shell">
     <div class="section-head">
-      <span class="eyebrow">Cheapest right now</span>
-      <h2>Starter plans under a few dollars</h2>
-      <p class="h-sub">Small plans for short trips, priced per GB so you can see what you are actually paying.</p>
+      <span class="eyebrow">{% trans "Cheapest right now" %}</span>
+      <h2>{% trans "Starter plans for short trips" %}</h2>
+      <p class="h-sub">{% trans "Next to every price is what the same wholesale data usually costs elsewhere, so the gap is yours to check rather than ours to claim." %}</p>
     </div>
     <div class="grid g4">
       {% for plan in cheapest %}
       <a class="card card-hover" href="{{ plan.target.get_absolute_url }}">
         <div class="row" style="gap:9px">
-          <span style="font-size:1.5rem">{% if plan.country %}{{ plan.country.flag_emoji }}{% else %}{{ plan.region.icon }}{% endif %}</span>
-          <b>{{ plan.target_name }}</b>
+          {% if plan.country %}{% flag plan.country.iso2 size=26 %}{% else %}{% icon "globe" size=22 %}{% endif %}
+          <b class="truncate">{{ plan.target_name }}</b>
         </div>
-        <div class="mt-2" style="font-size:1.35rem;font-weight:800">${{ plan.price }}</div>
-        <div class="small muted">{{ plan.data_label }} · {{ plan.days }} day{{ plan.days|pluralize }}</div>
+        <div class="price-stack mt-2">
+          <span class="plan-price">{{ plan.price|usd }}</span>
+          {% if plan.compare_at_usd and plan.savings_pct %}
+            <span class="price-was">{{ plan.compare_at_usd|usd }}</span>
+            <span class="off-badge">{% icon "percent" size=13 %}{% blocktrans with pct=plan.savings_pct %}{{ pct }}% OFF{% endblocktrans %}</span>
+          {% endif %}
+        </div>
+        <div class="small muted">{{ plan.data_label }} &middot; {% blocktrans count days=plan.days %}{{ days }} day{% plural %}{{ days }} days{% endblocktrans %}</div>
       </a>
       {% endfor %}
     </div>
+    <p class="xs muted-3 mt-3">{% trans "The struck-through figure is the typical market price for the same data, not a price we used to charge." %}</p>
   </div>
 </section>
 {% endif %}
@@ -181,17 +158,17 @@
   <div class="shell">
     <div class="row-between section-head">
       <div>
-        <span class="eyebrow">Travel guides</span>
-        <h2>Before you fly</h2>
+        <span class="eyebrow">{% trans "Travel guides" %}</span>
+        <h2>{% trans "Before you fly" %}</h2>
       </div>
-      <a class="btn btn-ghost" href="{% url 'blog:index' %}">All guides</a>
+      <a class="btn btn-ghost" href="{% url 'blog:index' %}">{% trans "All guides" %}</a>
     </div>
     <div class="grid g3">
       {% for post in posts %}
       <a class="card card-hover reveal" href="{{ post.get_absolute_url }}">
         <h3>{{ post.title }}</h3>
         <p class="small muted mt-1">{{ post.excerpt|truncatechars:130 }}</p>
-        <span class="link small mt-2" style="display:inline-block">Read the guide →</span>
+        <span class="link small mt-2" style="display:inline-flex;align-items:center;gap:6px">{% trans "Read the guide" %}{% icon "arrow-right" size=15 %}</span>
       </a>
       {% endfor %}
     </div>
@@ -202,11 +179,11 @@
 <section class="section">
   <div class="shell">
     <div class="section-head center">
-      <span class="eyebrow">Questions</span>
-      <h2>Everything people ask before their first eSIM</h2>
+      <span class="eyebrow">{% trans "Questions" %}</span>
+      <h2>{% trans "Everything people ask before their first eSIM" %}</h2>
     </div>
     {% include "partials/faq.html" %}
-    <div class="center mt-4"><a class="btn btn-ghost" href="{% url 'faq' %}">Read the full FAQ</a></div>
+    <div class="center mt-4"><a class="btn btn-ghost" href="{% url 'faq' %}">{% trans "Read the full FAQ" %}</a></div>
   </div>
 </section>
 

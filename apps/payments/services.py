@@ -205,6 +205,10 @@ def process_nowpayments_ipn(payload: dict) -> None:
         if payment.order.status == Order.Status.PENDING:
             payment.order.status = Order.Status.CANCELLED
             payment.order.save(update_fields=["status"])
+            # An invoice that expired unpaid must hand its coupon seat back,
+            # otherwise a capped code drains through abandoned checkouts.
+            from apps.coupons.services import release
+            release(payment.order)
     elif status == "confirming":
         payment.status = Payment.Status.CONFIRMING
     elif status == "partially_paid":

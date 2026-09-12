@@ -1,0 +1,28 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}Your card was declined, so we could not renew your subscription. Here is how to fix it.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">We could not renew your subscription</h1>
+<p style="margin:0 0 18px">
+  Your bank declined the ${{ subscription.price_usd }} renewal for {{ subscription.target_name }}. That is usually an
+  expired card or a block on foreign payments, rather than anything wrong with your account.
+</p>
+
+<table role="presentation" width="100%" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;margin:0 0 18px">
+  <tr><td style="padding:18px;font-size:14px;color:#7c2d12">
+    Your eSIM keeps working until the current period ends. We retry the payment automatically over the next few
+    days; if it still does not go through, the subscription stops and the line goes quiet.
+  </td></tr>
+</table>
+
+<a href="{{ detail_url }}"
+   style="display:inline-block;background:#0f74b4;background:linear-gradient(135deg,#0d5c91 0%,#1a8fd1 48%,#35bdea 120%);
+          color:#fff;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:15px">Update your card</a>
+
+<h2 style="margin:26px 0 10px;font-size:16px;font-weight:700;color:#171a3c">How to fix it</h2>
+<ol style="margin:0 0 0 18px;padding:0;font-size:14px;color:#575c86;line-height:1.75">
+  <li>Open your subscription and choose Manage billing.</li>
+  <li>Add a working card. The retry happens straight away.</li>
+  <li>Still stuck? Reply to this email and a person will sort it out.</li>
+</ol>
+{% endblock %}
+{% block footer_note %}You are receiving this because a payment failed on your {{ site_name }} subscription.{% endblock %}

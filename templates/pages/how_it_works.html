@@ -1,13 +1,13 @@
 {% extends "base.html" %}
+{% load i18n ui %}
 
 {% block content %}
 <section class="section">
   <div class="shell">
     <div class="section-head center">
-      <span class="eyebrow">The basics</span>
-      <h2>How an eSIM actually works</h2>
-      <p class="h-sub">No plastic, no shop, no roaming surcharge. Here is the whole thing in four steps
-        and about two minutes of your time.</p>
+      <span class="eyebrow">{% trans "The basics" %}</span>
+      <h2>{% trans "How an eSIM actually works" %}</h2>
+      <p class="h-sub">{% trans "No plastic, no shop, no roaming surcharge. Here is the whole thing in four steps and about two minutes of your time." %}</p>
     </div>
     <div class="mx-auto" style="max-width:720px">{% include "partials/steps.html" %}</div>
   </div>
@@ -17,37 +17,50 @@
   <div class="shell">
     <div class="grid g3">
       <div class="card">
-        <span class="icon-tile v-sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect width="14" height="20" x="5" y="2" rx="2.5"/><path d="M12 18h.01"/></svg></span>
-        <h3 class="mt-2">What is an eSIM?</h3>
-        <p class="muted small mt-1">A chip already soldered into your phone that can hold a mobile plan
-          downloaded over the internet. The QR code you scan is just the download instruction.</p>
+        <span class="icon-tile v-sky">{% icon "smartphone" size=22 %}</span>
+        <h3 class="mt-2">{% trans "What is an eSIM?" %}</h3>
+        <p class="muted small mt-1">{% trans "A chip already soldered into your phone that can hold a mobile plan downloaded over the internet. The QR code you scan is just the download instruction." %}</p>
       </div>
       <div class="card">
-        <span class="icon-tile v-mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M2 12h20"/></svg></span>
-        <h3 class="mt-2">Two lines at once</h3>
-        <p class="muted small mt-1">Your normal SIM keeps handling calls, SMS and WhatsApp on your own
-          number. The eSIM only carries data, so nothing about your identity changes.</p>
+        <span class="icon-tile v-mint">{% icon "sim" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Two lines at once" %}</h3>
+        <p class="muted small mt-1">{% trans "Your normal SIM keeps handling calls, SMS and WhatsApp on your own number. The eSIM only carries data, so nothing about your identity changes." %}</p>
       </div>
       <div class="card">
-        <span class="icon-tile v-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-        <h3 class="mt-2">When the clock starts</h3>
-        <p class="muted small mt-1">On first connection at your destination — not at purchase, not at
-          install. Install at home on Wi-Fi and nothing is wasted.</p>
+        <span class="icon-tile v-amber">{% icon "clock" size=22 %}</span>
+        <h3 class="mt-2">{% trans "When the clock starts" %}</h3>
+        <p class="muted small mt-1">{% trans "On first connection at your destination — not at purchase, not at install. Install at home on Wi-Fi and nothing is wasted." %}</p>
       </div>
     </div>
 
     <div class="alert alert-info mt-4">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-      <div><b>One setting people forget.</b> Turn <b>Data Roaming ON</b> for the eSIM line. It sounds
-        wrong, but a travel eSIM is technically roaming on partner networks — with the setting off it
-        will show bars and carry no data.</div>
+      {% icon "info" %}
+      <div>{% blocktrans %}<b>One setting people forget.</b> Turn <b>Data Roaming ON</b> for the eSIM line. It sounds wrong, but a travel eSIM is technically roaming on partner networks — with the setting off it will show bars and carry no data.{% endblocktrans %}</div>
+    </div>
+
+    <div class="grid g3 mt-4">
+      <div class="card">
+        <span class="icon-tile v-gold">{% icon "globe" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Local networks, not a reseller pipe" %}</h3>
+        <p class="muted small mt-1">{% trans "The profile registers on real carriers at your destination, the same ones a local pay-as-you-go SIM would use. Each destination page lists the partner operators." %}</p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-cyan">{% icon "qr" size=22 %}</span>
+        <h3 class="mt-2">{% trans "One profile, one device" %}</h3>
+        <p class="muted small mt-1">{% trans "An eSIM installs on a single phone and cannot be moved afterwards, so install it on the device you are travelling with. The QR code stays in your account either way." %}</p>
+      </div>
+      <div class="card">
+        <span class="icon-tile">{% icon "refresh" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Running low? Top up" %}</h3>
+        <p class="muted small mt-1">{% trans "Add data to the line you already installed from your dashboard. No new QR code, no reinstall, no second profile cluttering your settings." %}</p>
+      </div>
     </div>
   </div>
 </section>
 
 <section class="section">
   <div class="shell">
-    <div class="section-head center"><h2>Questions people ask first</h2></div>
+    <div class="section-head center"><h2>{% trans "Questions people ask first" %}</h2></div>
     {% include "partials/faq.html" %}
   </div>
 </section>

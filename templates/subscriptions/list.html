@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="dash-head">
+      <div>
+        <h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">{% trans "Subscriptions" %}</h1>
+        <p class="muted mt-1">{% trans "Unlimited plans that renew on their own, on the eSIM you already have." %}</p>
+      </div>
+      <a class="btn btn-ghost" href="{% url 'unlimited' %}">{% trans "Browse unlimited plans" %}</a>
+    </div>
+
+    {% include "partials/dash_tabs.html" %}
+
+    {% if subscriptions %}
+    <div class="grid g2">
+      {% for sub in subscriptions %}
+      <div class="card card-solid">
+        <div class="row-between">
+          <div class="row" style="gap:10px">
+            {% if sub.plan.country %}{% flag sub.plan.country.iso2 size=24 %}{% else %}{% icon "globe" size=20 %}{% endif %}
+            <b>{{ sub.target_name }}</b>
+          </div>
+          <span class="status-dot {% if sub.is_live %}status-live{% elif sub.needs_attention %}status-dead{% else %}status-pending{% endif %}">
+            {{ sub.get_status_display }}
+          </span>
+        </div>
+
+        <div class="row mt-2" style="gap:8px">
+          <span class="badge badge-mint">{% icon "infinity" size=13 %} {% trans "Unlimited" %}</span>
+          <span class="badge badge-muted">{% blocktrans with price=sub.price_usd|usd count days=sub.interval_days %}{{ price }} every {{ days }} day{% plural %}{{ price }} every {{ days }} days{% endblocktrans %}</span>
+        </div>
+
+        <div class="small muted mt-2">
+          {% if sub.cancel_at_period_end and sub.current_period_end %}
+            {% blocktrans with date=sub.current_period_end|date:"j M Y" %}Ends on {{ date }} — no further charges.{% endblocktrans %}
+          {% elif sub.is_live and sub.current_period_end %}
+            {% blocktrans with date=sub.current_period_end|date:"j M Y" %}Renews on {{ date }}.{% endblocktrans %}
+          {% elif sub.needs_attention %}
+            {% trans "The last payment did not go through. Update your card to keep the line alive." %}
+          {% elif sub.status == 'canceled' %}
+            {% trans "Cancelled. Nothing further will be charged." %}
+          {% else %}
+            {% trans "Setting up." %}
+          {% endif %}
+        </div>
+
+        <div class="row mt-3" style="gap:8px">
+          <a class="btn btn-ghost btn-sm" href="{{ sub.get_absolute_url }}">{% trans "Manage" %}</a>
+          {% if sub.esim %}
+          <a class="btn btn-primary btn-sm" href="{{ sub.esim.get_absolute_url }}">{% trans "Open eSIM" %}</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty card">
+      <div class="icon-tile mx-auto">{% icon "repeat" %}</div>
+      <h3>{% trans "No subscriptions yet" %}</h3>
+      <p>{% trans "Pick an unlimited plan for a country or a region and subscribe once. It renews on the same eSIM until you say stop, for less than buying it again each trip." %}</p>
+      <a class="btn btn-primary mt-3" href="{% url 'unlimited' %}">{% trans "See unlimited plans" %}</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

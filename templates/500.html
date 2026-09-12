@@ -1,21 +1,32 @@
-{% load static %}<!DOCTYPE html>
-<html lang="en" data-theme="light">
+{% load i18n static %}<!DOCTYPE html>
+{% comment %}
+Standalone on purpose: base.html may be what failed, so this page extends
+nothing and loads no template library beyond core Django. The icon below is the
+"alert" path from the ui tag library, inlined for the same reason - this is the
+ONE template allowed to carry a raw <svg>.
+{% endcomment %}
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" data-theme="light">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Something broke — eSIMsterr</title>
+  <title>{% trans "Something broke" %} — eSIMsterr</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
   <main class="section">
     <div class="shell center" style="max-width:620px">
-      <div style="font-size:3rem">🛠️</div>
-      <h1 class="mt-2">Something broke on our side</h1>
-      <p class="h-sub mx-auto">This is our fault, not yours, and we have been alerted. If you were in
-        the middle of a purchase, nothing was charged twice — check your email, or write to
-        <a class="link" href="mailto:support@esimsterr.com">support@esimsterr.com</a> with what you
-        were doing.</p>
-      <a class="btn btn-primary mt-4" href="/">Back to the site</a>
+      <div class="icon-tile v-amber mx-auto">
+        <svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>
+        </svg>
+      </div>
+      <h1 class="mt-2">{% trans "Something broke on our side" %}</h1>
+      <p class="h-sub mx-auto">{% trans "This is our fault, not yours, and we have been alerted. If you were in the middle of a purchase, check your email before trying again: if the eSIM was issued, the QR code is already there." %}</p>
+      <p class="small muted mt-2">
+        {% blocktrans %}Still stuck? Write to <a class="link" href="mailto:support@esimsterr.com">support@esimsterr.com</a> with what you were doing and we will pick it up from there.{% endblocktrans %}
+      </p>
+      <a class="btn btn-primary mt-4" href="/">{% trans "Back to the site" %}</a>
     </div>
   </main>
 </body>

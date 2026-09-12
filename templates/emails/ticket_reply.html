@@ -1,0 +1,16 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}The team replied on {{ ticket.ref }}.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:20px;font-weight:800;color:#171a3c">The team replied</h1>
+<p style="margin:0 0 14px">About <b>{{ ticket.subject }}</b> ({{ ticket.ref }}).</p>
+
+<table role="presentation" width="100%" style="background:#f7f8fc;border:1px solid #e6e8f4;border-radius:14px">
+  <tr><td style="padding:16px;font-size:13px;color:#575c86;white-space:pre-wrap">{{ body }}</td></tr>
+</table>
+
+<p style="margin:18px 0 0">
+  <a href="{{ ticket_url }}" style="display:inline-block;padding:12px 22px;border-radius:12px;background:#0f74b4;color:#fff;text-decoration:none;font-weight:700;font-size:14px">Reply on your ticket</a>
+</p>
+<p style="margin:12px 0 0;font-size:12px;color:#8a8fb4">Replying to this email reaches us as well.</p>
+{% endblock %}
+{% block footer_note %}You are receiving this because you contacted {{ site_name }} support.{% endblock %}

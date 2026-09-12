@@ -1,23 +1,27 @@
-{# Context: esim #}
+{% load i18n ui %}
+{# One eSIM at a glance. Context: esim #}
 <div class="card card-solid esim-card">
   <div class="top">
     <div>
       <div class="row" style="gap:8px">
         <b style="font-size:1.05rem">{{ esim.display_name }}</b>
-        {% if esim.is_unlimited %}<span class="badge badge-hot">Unlimited</span>{% endif %}
+        {% if esim.is_unlimited %}<span class="badge badge-hot">{% trans "Unlimited" %}</span>{% endif %}
       </div>
-      <div class="iccid mt-1">ICCID {{ esim.iccid }}</div>
+      <div class="iccid mt-1">{% trans "ICCID" %} {{ esim.iccid }}</div>
     </div>
     <span class="status-dot {% if esim.is_active %}status-live{% elif esim.is_expired %}status-dead{% else %}status-pending{% endif %}">
-      {% if esim.is_expired %}Expired{% else %}{{ esim.get_status_qr_display }}{% endif %}
+      {% if esim.is_expired %}{% trans "Expired" %}{% else %}{{ esim.get_status_qr_display }}{% endif %}
     </span>
   </div>
 
   {% if esim.is_unlimited %}
     <div>
-      <div class="row-between small"><span class="muted">Data used</span><b>{{ esim.data_used_mb|default:0 }} MB</b></div>
-      <div class="meter mt-1"><span style="width:100%"></span></div>
-      <div class="meter-labels"><span>Unlimited</span><span>{% if esim.days_left != None %}{{ esim.days_left }} day{{ esim.days_left|pluralize }} left{% endif %}</span></div>
+      <div class="row-between small"><span class="muted">{% trans "Data used" %}</span><b>{{ esim.data_used_mb|data_size|default:"0 MB" }}</b></div>
+      <div class="meter mt-1 is-unlimited"><span style="width:100%"></span></div>
+      <div class="meter-labels">
+        <span>{% trans "No cap on this plan" %}</span>
+        <span>{% if esim.days_left != None %}{% blocktrans count days=esim.days_left %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktrans %}{% endif %}</span>
+      </div>
     </div>
   {% elif esim.data_package_mb %}
     <div>
@@ -25,16 +29,16 @@
         <span style="width:{{ esim.data_used_pct }}%"></span>
       </div>
       <div class="meter-labels">
-        <span><b>{{ esim.data_left_gb }} GB</b> left of {{ esim.data_package_gb }} GB</span>
-        <span>{% if esim.days_left != None %}{{ esim.days_left }} day{{ esim.days_left|pluralize }} left{% endif %}</span>
+        <span>{% blocktrans with left=esim.remaining_mb|data_size total=esim.data_package_mb|data_size %}<b>{{ left }}</b> left of {{ total }}{% endblocktrans %}</span>
+        <span>{% if esim.days_left != None %}{% blocktrans count days=esim.days_left %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktrans %}{% endif %}</span>
       </div>
     </div>
   {% else %}
-    <p class="small muted">Not activated yet — usage appears once the eSIM connects at your destination.</p>
+    <p class="small muted">{% trans "Not installed yet. Usage appears once this eSIM connects to a network at your destination." %}</p>
   {% endif %}
 
   <div class="row" style="gap:8px">
-    <a class="btn btn-ghost btn-sm" href="{{ esim.get_absolute_url }}">Details & QR</a>
-    <a class="btn btn-primary btn-sm" href="{% url 'esim_topup' esim.pk %}">Add data</a>
+    <a class="btn btn-ghost btn-sm" href="{{ esim.get_absolute_url }}">{% icon "qr" size=15 %}{% trans "Details and QR" %}</a>
+    <a class="btn btn-primary btn-sm" href="{% url 'esim_topup' esim.pk %}">{% trans "Add data" %}</a>
   </div>
 </div>

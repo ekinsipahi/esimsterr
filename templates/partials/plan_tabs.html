@@ -1,12 +1,13 @@
-{# Data / Unlimited tab switcher + grids. Context: data_plans, unlimited_plans, target #}
+{% load i18n %}
+{# Data / Unlimited tab switcher. Context: data_plans, unlimited_plans, target #}
 <div id="plans">
   {% if unlimited_plans %}
   <div class="row-between mb-3">
     <div class="pill-tabs" data-tabs="#plan-panels" role="tablist">
-      <button data-tab="data" aria-selected="true" role="tab">Data plans</button>
-      <button data-tab="unlimited" aria-selected="false" role="tab">Unlimited</button>
+      <button data-tab="data" aria-selected="true" role="tab">{% trans "Data plans" %}</button>
+      <button data-tab="unlimited" aria-selected="false" role="tab">{% trans "Unlimited" %}</button>
     </div>
-    <span class="small muted">Prices in USD · one-off, nothing recurring</span>
+    <span class="small muted">{% trans "Prices in USD. One-off payment, nothing recurring." %}</span>
   </div>
   {% endif %}
 
@@ -17,7 +18,7 @@
         {% for plan in data_plans %}{% include "partials/plan_card.html" %}{% endfor %}
       </div>
       {% else %}
-      <p class="muted">No data plans available for this destination right now.</p>
+      <p class="muted">{% trans "No data plans are available for this destination right now." %}</p>
       {% endif %}
     </div>
 
@@ -27,8 +28,7 @@
         {% for plan in unlimited_plans %}{% include "partials/plan_card.html" %}{% endfor %}
       </div>
       <p class="small muted mt-3">
-        Unlimited plans run at full speed on a fair-use basis: heavy tethering or continuous streaming
-        may be shaped by the local network after very high daily use. There is no hard cap and no overage bill.
+        {% trans "Unlimited plans run at full speed on a fair-use basis: local networks may shape extreme continuous use, in particular sustained tethering. There is no hard cap and no overage bill." %}
       </p>
     </div>
     {% endif %}

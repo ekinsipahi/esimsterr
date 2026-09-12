@@ -1,0 +1,36 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}Your {{ subscription.target_name }} subscription is live. Here is what renews, and when.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">Your {{ subscription.target_name }} subscription is live</h1>
+<p style="margin:0 0 18px">
+  You are subscribed to unlimited data, renewed every {{ subscription.interval_days }} days for ${{ subscription.price_usd }}.
+  Each renewal lands on the same eSIM, so there is nothing to reinstall and no gap in coverage.
+</p>
+
+<table role="presentation" width="100%" style="background:#f7f8fc;border:1px solid #e6e8f4;border-radius:14px;margin:0 0 18px">
+  <tr><td style="padding:18px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8a8fb4;text-transform:uppercase">Plan</div>
+    <div style="font-size:14px;color:#171a3c;margin-top:4px">{{ subscription.title }}</div>
+    {% if subscription.current_period_end %}
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8a8fb4;text-transform:uppercase;margin-top:14px">Next renewal</div>
+    <div style="font-size:14px;color:#171a3c;margin-top:4px">{{ subscription.current_period_end|date:"j M Y" }}</div>
+    {% endif %}
+    {% if esim %}
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8a8fb4;text-transform:uppercase;margin-top:14px">ICCID</div>
+    <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#171a3c;margin-top:4px">{{ esim.iccid }}</div>
+    {% endif %}
+  </td></tr>
+</table>
+
+<a href="{{ detail_url }}"
+   style="display:inline-block;background:#0f74b4;background:linear-gradient(135deg,#0d5c91 0%,#1a8fd1 48%,#35bdea 120%);
+          color:#fff;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:15px">Open your subscription</a>
+
+<h2 style="margin:26px 0 10px;font-size:16px;font-weight:700;color:#171a3c">Worth knowing</h2>
+<ol style="margin:0 0 0 18px;padding:0;font-size:14px;color:#575c86;line-height:1.75">
+  <li>Install the eSIM once. Every renewal tops up that same line, so the profile on your phone never changes.</li>
+  <li>The same amount is charged each period until you cancel, and you can cancel in two clicks from your dashboard.</li>
+  <li>Turn Data Roaming ON for the eSIM line, or you get bars and no data.</li>
+</ol>
+{% endblock %}
+{% block footer_note %}You are receiving this because you started a subscription at {{ site_name }}.{% endblock %}
