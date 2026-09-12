@@ -207,6 +207,7 @@ def order_detail(request, ref):
     order = get_object_or_404(Order.objects.select_related("plan"), ref=ref)
     if not _can_view_order(request, order):
         raise Http404
+    _settle_on_return(request, order)
     esim = order.esims.first() or order.target_esim
     ctx = {
         "order": order,
@@ -217,6 +218,39 @@ def order_detail(request, ref):
         "poll": order.status in (Order.Status.PENDING, Order.Status.PAID),
     }
     return render(request, "orders/order_detail.html", ctx)
+
+
+def _settle_on_return(request, order):
+    """Settle a card order from Stripe's return redirect if the webhook has not
+    landed yet.
+
+    The webhook is the primary path, but it can be late, misconfigured, or its
+    signing secret simply unset -- and in every one of those cases the customer
+    has paid and would otherwise sit on a spinner for ever. We do not trust the
+    query string: it only tells us which session to go and ask Stripe about."""
+    session_id = request.GET.get("session_id") or ""
+    if order.status != Order.Status.PENDING or not session_id.startswith("cs_"):
+        return
+    from apps.payments import stripe_client
+    from apps.payments import services as payment_services
+
+    try:
+        session = stripe_client.retrieve_session(session_id)
+    except Exception:  # noqa: BLE001
+        log.warning("could not read Stripe session %s for order %s", session_id, order.ref)
+        return
+    if str(session.get("client_reference_id") or "") not in {
+        str(p.id) for p in order.payments.all()
+    }:
+        # The session belongs to a different order; never settle on it.
+        return
+    if session.get("payment_status") not in ("paid", "no_payment_required"):
+        return
+    try:
+        payment_services.settle_stripe_session(session)
+        order.refresh_from_db()
+    except Exception:  # noqa: BLE001
+        log.exception("return-page settlement failed for %s", order.ref)
 
 
 def order_status_api(request, ref):

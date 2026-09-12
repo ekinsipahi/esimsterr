@@ -46,6 +46,22 @@ def create_checkout_session(*, amount_usd: Decimal, reference: str, description:
         raise StripeError(str(e)) from e
 
 
+def retrieve_session(session_id: str):
+    """Read a Checkout Session back from Stripe.
+
+    This is the return-page fallback: it needs only the secret key, so an order
+    still settles when the webhook is late, misconfigured, or the webhook secret
+    has not been set at all. Stripe is the authority either way -- we never trust
+    the browser's claim that it paid, we go and ask."""
+    if not configured():
+        raise StripeError("Stripe is not configured.")
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    try:
+        return stripe.checkout.Session.retrieve(session_id).to_dict()
+    except stripe.error.StripeError as e:  # type: ignore[attr-defined]
+        raise StripeError(str(e)) from e
+
+
 def construct_event(payload: bytes, sig_header: str):
     if not settings.STRIPE_WEBHOOK_SECRET:
         raise StripeError("Stripe webhook secret is not configured.")
