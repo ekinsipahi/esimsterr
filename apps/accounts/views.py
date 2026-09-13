@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -19,6 +20,8 @@ from .emails import send_welcome
 from .forms import LoginForm, PasswordChangeForm, ProfileForm, SignupForm
 from .google import GoogleAuthError, user_from_google_token
 from .models import User
+
+log = logging.getLogger(__name__)
 
 
 def _client_ip(request):
@@ -119,7 +122,15 @@ def google_finish(request):
     try:
         user, created = user_from_google_token(token, signup_ip=_client_ip(request))
     except GoogleAuthError as e:
-        return fail(str(e), 400)
+        # The underlying library reports things like "Wrong number of segments in
+        # token: b'...'", which is useful in a log and meaningless on a sign-in
+        # page. The detail goes to the logs and to API callers; the person
+        # reading the page gets something they can act on.
+        log.warning("Google sign-in rejected: %s", e)
+        if wants_json:
+            return JsonResponse({"ok": False, "error": str(e)}, status=400)
+        return fail(_("Google could not verify that sign-in. Please try again, "
+                      "or use your email address."), 400)
     if not user.is_active:
         return fail(_("This account is disabled."), 403)
 
