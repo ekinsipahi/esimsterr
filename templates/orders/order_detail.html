@@ -5,6 +5,18 @@
 <section class="section">
   <div class="shell" style="max-width:880px">
 
+    {% comment %}
+      The customer started in the Android app, left for this page to pay, and is
+      now stranded in a browser. A link back is not a nicety: the app is where
+      the one-tap install lives, and without this they have to find it by hand
+      and wonder whether the purchase worked.
+    {% endcomment %}
+    {% if order.source == "android" or order.source == "ios" %}
+      <a class="btn btn-primary btn-block mb-4" href="esimsterr://order/{{ order.ref }}">
+        {% icon "arrow-right" size=17 %}{% trans "Back to the app to install it" %}
+      </a>
+    {% endif %}
+
     {% if order.status == 'completed' and esim %}
       <div class="center mb-4">
         <span class="badge badge-mint">{% icon "check-circle" size=14 %} {% trans "Payment confirmed" %}</span>
