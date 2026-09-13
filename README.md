@@ -29,7 +29,8 @@ assets-src/         the original logo and film files the derivatives come from
 ```bash
 python3 -m venv venv
 ./venv/bin/pip install -r requirements.txt
-cp .env.example .env          # fill in YESIM_API_TOKEN at minimum
+# .env holds every setting; it is gitignored and is also what you copy
+# into Render. render.yaml lists the same variables with comments.
 ./venv/bin/python manage.py migrate
 ./venv/bin/python manage.py sync_plans        # mirrors the catalogue (~90s)
 ./venv/bin/python manage.py seed_country_seo  # unique copy for 148 destinations
