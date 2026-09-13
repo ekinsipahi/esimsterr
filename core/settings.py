@@ -322,6 +322,14 @@ NOWPAYMENTS_API_KEY = env("NOWPAYMENTS_API_KEY", "")
 NOWPAYMENTS_IPN_SECRET = env("NOWPAYMENTS_IPN_SECRET", "")
 NOWPAYMENTS_API_BASE = env("NOWPAYMENTS_API_BASE", "https://api.nowpayments.io/v1")
 
+# What the processors take. Used only to report true net profit in the operator
+# sale alert, never to price a plan. Stripe's cut varies by country and card
+# type, so check your own dashboard and correct these rather than trusting the
+# defaults: a wrong rate here silently misreports the profit on every sale.
+STRIPE_FEE_PCT = env("STRIPE_FEE_PCT", "2.9")
+STRIPE_FEE_FIXED_USD = env("STRIPE_FEE_FIXED_USD", "0.30")
+NOWPAYMENTS_FEE_PCT = env("NOWPAYMENTS_FEE_PCT", "0.5")
+
 # Shared secret for the HTTP cron trigger (/cron/<task>/?token=...).
 CRON_SECRET = env("CRON_SECRET", "")
 

@@ -132,12 +132,9 @@ def settle_payment(payment_id, *, paid_amount_usd=None, provider_payment_id="", 
         payment.status = Payment.Status.PARTIAL
         payment.save()
         log.warning("Underpaid payment %s: $%s of $%s", payment.id, arrived, payment.amount_usd)
-        from apps.accounts.emails import notify_admin
-        notify_admin(
-            f"Underpaid order {payment.order.ref}",
-            [f"Invoice: ${payment.amount_usd}", f"Received: ${arrived}",
-             f"Customer: {payment.order.email}", "Nothing was provisioned."],
-        )
+        from apps.accounts.notifications import underpaid_alert
+
+        underpaid_alert(payment.order, arrived)
         return payment
 
     payment.status = Payment.Status.PAID

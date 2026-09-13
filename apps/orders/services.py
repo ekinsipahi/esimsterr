@@ -18,7 +18,8 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from apps.accounts.emails import notify_admin, send_esim_ready
+from apps.accounts.emails import send_esim_ready
+from apps.accounts.notifications import failure_alert, sale_alert
 from apps.providers.yesim import YesimError, client
 
 from .models import Esim, Order
@@ -117,12 +118,7 @@ def fulfill_order(order_id) -> Order:
         order.fulfillment_error = str(e)[:2000]
         order.save(update_fields=["fulfillment_error"])
         log.exception("fulfilment failed for %s", order.ref)
-        notify_admin(
-            f"eSIM provisioning FAILED — {order.ref}",
-            [f"Order: {order.ref}", f"Customer: {order.email}",
-             f"Plan: {order.plan_title}", f"Paid: ${order.amount_usd}",
-             f"Attempt: {order.fulfillment_attempts}", f"Error: {e}"],
-        )
+        failure_alert(order, str(e))
         raise
 
     order.status = Order.Status.COMPLETED
@@ -132,12 +128,7 @@ def fulfill_order(order_id) -> Order:
 
     def _after_commit():
         send_esim_ready(order, esim)
-        notify_admin(
-            f"Sale ${order.amount_usd} — {order.plan_title}",
-            [f"Order: {order.ref}", f"Customer: {order.email}",
-             f"Revenue: ${order.amount_usd}", f"Margin: ${order.margin_usd}",
-             f"ICCID: {esim.iccid}"],
-        )
+        sale_alert(order, esim)
 
     transaction.on_commit(_after_commit)
     return order
