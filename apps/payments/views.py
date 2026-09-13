@@ -178,6 +178,17 @@ def cron(request, task):
         call_command("sync_plans", "--no-devices")
         return JsonResponse({"task": task, "status": "ok"})
 
+    if task == "sentry-check":
+        # Deliberate crash, used to prove error reporting still works after a
+        # deploy. It sits behind the cron token rather than on a public URL so
+        # nobody can fill the error budget from outside, and it is worth keeping:
+        # a monitoring pipeline that is never exercised is a monitoring pipeline
+        # that is quietly broken.
+        raise RuntimeError(
+            "Sentry reachability check from /webhooks/cron/sentry-check/. "
+            "This exception is raised on purpose and can be resolved."
+        )
+
     if task == "purge-fingerprints":
         # Enforces the retention window the privacy policy publishes.
         from django.core.management import call_command
