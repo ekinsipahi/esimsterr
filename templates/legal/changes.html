@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<section class="section">
+  <div class="shell legal-page">
+    <header class="legal-head">
+      <a class="legal-back" href="{% url 'legal_index' %}">{% trans "Legal" %}</a>
+      <h1>{% trans "Change history" %}</h1>
+      <p class="legal-summary">{% blocktrans %}Every revision of our terms and policies, when it took effect, and whether it changed anything you had agreed to.{% endblocktrans %}</p>
+    </header>
+
+    <div class="legal-layout">
+      <div class="prose legal-body">
+        {% for entry in history %}
+          <div class="legal-entry">
+            <h2 id="v{{ entry.version }}">
+              {% blocktrans with v=entry.version %}Version {{ v }}{% endblocktrans %}
+              <span class="legal-badge">{{ entry.date|date:"j F Y" }}</span>
+              {% if entry.material %}<span class="legal-badge legal-badge-warn">{% trans "Material change" %}</span>{% endif %}
+            </h2>
+            <p>{% translate entry.summary %}</p>
+            {% if entry.detail %}<ul>{% for line in entry.detail %}<li>{% translate line %}</li>{% endfor %}</ul>{% endif %}
+            <p class="muted">{% trans "Documents affected:" %}
+              {% for d in entry.docs %}<a href="{% url d.url_name %}">{% translate d.title %}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+            </p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

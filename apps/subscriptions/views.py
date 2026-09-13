@@ -9,7 +9,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import Http404
-from apps.common import analytics
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -17,6 +16,8 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from apps.catalog.models import Plan
+from apps.common import analytics
+from apps.legal.models import LegalAcceptance, record_acceptance
 from core.ratelimit import rate_limit
 
 from . import stripe_sub
@@ -116,6 +117,8 @@ def subscribe(request, plan_id):
         else:
             sub.stripe_price_id = price_id
             sub.save(update_fields=["stripe_price_id", "updated_at"])
+            record_acceptance(request, user=request.user, email=request.user.email,
+                              context=LegalAcceptance.Context.SUBSCRIBE)
             url = session.get("url") or ""
             if url:
                 return redirect(url)

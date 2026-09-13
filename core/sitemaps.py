@@ -43,9 +43,15 @@ class StaticSitemap(CanonicalSitemap):
         ("about", "monthly", 0.4),
         ("support", "monthly", 0.5),
         ("blog:index", "weekly", 0.5),
+        ("legal_index", "monthly", 0.3),
         ("privacy", "yearly", 0.2),
         ("terms", "yearly", 0.2),
         ("refund", "yearly", 0.2),
+        ("acceptable_use", "yearly", 0.2),
+        ("cookies", "yearly", 0.2),
+        ("subprocessors", "monthly", 0.2),
+        ("eula", "yearly", 0.1),
+        ("legal_changes", "monthly", 0.1),
     ]
 
     def items(self):

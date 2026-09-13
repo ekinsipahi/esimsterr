@@ -22,6 +22,7 @@ from core.ratelimit import rate_limit
 from apps.catalog.models import Plan
 from apps.common import analytics
 from apps.coupons.services import CouponError, redeem, release, validate_coupon
+from apps.legal.models import LegalAcceptance, record_acceptance
 from apps.payments import services as payment_services
 from apps.providers.yesim import YesimError
 
@@ -147,6 +148,13 @@ def checkout(request, plan_id):
                 **_fingerprint(request),
             )
             _remember_order(request, order)
+            # Record which version of the terms, privacy, refund and acceptable
+            # use documents was on the site at the moment of this purchase. Six
+            # months from now, "what did they agree to" has to have an answer
+            # that does not depend on what the page says today.
+            record_acceptance(request, user=request.user, email=email,
+                              context=LegalAcceptance.Context.CHECKOUT,
+                              order_ref=order.ref)
             if coupon is not None:
                 try:
                     redeem(coupon, order,

@@ -240,19 +240,6 @@ def about(request):
     })
 
 
-def legal(request, page):
-    templates = {
-        "privacy": ("pages/privacy.html", "Privacy Policy"),
-        "terms": ("pages/terms.html", "Terms of Service"),
-        "refund": ("pages/refund.html", "Refund Policy"),
-    }
-    template, title = templates[page]
-    return render(request, template, {
-        "seo_title": f"{title} — {settings.SITE_NAME}",
-        "seo_description": f"{title} for {settings.SITE_NAME} travel eSIM plans.",
-    })
-
-
 def _country_result(c):
     """The type-ahead sends a flag IMAGE URL, never an emoji: Windows has no
     regional-indicator font and renders emoji flags as the bare country code."""

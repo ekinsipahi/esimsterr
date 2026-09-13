@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<section class="section">
+  <div class="shell legal-page">
+    <header class="legal-head">
+      <h1>{% trans "Legal" %}</h1>
+      <p class="legal-summary">{% blocktrans %}Six short documents instead of one long one, each with its own version and effective date, so you can see exactly what changed and when.{% endblocktrans %}</p>
+    </header>
+
+    <div class="legal-more-grid legal-index-grid">
+      {% for d, url, stamp in docs %}
+        <a class="legal-card" href="{{ url }}">
+          <strong>{% translate d.title %}</strong>
+          <span>{% translate d.summary %}</span>
+          <em>{% blocktrans with v=d.version d=d.effective|date:"j F Y" %}Version {{ v }} · {{ d }}{% endblocktrans %}</em>
+        </a>
+      {% endfor %}
+    </div>
+
+    {% if unlisted %}
+      <p class="legal-note">{% blocktrans %}Published but not yet in use:{% endblocktrans %}
+        {% for d in unlisted %}<a href="{% url d.url_name %}">{% translate d.title %}</a>{% if not forloop.last %}, {% endif %}{% endfor %}.
+      </p>
+    {% endif %}
+
+    <div class="legal-layout legal-extra">
+      <div class="prose legal-body">
+        <h2>{% trans "How these documents work" %}</h2>
+        <p>{% blocktrans %}Each document is versioned on its own. Replacing a payment provider changes the sub-processor list and nothing else; tightening a fair-use rule changes the acceptable use policy and nothing else. You are not asked to re-read a contract because a cookie name changed.{% endblocktrans %}</p>
+        {% url 'legal_changes' as changes_url %}
+        <p>{% blocktrans %}The version in force for you is the one published when you bought. Every version is listed on the <a href="{{ changes_url }}">change history page</a>, and material changes are emailed to account holders before they take effect.{% endblocktrans %}</p>
+        <h2>{% trans "Getting in touch" %}</h2>
+        <p>{% blocktrans %}Privacy requests, refund questions, abuse reports and anything else: <a href="mailto:{{ support_email }}">{{ support_email }}</a>. We answer within one business day.{% endblocktrans %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

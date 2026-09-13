@@ -182,3 +182,22 @@ def cancel_at_period_end(stripe_subscription_id: str, cancel: bool = True) -> di
                                           cancel_at_period_end=bool(cancel)).to_dict()
     except stripe.StripeError as e:
         raise SubscriptionError(str(e)) from e
+
+
+def cancel_now(stripe_subscription_id: str) -> dict:
+    """Stop a subscription immediately, not at the end of the period.
+
+    Used when an account is deleted: "cancel at period end" would leave one more
+    charge to land on a customer who no longer has anywhere to see it. A
+    subscription Stripe has already lost track of is treated as cancelled --
+    there is nothing left that could bill.
+    """
+    _api()
+    try:
+        return stripe.Subscription.cancel(stripe_subscription_id).to_dict()
+    except stripe.InvalidRequestError as e:
+        if "No such subscription" in str(e) or "canceled" in str(e).lower():
+            return {"status": "canceled"}
+        raise SubscriptionError(str(e)) from e
+    except stripe.StripeError as e:
+        raise SubscriptionError(str(e)) from e

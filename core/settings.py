@@ -60,9 +60,23 @@ DEFAULT_DESCRIPTION = (
     "unlimited plans, pay by card or crypto. Cheaper than roaming — and cheaper than the other eSIM apps."
 )
 SITE_SAMEAS = env_list("SITE_SAMEAS", [])
-# Shown as "last updated" on the legal pages. Bump it when a policy really
-# changes; rendering today's date would claim a daily revision that never happened.
+# Legal documents carry their own version and effective date (apps/legal), so
+# there is no site-wide "last updated" to keep in sync any more. Kept only for
+# older templates that still reference it.
 LEGAL_UPDATED = env("LEGAL_UPDATED", "12 September 2026")
+
+# The governing law and forum printed in the terms. These are a real commercial
+# decision, not a default to inherit silently: set them to the jurisdiction the
+# selling entity is actually registered in, or the clause is unenforceable.
+LEGAL_JURISDICTION = env("LEGAL_JURISDICTION", "the Republic of Türkiye")
+LEGAL_COURTS = env("LEGAL_COURTS", "Istanbul")
+# Printed on the imprint and required by EU distance-selling rules. Empty means
+# the address block is left out rather than printed wrong.
+COMPANY_ADDRESS = env("COMPANY_ADDRESS", "")
+COMPANY_REGISTRATION = env("COMPANY_REGISTRATION", "")
+COMPANY_VAT = env("COMPANY_VAT", "")
+PRIVACY_CONTACT_EMAIL = env("PRIVACY_CONTACT_EMAIL", "") or SUPPORT_EMAIL
+
 APP_STORE_URL = env("APP_STORE_URL", "")
 PLAY_STORE_URL = env("PLAY_STORE_URL", "")
 
@@ -119,6 +133,7 @@ INSTALLED_APPS = [
     "apps.coupons",
     "apps.subscriptions",
     "apps.seo",
+    "apps.legal",
 ]
 
 MIDDLEWARE = [

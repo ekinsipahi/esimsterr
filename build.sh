@@ -6,6 +6,12 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 python manage.py migrate
 
+# Fail the build if a legal document's text changed without its version being
+# bumped. The acceptance ledger records version + content hash together; if the
+# two can drift, every record already written becomes a claim about text the
+# customer may never have seen.
+python manage.py check_legal
+
 # Compile any translated locales. No .po files yet means a no-op.
 python manage.py compilemessages 2>/dev/null || true
 

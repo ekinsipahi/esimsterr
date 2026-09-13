@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<section class="section">
+  <div class="shell legal-page">
+
+    <header class="legal-head">
+      <a class="legal-back" href="{% url 'legal_index' %}">{% trans "Legal" %}</a>
+      <h1>{% translate doc.title %}</h1>
+      <p class="legal-summary">{% translate doc.summary %}</p>
+      <p class="legal-meta">
+        <span class="legal-badge">{% blocktrans with v=doc.version %}Version {{ v }}{% endblocktrans %}</span>
+        <span>{% blocktrans with d=doc.effective|date:"j F Y" %}In effect since {{ d }}{% endblocktrans %}</span>
+        <a href="{% url 'legal_changes' %}">{% trans "What changed" %}</a>
+      </p>
+      {% if surface != "web" %}
+        <p class="legal-preview">{% blocktrans %}Staff preview: composed for the <strong>{{ surface }}</strong> surface. Visitors see the web version.{% endblocktrans %}</p>
+      {% endif %}
+    </header>
+
+    <div class="legal-layout">
+      <aside class="legal-toc">
+        <p class="legal-toc-title">{% trans "On this page" %}</p>
+        <ol>
+          {% for c in clauses %}{% if c.title %}
+            <li><a href="#{{ c.slug }}">{% if c.number %}<span>{{ c.number }}.</span> {% endif %}{% translate c.title %}</a></li>
+          {% endif %}{% endfor %}
+        </ol>
+      </aside>
+
+      <article class="prose legal-body">
+        {% for c in clauses %}
+          {% if c.title %}
+            <h2 id="{{ c.slug }}">
+              {% if c.number %}<span class="legal-num">{{ c.number }}.</span> {% endif %}{% translate c.title %}
+              <a class="legal-anchor" href="#{{ c.slug }}" aria-label="{% trans 'Link to this section' %}">#</a>
+            </h2>
+          {% endif %}
+          {% for block in c.blocks %}{{ block.render }}{% endfor %}
+        {% endfor %}
+
+        <hr class="legal-rule">
+        <p class="legal-stamp">{% blocktrans with s=stamp %}Document reference {{ s }} — the version and a fingerprint of its text. Quote it if you ever need to show which wording applied to your order.{% endblocktrans %}</p>
+      </article>
+    </div>
+
+    <nav class="legal-more">
+      <p class="legal-toc-title">{% trans "The rest of it" %}</p>
+      <div class="legal-more-grid">
+        {% for d in others %}
+          <a class="legal-card" href="{% url d.url_name %}">
+            <strong>{% translate d.title %}</strong>
+            <span>{% translate d.summary %}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </nav>
+
+  </div>
+</section>
+{% endblock %}

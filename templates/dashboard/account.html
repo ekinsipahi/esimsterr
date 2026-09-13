@@ -71,16 +71,8 @@
 
         <div class="card" style="border-color:color-mix(in srgb,#ef4444 30%,transparent)">
           <h3>{% trans "Delete account" %}</h3>
-          <p class="small muted mt-1">{% trans "This deactivates your account and unlinks your email. Active eSIMs keep working until their plan expires, but you lose access to their QR codes here." %}</p>
-          <form method="post" class="row mt-3" style="gap:10px;align-items:flex-end">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="delete">
-            <div class="field flex-1">
-              <label for="confirm">{% trans "Type DELETE to confirm" %}</label>
-              <input class="input" id="confirm" name="confirm" placeholder="DELETE">
-            </div>
-            <button class="btn btn-ghost" type="submit" style="color:#dc2626">{% icon "trash" size=16 %}{% trans "Delete" %}</button>
-          </form>
+          <p class="small muted mt-1">{% trans "Cancels any subscription so nothing can be charged again, erases your support history and unlinks your data. Active eSIMs keep working until their plan expires, but you lose access to their QR codes here." %}</p>
+          <a class="btn btn-ghost mt-3" href="{% url 'account_delete' %}" style="color:#dc2626">{% icon "trash" size=16 %}{% trans "Delete my account" %}</a>
         </div>
       </div>
     </div>

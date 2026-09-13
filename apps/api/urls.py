@@ -22,4 +22,9 @@ urlpatterns = [
     path("esims/<uuid:pk>/rename/", views.esim_rename, name="api_esim_rename"),
     path("orders/", views.my_orders, name="api_orders"),
     path("checkout-url/", views.checkout_url, name="api_checkout_url"),
+    path("account/delete/", views.delete_account_api, name="api_account_delete"),
+    # legal
+    path("legal/", views.legal_index, name="api_legal"),
+    path("legal/accept/", views.legal_accept, name="api_legal_accept"),
+    path("legal/<slug:slug>/", views.legal_document, name="api_legal_document"),
 ]

@@ -67,6 +67,7 @@
         <a href="{% url 'terms' %}">{% trans "Terms of service" %}</a>
         <a href="{% url 'privacy' %}">{% trans "Privacy policy" %}</a>
         <a href="{% url 'refund' %}">{% trans "Refund policy" %}</a>
+        <a href="{% url 'legal_index' %}">{% trans "All legal documents" %}</a>
       </div>
     </div>
 
@@ -98,6 +99,20 @@
           <a href="{% url 'alternative' 'cellesim' %}">Cellesim</a>
         </div>
       </div>
+    </div>
+
+    {% comment %}
+      The secondary legal documents live on the bottom rail rather than in the
+      Company column: they have to be reachable from every page to count as
+      published, but a six-link legal column would crowd out the pages that
+      actually sell.
+    {% endcomment %}
+    <div class="footer-legal-rail">
+      <a href="{% url 'acceptable_use' %}">{% trans "Acceptable use" %}</a>
+      <a href="{% url 'cookies' %}">{% trans "Cookies" %}</a>
+      <a href="{% url 'subprocessors' %}">{% trans "Sub-processors" %}</a>
+      <a href="{% url 'legal_changes' %}">{% trans "Legal changes" %}</a>
+      {% if app_store_url or play_store_url %}<a href="{% url 'eula' %}">{% trans "App licence" %}</a>{% endif %}
     </div>
 
     <div class="footer-bottom">

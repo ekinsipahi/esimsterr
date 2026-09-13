@@ -14,9 +14,10 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from apps.common import analytics
+from apps.legal.models import LegalAcceptance, record_acceptance
 from core.ratelimit import rate_limit
 
-from .emails import send_welcome
+from .emails import send_email_bg, send_welcome
 from .forms import LoginForm, PasswordChangeForm, ProfileForm, SignupForm
 from .google import GoogleAuthError, user_from_google_token
 from .models import User
@@ -55,6 +56,8 @@ def signup(request):
                 user.referred_by = referrer
                 user.save(update_fields=["referred_by"])
         auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+        record_acceptance(request, user=user, email=user.email,
+                          context=LegalAcceptance.Context.SIGNUP)
         send_welcome(user)
         request.session["pending_analytics"] = [analytics.sign_up("email")]
         return redirect(_safe_next(request))
@@ -167,20 +170,59 @@ def account(request):
                 messages.success(request, "Password updated.")
                 return redirect("account")
         elif action == "delete":
-            if request.POST.get("confirm") == "DELETE":
-                user = request.user
-                auth_logout(request)
-                user.is_active = False
-                user.email = f"deleted-{user.id}@deleted.invalid"
-                user.set_unusable_password()
-                user.save(update_fields=["is_active", "email", "password"])
-                messages.success(request, "Your account has been deleted.")
-                return redirect("home")
-            messages.error(request, "Type DELETE to confirm account deletion.")
+            # Deletion has its own page. It cancels billing, erases support
+            # history and has to say so before the click, which does not fit
+            # under a settings form.
+            return redirect("account_delete")
     return render(request, "dashboard/account.html", {
         "profile_form": profile_form, "pw_form": pw_form,
         "seo_title": "Account — eSIMsterr", "meta_robots": "noindex,nofollow",
     })
+
+
+def account_delete(request):
+    """Delete your own account, without emailing anyone to ask.
+
+    Deliberately reachable when signed out. Google Play requires the deletion
+    route to be findable from outside the app, and a page that bounces a signed
+    -out visitor to a login form does not meet that -- so the explanation is
+    public and only the button needs an account.
+    """
+    ctx = {
+        "seo_title": _("Delete your account — %(site)s") % {"site": settings.SITE_NAME},
+        "seo_description": _("How to delete your %(site)s account and what happens to your "
+                             "data when you do.") % {"site": settings.SITE_NAME},
+        "meta_robots": "noindex,follow",
+    }
+    if not request.user.is_authenticated:
+        return render(request, "dashboard/account_delete.html", ctx)
+
+    from .deletion import DeletionBlocked, active_subscriptions, delete_account
+
+    subs = list(active_subscriptions(request.user))
+    ctx["active_subscriptions"] = subs
+
+    if request.method == "POST":
+        if request.POST.get("confirm", "").strip().upper() != "DELETE":
+            messages.error(request, _("Type DELETE to confirm."))
+            return render(request, "dashboard/account_delete.html", ctx)
+
+        user, email = request.user, request.user.email
+        try:
+            report = delete_account(user)
+        except DeletionBlocked as e:
+            log.warning("Account deletion blocked for %s: %s", user.pk, e)
+            messages.error(request, str(e))
+            return render(request, "dashboard/account_delete.html", ctx)
+
+        auth_logout(request)
+        send_email_bg(email, f"Your {settings.SITE_NAME} account has been deleted",
+                      "account_deleted", {"lines": report.as_lines()})
+        messages.success(request, _("Your account has been deleted. A confirmation is on "
+                                    "its way to your email."))
+        return redirect("home")
+
+    return render(request, "dashboard/account_delete.html", ctx)
 
 
 def unsubscribe(request):

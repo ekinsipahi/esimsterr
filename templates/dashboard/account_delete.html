@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block content %}
+<section class="section">
+  <div class="shell" style="max-width:720px">
+    <a class="legal-back" href="{% url 'account' %}">{% trans "Account" %}</a>
+    <h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">{% trans "Delete your account" %}</h1>
+    <p class="muted mt-1">{% blocktrans %}You can do this yourself, now, without emailing anyone. Read what it does first — it cannot be undone.{% endblocktrans %}</p>
+
+    <div class="card mt-4">
+      <h3>{% trans "What gets deleted" %}</h3>
+      <ul class="prose mt-2" style="margin-left:1.2em">
+        <li>{% trans "Your profile, sign-in and password." %}</li>
+        <li>{% trans "Every support ticket and assistant conversation on the account." %}</li>
+        <li>{% trans "The IP address, browser and referrer recorded against your past orders." %}</li>
+        <li>{% trans "The link between you and your past orders and eSIM lines." %}</li>
+      </ul>
+
+      <h3 class="mt-4">{% trans "What stops" %}</h3>
+      <ul class="prose mt-2" style="margin-left:1.2em">
+        <li>{% trans "Any auto-renewing subscription is cancelled with our payment processor first, so nothing can be charged again." %}</li>
+        <li>{% trans "All email from us, including marketing and order notifications." %}</li>
+      </ul>
+
+      <h3 class="mt-4">{% trans "What stays" %}</h3>
+      <ul class="prose mt-2" style="margin-left:1.2em">
+        <li>{% blocktrans %}Order and payment records, with your identity unlinked. Tax law requires an invoice record; it is used for nothing else.{% endblocktrans %}</li>
+        <li>{% blocktrans %}eSIMs you have already installed keep working until their validity ends. You will not be able to see their data balance here any more, so <strong>note down what you need first</strong>.{% endblocktrans %}</li>
+      </ul>
+      {% url 'privacy' as privacy_url %}
+      <p class="small muted mt-3">{% blocktrans %}The full detail is in the <a href="{{ privacy_url }}">privacy policy</a>.{% endblocktrans %}</p>
+    </div>
+
+    {% if user.is_authenticated %}
+      {% if active_subscriptions %}
+        <div class="card mt-3" style="border-color:color-mix(in srgb,#f59e0b 40%,transparent)">
+          <h3>{% trans "You have an active subscription" %}</h3>
+          <p class="small muted mt-1">{% blocktrans count n=active_subscriptions|length %}Deleting the account cancels it immediately. The period you have already paid for stays usable until it ends, and it is not refunded.{% plural %}Deleting the account cancels all {{ n }} of them immediately. Periods you have already paid for stay usable until they end, and are not refunded.{% endblocktrans %}</p>
+        </div>
+      {% endif %}
+
+      <form method="post" class="card mt-3">
+        {% csrf_token %}
+        <div class="field">
+          <label for="confirm">{% trans "Type DELETE to confirm" %}</label>
+          <input class="input" id="confirm" name="confirm" placeholder="DELETE" autocomplete="off" required>
+        </div>
+        <div class="row mt-3" style="gap:10px">
+          <button class="btn btn-ghost" type="submit" style="color:#dc2626">{% icon "trash" size=16 %}{% trans "Delete my account permanently" %}</button>
+          <a class="btn btn-ghost" href="{% url 'account' %}">{% trans "Keep my account" %}</a>
+        </div>
+      </form>
+    {% else %}
+      <div class="card mt-3">
+        <h3>{% trans "Sign in to delete your account" %}</h3>
+        <p class="small muted mt-1">{% blocktrans %}Only the account holder can do this, so you need to sign in first. If you cannot get into your account, email us from the address it was opened with and we will delete it for you.{% endblocktrans %}</p>
+        <div class="row mt-3" style="gap:10px">
+          <a class="btn btn-primary" href="{% url 'login' %}?next={% url 'account_delete' %}">{% trans "Sign in" %}</a>
+          <a class="btn btn-ghost" href="mailto:{{ support_email }}?subject={% trans 'Account deletion request' %}">{% trans "Email us instead" %}</a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

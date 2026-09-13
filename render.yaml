@@ -37,6 +37,16 @@ services:
         sync: false
       - key: CANONICAL_HOST        # esimsterr.com
         sync: false
+
+      # --- Legal identity (printed in the terms; set these before selling) ---
+      - key: COMPANY_LEGAL_NAME    # the registered selling entity
+        sync: false
+      - key: LEGAL_JURISDICTION    # e.g. "the Republic of Türkiye"
+        sync: false
+      - key: LEGAL_COURTS          # e.g. "Istanbul"
+        sync: false
+      - key: COMPANY_ADDRESS       # registered address, shown on the imprint
+        sync: false
       - key: ALLOWED_HOSTS         # esimsterr.com,www.esimsterr.com,esimsterr.onrender.com
         sync: false
       - key: CSRF_TRUSTED_ORIGINS  # https://esimsterr.com,https://www.esimsterr.com

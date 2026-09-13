@@ -32,6 +32,7 @@ urlpatterns = [
 # Human-facing pages. prefix_default_language=False keeps English on bare paths,
 # so adding a locale later never moves an already-indexed URL.
 urlpatterns += i18n_patterns(
+    path("", include("apps.legal.urls")),
     path("", include("apps.catalog.urls")),
     path("", include("apps.accounts.urls")),
     path("", include("apps.orders.urls")),

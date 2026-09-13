@@ -1,0 +1,17 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}Your {{ site_name }} account has been deleted.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">Account deleted</h1>
+<p style="margin:0 0 14px">This is the confirmation, and the last email you will get from us.</p>
+<p style="margin:0 0 8px;font-weight:700;color:#171a3c">What happened</p>
+<ul style="margin:0 0 18px;padding-left:20px;color:#575c86">
+  {% for line in lines %}<li style="margin-bottom:4px">{{ line }}</li>{% endfor %}
+</ul>
+<p style="margin:0 0 14px">Any eSIM you have already installed keeps working until its validity ends.
+You just cannot see its data balance in a dashboard any more, because there is no longer an account
+to show it in.</p>
+<p style="margin:0 0 14px;font-size:13px;color:#575c86">Order and payment records stay on file because
+tax law requires an invoice record. They are not linked to you any more and are used for nothing else.</p>
+<p style="margin:22px 0 0;font-size:13px;color:#575c86">If you did not ask for this,
+reply to this email immediately.</p>
+{% endblock %}

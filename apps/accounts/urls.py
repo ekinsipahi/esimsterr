@@ -8,6 +8,7 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("auth/google/", views.google_finish, name="google_finish"),
     path("dashboard/account/", views.account, name="account"),
+    path("dashboard/account/delete/", views.account_delete, name="account_delete"),
     path("unsubscribe/", views.unsubscribe, name="unsubscribe"),
     path("password-reset/", views.PasswordResetView.as_view(), name="password_reset"),
     path("password-reset/done/", views.PasswordResetDoneView.as_view(), name="password_reset_done"),

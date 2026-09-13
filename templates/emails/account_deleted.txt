@@ -1,0 +1,17 @@
+Your {{ site_name }} account has been deleted.
+
+This is the confirmation, and the last email you will get from us.
+
+What happened:
+{% for line in lines %}- {{ line }}
+{% endfor %}
+Any eSIM you have already installed keeps working until its validity ends. You
+just cannot see its data balance in a dashboard any more, because there is no
+longer an account to show it in.
+
+Order and payment records stay on file because tax law requires an invoice
+record. They are not linked to you any more and are used for nothing else.
+
+If you did not ask for this, reply to this email immediately.
+
+-- {{ site_name }} · {{ support_email }}

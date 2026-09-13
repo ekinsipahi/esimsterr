@@ -19,6 +19,9 @@ from apps.accounts.emails import send_welcome
 from apps.accounts.google import GoogleAuthError, user_from_google_token
 from apps.accounts.models import User
 from apps.catalog.models import Country, Device, Plan, Region
+from apps.legal.documents import (BY_SLUG, DOCUMENTS, contract_stamps,
+                                  document_url, stamp)
+from apps.legal.models import LegalAcceptance, record_acceptance
 from apps.orders.models import Esim, Order
 from apps.orders.services import sync_esim
 from apps.providers.yesim import YesimError
@@ -31,6 +34,19 @@ from .throttles import AuthAnonThrottle, CheckoutThrottle
 def _tokens(user):
     refresh = RefreshToken.for_user(user)
     return {"access": str(refresh.access_token), "refresh": str(refresh)}
+
+
+def legal_surface(request) -> str:
+    """Which platform is asking.
+
+    The app sends X-Client-Platform. Anything else is treated as web, so a
+    forged header can only ever get you a *different* public document, never a
+    private one.
+    """
+    from apps.legal.registry import ALL_SURFACES, WEB
+
+    value = (request.headers.get("X-Client-Platform") or "").strip().lower()
+    return value if value in ALL_SURFACES else WEB
 
 
 # ---- auth -------------------------------------------------------------------
@@ -47,6 +63,9 @@ def register(request):
         return Response({"detail": "An account with this email already exists."},
                         status=status.HTTP_400_BAD_REQUEST)
     user = User.objects.create_user(email=email, password=password)
+    record_acceptance(request, user=user, email=user.email,
+                      context=LegalAcceptance.Context.SIGNUP,
+                      surface=legal_surface(request))
     send_welcome(user)
     return Response({"user": {"email": user.email}, **_tokens(user)}, status=201)
 
@@ -200,4 +219,95 @@ def config(request):
         "currency": "USD",
         "min_supported_version": "1.0.0",
         "country_count": Country.objects.filter(is_active=True).count(),
+        # The app compares these against what the customer last accepted and
+        # shows the changed document. Cheaper than a push, and it cannot be
+        # missed by someone who has notifications switched off.
+        "legal": contract_stamps(legal_surface(request)),
     })
+
+
+# ---- legal ------------------------------------------------------------------
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def legal_index(request):
+    """The documents in force, with the version the app should show and record.
+
+    The app renders these rather than bundling its own copy: a policy that ships
+    inside a binary is one that cannot be corrected without a store review.
+    """
+    surface = legal_surface(request)
+    return Response({
+        "surface": surface,
+        "documents": [
+            {
+                "slug": d.slug,
+                "title": d.title,
+                "summary": d.summary,
+                "version": d.version,
+                "effective": d.effective.isoformat(),
+                "stamp": stamp(d, surface),
+                "url": request.build_absolute_uri(document_url(d)),
+            }
+            for d in DOCUMENTS if d.applies_to(surface)
+        ],
+    })
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def legal_document(request, slug):
+    """One document as structured blocks, composed for the calling platform."""
+    from apps.legal.documents import render as render_doc
+
+    doc = BY_SLUG.get(slug)
+    surface = legal_surface(request)
+    if doc is None or not doc.applies_to(surface):
+        return Response({"detail": "No such document."}, status=status.HTTP_404_NOT_FOUND)
+    return Response({
+        "slug": doc.slug, "title": doc.title, "summary": doc.summary,
+        "version": doc.version, "effective": doc.effective.isoformat(),
+        "stamp": stamp(doc, surface), "surface": surface,
+        "url": request.build_absolute_uri(document_url(doc)),
+        "sections": [
+            {"number": c.number, "id": c.slug, "title": c.title,
+             "html": "".join(str(b.render()) for b in c.blocks)}
+            for c in render_doc(doc, surface)
+        ],
+    })
+
+
+@api_view(["POST"])
+def legal_accept(request):
+    """Record that the signed-in customer accepted the current documents.
+
+    Called by the app after it shows a changed policy. Idempotent in practice:
+    a second call writes a second row with the same stamp, which is a truthful
+    record of them having seen it twice.
+    """
+    record_acceptance(request, user=request.user, email=request.user.email,
+                      context=LegalAcceptance.Context.APP,
+                      surface=legal_surface(request))
+    return Response({"ok": True})
+
+
+# ---- account ----------------------------------------------------------------
+@api_view(["POST", "DELETE"])
+def delete_account_api(request):
+    """In-app account deletion.
+
+    App Store guideline 5.1.1(v) requires an app that creates accounts to let you
+    delete one from inside it -- not a link to a support email. The confirmation
+    string is required for the same reason the web form requires it: this cancels
+    billing and erases support history, and a mis-tap should not do that.
+    """
+    from apps.accounts.deletion import DeletionBlocked, delete_account
+
+    confirm = (request.data.get("confirm") or "").strip().upper()
+    if confirm != "DELETE":
+        return Response({"detail": 'Send {"confirm": "DELETE"} to confirm.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    try:
+        report = delete_account(request.user)
+    except DeletionBlocked as e:
+        return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
+    return Response({"ok": True, "deleted": report.as_lines()})
