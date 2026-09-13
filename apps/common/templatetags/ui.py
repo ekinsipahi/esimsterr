@@ -74,7 +74,9 @@ _P = {
     "globe": '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/>',
     "map-pin": '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
     "layers": '<path d="M3 7 9 4l6 3 6-3v13l-6 3-6-3-6 3z"/><path d="M9 4v13M15 7v13"/>',
-    "infinity": '<path d="M18.2 14.8a4 4 0 1 1 0-5.6L12 12l-6.2 2.8a4 4 0 1 1 0-5.6L12 12z"/>',
+    # Two proper lobes. The earlier single-path approximation crossed itself
+    # in the middle and read as a bowtie rather than an infinity sign.
+    "infinity": '<path d="M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4Zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4Z"/>',
     "sim": '<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3h6.7L19 8.8V19.5A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5z"/><rect x="8.5" y="11" width="7" height="6" rx="1.2"/><path d="M11 11v6M8.5 14h7"/>',
     "qr": '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14h1M14 20h3M20 17v4"/>',
     "smartphone": '<rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M12 18h.01"/>',

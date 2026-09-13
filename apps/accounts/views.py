@@ -2,6 +2,7 @@ import json
 
 from django.conf import settings
 from django.contrib import messages
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import login as auth_login, logout as auth_logout, update_session_auth_hash
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
@@ -88,7 +89,25 @@ def logout_view(request):
 @require_POST
 @rate_limit("google", limit=12, window=600)
 def google_finish(request):
-    """GIS callback: POST credential (ID token) → session login. Returns JSON."""
+    """Google Identity Services callback: an ID token in, a session out.
+
+    Two kinds of caller reach this, and they need different answers. The sign-in
+    page submits a real form, so the browser navigates to whatever comes back:
+    that caller must get a redirect, or the customer lands staring at raw JSON.
+    The mobile app and any fetch() caller want the JSON. Content negotiation
+    decides, rather than a second URL."""
+    wants_json = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or "application/json" in request.headers.get("Accept", "")
+        or request.content_type == "application/json"
+    )
+
+    def fail(message, status):
+        if wants_json:
+            return JsonResponse({"ok": False, "error": message}, status=status)
+        messages.error(request, message)
+        return redirect("login")
+
     token = request.POST.get("credential") or ""
     if not token:
         try:
@@ -96,20 +115,24 @@ def google_finish(request):
         except ValueError:
             token = ""
     if not token:
-        return JsonResponse({"ok": False, "error": "missing_token"}, status=400)
+        return fail(_("Google sign-in did not return a token. Please try again."), 400)
     try:
         user, created = user_from_google_token(token, signup_ip=_client_ip(request))
     except GoogleAuthError as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=400)
+        return fail(str(e), 400)
     if not user.is_active:
-        return JsonResponse({"ok": False, "error": "account_disabled"}, status=403)
+        return fail(_("This account is disabled."), 403)
+
     auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     if created:
         send_welcome(user)
     request.session["pending_analytics"] = [
         analytics.sign_up("google") if created else analytics.login("google")
     ]
-    return JsonResponse({"ok": True, "next": _safe_next(request)})
+    destination = _safe_next(request)
+    if wants_json:
+        return JsonResponse({"ok": True, "next": destination})
+    return redirect(destination)
 
 
 @login_required
