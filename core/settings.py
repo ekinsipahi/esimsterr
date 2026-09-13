@@ -81,6 +81,16 @@ PRIVACY_CONTACT_EMAIL = env("PRIVACY_CONTACT_EMAIL", "") or SUPPORT_EMAIL
 APP_STORE_URL = env("APP_STORE_URL", "")
 PLAY_STORE_URL = env("PLAY_STORE_URL", "")
 
+# ---- Store credit ------------------------------------------------------------
+# "Pay this, get that much extra." Highest tier reached wins, so the list does
+# not have to be exhaustive. A setting because it is a marketing lever: the
+# tiers change with a campaign, and a deploy is a more auditable way to change
+# what money is given away than an admin form.
+WALLET_BONUS_TIERS = env("WALLET_BONUS_TIERS", "10:0,25:2,50:6,100:15,200:36")
+WALLET_MIN_TOPUP_USD = env("WALLET_MIN_TOPUP_USD", "10.00")
+WALLET_MAX_TOPUP_USD = env("WALLET_MAX_TOPUP_USD", "500.00")
+WALLET_ENABLED = env_bool("WALLET_ENABLED", True)
+
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", [])
 _PROD_HOSTS = [CANONICAL_HOST, f"www.{CANONICAL_HOST}", "esimsterr.onrender.com"]
@@ -135,6 +145,7 @@ INSTALLED_APPS = [
     "apps.subscriptions",
     "apps.seo",
     "apps.legal",
+    "apps.wallet",
 ]
 
 MIDDLEWARE = [

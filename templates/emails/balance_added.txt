@@ -1,0 +1,14 @@
+You added {{ topup.amount_usd }} USD to your {{ site_name }} balance.
+{% if topup.bonus_usd %}
+Because you topped up {{ topup.amount_usd }} USD, we added a {{ topup.bonus_usd }} USD
+bonus on top. Credited in total: {{ topup.credited_usd }} USD.
+{% endif %}
+Your balance is now {{ wallet.balance_usd }} USD.
+
+Spend it on any plan, in one tap, from the app or the website — no card, no
+checkout, no waiting. Balance never expires.
+
+Reference: {{ topup.ref }}
+See your balance: {{ site_url }}/wallet/
+
+-- {{ site_name }} · {{ support_email }}

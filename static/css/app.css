@@ -1229,3 +1229,80 @@ html[data-theme="dark"] .legal-callout { background: rgba(26,143,209,.12); }
 .consent-check input { margin-top: 2px; width: 17px; height: 17px; flex: none; accent-color: var(--b-500); }
 .consent-check span { color: var(--text-2); }
 .consent-check:has(input:checked) { border-color: var(--b-400); }
+
+/* ---------- 14. Balance ---------------------------------------------------- */
+/* The balance is the first thing a returning customer looks for, so it gets the
+   gold treatment the savings badges use: this is the money they already own. */
+.balance-hero {
+  display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between;
+  padding: 26px 28px; border-radius: var(--r-lg, 20px); border: 1px solid var(--line);
+  background: linear-gradient(135deg, var(--navy) 0%, #123a63 55%, #0f5d92 130%);
+  color: #fff; box-shadow: var(--sh);
+}
+.balance-label {
+  font-size: .74rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: rgba(255,255,255,.62);
+}
+.balance-amount {
+  font-size: clamp(2.1rem, 5vw, 3rem); font-weight: 800; line-height: 1.05; margin-top: 6px;
+  background: var(--grad-gold); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.balance-sub { margin-top: 6px; font-size: .92rem; color: rgba(255,255,255,.72); }
+
+.btn-gold {
+  background: var(--grad-gold); color: #2a1e04; font-weight: 800;
+  box-shadow: var(--glow-gold);
+}
+.btn-gold:hover { filter: brightness(1.05); }
+
+.stat-card { display: flex; flex-direction: column; gap: 4px; }
+.stat-label { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
+.stat-value { font-size: 1.5rem; font-weight: 800; color: var(--text); }
+
+.preset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.preset {
+  position: relative; display: flex; flex-direction: column; gap: 3px; padding: 16px 18px;
+  border: 1px solid var(--line-2); border-radius: var(--r); background: var(--card);
+  text-decoration: none; color: var(--text); cursor: pointer; transition: border-color .16s, transform .16s;
+}
+.preset:hover { border-color: var(--b-400); transform: translateY(-2px); }
+.preset input { position: absolute; opacity: 0; pointer-events: none; }
+.preset:has(input:checked) { border-color: var(--b-500); box-shadow: 0 0 0 3px color-mix(in srgb, var(--b-500) 18%, transparent); }
+.preset-pay { font-size: 1.35rem; font-weight: 800; }
+.preset-get { font-size: .84rem; color: var(--text-3); }
+.preset-bonus .preset-get { color: var(--gold-600); font-weight: 650; }
+html[data-theme="dark"] .preset-bonus .preset-get { color: var(--gold-400); }
+.preset-badge {
+  position: absolute; top: 10px; right: 10px; padding: 3px 9px; border-radius: 999px;
+  background: var(--grad-gold); color: #2a1e04; font-size: .72rem; font-weight: 800;
+}
+
+.method-pick { position: relative; cursor: pointer; }
+.method-pick input { position: absolute; opacity: 0; pointer-events: none; }
+.method-pick span {
+  display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px;
+  border: 1px solid var(--line-2); border-radius: var(--r-sm); font-weight: 650; color: var(--text-2);
+}
+.method-pick:has(input:checked) span {
+  border-color: var(--b-500); color: var(--b-600); background: var(--b-50);
+}
+html[data-theme="dark"] .method-pick:has(input:checked) span { background: rgba(26,143,209,.14); color: var(--b-200); }
+
+.tx-list { display: flex; flex-direction: column; }
+.tx { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.tx:last-child { border-bottom: 0; }
+.tx-icon {
+  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; flex: none;
+}
+.tx-in  { background: color-mix(in srgb, var(--mint) 16%, transparent); color: var(--mint); }
+.tx-out { background: var(--b-50); color: var(--b-600); }
+html[data-theme="dark"] .tx-out { background: rgba(26,143,209,.14); color: var(--b-300); }
+.tx-main { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.tx-main span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx-right { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex: none; }
+.tx-plus { color: var(--mint); }
+
+/* A payment method the customer cannot use yet is shown, not hidden: seeing
+   "Balance — $0.00, add balance" is how anyone learns the feature exists. */
+.radio-card-off { opacity: .62; }
+.radio-card-off:hover { opacity: .78; }

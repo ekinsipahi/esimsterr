@@ -46,6 +46,67 @@ def _abs(request, path):
     return f"{settings.SITE_URL}{path}"
 
 
+def start_balance_payment(topup, method: str, request=None) -> str:
+    """Provider checkout for store credit. Mirrors start_payment deliberately:
+    one code path proven in production is worth more than a shared abstraction
+    that has to be right for two different things on its first day."""
+    method = (method or "").lower()
+    if method not in ("stripe", "crypto", "nowpayments"):
+        raise PaymentError("Choose a payment method.")
+
+    done_url = _abs(request, reverse("wallet")) + f"?added={topup.ref}"
+    cancel_url = _abs(request, reverse("wallet_add"))
+    bonus = f" (+${topup.bonus_usd} bonus)" if topup.bonus_usd else ""
+    description = f"{settings.SITE_NAME} — ${topup.amount_usd} balance{bonus}"
+
+    if method == "stripe":
+        if not stripe_client.configured():
+            raise PaymentError("Card payments are not available right now. Please pay with crypto.")
+        payment = Payment.objects.create(
+            balance_topup=topup, user=topup.user, provider=Payment.Provider.STRIPE,
+            amount_usd=topup.amount_usd,
+        )
+        session = stripe_client.create_checkout_session(
+            amount_usd=topup.amount_usd,
+            reference=str(payment.id),
+            description=description,
+            success_url=done_url + "&paid=1&session_id={CHECKOUT_SESSION_ID}",
+            cancel_url=cancel_url,
+            customer_email=topup.user.email,
+        )
+        payment.provider_session_id = session.get("id", "")
+        payment.checkout_url = session.get("url", "")
+        payment.status = Payment.Status.WAITING
+        payment.raw = {"session": session.get("id", "")}
+        payment.save(update_fields=["provider_session_id", "checkout_url", "status", "raw"])
+        if not payment.checkout_url:
+            raise PaymentError("Stripe did not return a checkout URL.")
+        return payment.checkout_url
+
+    if not nowpayments.configured():
+        raise PaymentError("Crypto payments are not available right now.")
+    payment = Payment.objects.create(
+        balance_topup=topup, user=topup.user, provider=Payment.Provider.NOWPAYMENTS,
+        amount_usd=topup.amount_usd,
+    )
+    invoice = nowpayments.create_invoice(
+        amount_usd=topup.amount_usd,
+        reference=str(payment.id),
+        description=description,
+        success_url=done_url,
+        cancel_url=cancel_url,
+        ipn_url=_abs(request, reverse("nowpayments_ipn")),
+    )
+    payment.provider_payment_id = str(invoice.get("id", ""))
+    payment.checkout_url = invoice.get("invoice_url", "")
+    payment.status = Payment.Status.WAITING
+    payment.raw = invoice
+    payment.save(update_fields=["provider_payment_id", "checkout_url", "status", "raw"])
+    if not payment.checkout_url:
+        raise PaymentError("The crypto provider did not return an invoice URL.")
+    return payment.checkout_url
+
+
 def start_payment(order: Order, method: str, request=None) -> str:
     """Create the provider checkout and return the URL to redirect the customer to."""
     method = (method or "").lower()
@@ -132,14 +193,26 @@ def settle_payment(payment_id, *, paid_amount_usd=None, provider_payment_id="", 
         payment.status = Payment.Status.PARTIAL
         payment.save()
         log.warning("Underpaid payment %s: $%s of $%s", payment.id, arrived, payment.amount_usd)
-        from apps.accounts.notifications import underpaid_alert
+        if payment.order_id:
+            from apps.accounts.notifications import underpaid_alert
 
-        underpaid_alert(payment.order, arrived)
+            underpaid_alert(payment.order, arrived)
         return payment
 
     payment.status = Payment.Status.PAID
     payment.settled = True
     payment.save()
+
+    # A top-up buys credit, not a plan: there is nothing to provision, so it
+    # settles here and the wallet ledger takes over.
+    if payment.balance_topup_id:
+        from apps.wallet.services import credit_topup
+
+        topup = payment.balance_topup
+        topup.status = topup.Status.PAID
+        topup.save(update_fields=["status"])
+        transaction.on_commit(lambda: credit_topup(topup))
+        return payment
 
     order = payment.order
     order.mark_paid()

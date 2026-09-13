@@ -21,7 +21,14 @@ class Payment(models.Model):
         REFUNDED = "refunded", "Refunded"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    order = models.ForeignKey("orders.Order", on_delete=models.CASCADE, related_name="payments")
+    # Exactly one of these is set. A payment used to always be for an order;
+    # adding store credit introduced a second thing a customer can buy, and
+    # giving it its own column keeps `settle_payment` a routing decision rather
+    # than a guess about what an order-shaped row really meant.
+    order = models.ForeignKey("orders.Order", null=True, blank=True,
+                              on_delete=models.CASCADE, related_name="payments")
+    balance_topup = models.ForeignKey("wallet.BalanceTopUp", null=True, blank=True,
+                                      on_delete=models.CASCADE, related_name="payments")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
                              on_delete=models.SET_NULL, related_name="payments")
 
@@ -48,3 +55,8 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.get_provider_display()} ${self.amount_usd} — {self.status}"
+
+    @property
+    def target(self):
+        """What was bought: an Order, or a BalanceTopUp."""
+        return self.order or self.balance_topup

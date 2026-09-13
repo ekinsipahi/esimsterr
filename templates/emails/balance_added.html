@@ -1,0 +1,31 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}Your {{ site_name }} balance is now {{ wallet.balance_usd }} USD.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">Balance added</h1>
+<p style="margin:0 0 18px">You added <b>{{ topup.amount_usd }} USD</b> to your {{ site_name }} balance.</p>
+
+{% if topup.bonus_usd %}
+<table style="width:100%;border-collapse:separate;margin:0 0 18px">
+  <tr><td style="background:linear-gradient(135deg,#b98b28,#e0b04a);border-radius:14px;padding:15px 18px">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#3b2a06">Bonus credit</div>
+    <div style="margin-top:3px;font-size:26px;font-weight:800;color:#1f1503;line-height:1.1">+{{ topup.bonus_usd }} USD</div>
+  </td></tr>
+</table>
+{% endif %}
+
+<table style="width:100%;border-collapse:collapse;margin:0 0 20px">
+  <tr><td style="padding:8px 0;color:#575c86;font-size:13px">Paid</td>
+      <td style="padding:8px 0;text-align:right;font-weight:700;color:#171a3c">{{ topup.amount_usd }} USD</td></tr>
+  {% if topup.bonus_usd %}<tr><td style="padding:8px 0;color:#575c86;font-size:13px">Bonus</td>
+      <td style="padding:8px 0;text-align:right;font-weight:700;color:#171a3c">+{{ topup.bonus_usd }} USD</td></tr>{% endif %}
+  <tr><td style="padding:8px 0;border-top:1px solid #e6e8f5;color:#171a3c;font-size:14px;font-weight:700">Balance now</td>
+      <td style="padding:8px 0;border-top:1px solid #e6e8f5;text-align:right;font-weight:800;color:#0f74b4;font-size:16px">{{ wallet.balance_usd }} USD</td></tr>
+</table>
+
+<a href="{{ site_url }}/wallet/"
+   style="display:inline-block;background:#0f74b4;background:linear-gradient(135deg,#0d5c91 0%,#1a8fd1 48%,#35bdea 120%);
+          color:#fff;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:15px">See your balance</a>
+
+<p style="margin:22px 0 0;font-size:13px;color:#575c86">Spend it on any plan in one tap — no card, no checkout,
+no waiting. Balance never expires. Reference {{ topup.ref }}.</p>
+{% endblock %}

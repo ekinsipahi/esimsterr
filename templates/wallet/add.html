@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block content %}
+<section class="section">
+  <div class="shell" style="max-width:760px">
+    <a class="legal-back" href="{% url 'wallet' %}">{% trans "Balance" %}</a>
+    <h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">{% trans "Add balance" %}</h1>
+    <p class="muted mt-1">{% blocktrans with bal=wallet.balance_usd|usd %}You currently hold {{ bal }}.{% endblocktrans %}</p>
+
+    {% if error %}<div class="alert alert-error mt-3">{{ error }}</div>{% endif %}
+
+    <form method="post" class="card mt-3">
+      {% csrf_token %}
+      <input type="hidden" name="source" value="{{ request.GET.src|default:'web' }}">
+
+      <h3>{% trans "How much?" %}</h3>
+      <div class="preset-grid mt-3">
+        {% for p in presets %}
+          <label class="preset preset-pick {% if p.bonus %}preset-bonus{% endif %}">
+            <input type="radio" name="amount" value="{{ p.amount }}" {% if amount == p.amount|stringformat:"s" %}checked{% elif forloop.counter == 2 and not amount %}checked{% endif %}>
+            <span class="preset-pay">{{ p.amount|usd }}</span>
+            {% if p.bonus %}<span class="preset-badge">{% blocktrans with pct=p.bonus_pct %}+{{ pct }}%{% endblocktrans %}</span>{% endif %}
+            <span class="preset-get">{% blocktrans with total=p.total|usd %}You get {{ total }}{% endblocktrans %}</span>
+          </label>
+        {% endfor %}
+      </div>
+
+      <h3 class="mt-4">{% trans "Pay with" %}</h3>
+      <div class="row mt-2" style="gap:10px;flex-wrap:wrap">
+        {% if stripe_enabled %}
+        <label class="method-pick">
+          <input type="radio" name="method" value="stripe" checked>
+          <span>{% icon "credit-card" size=17 %}{% trans "Card" %}</span>
+        </label>
+        {% endif %}
+        {% if crypto_enabled %}
+        <label class="method-pick">
+          <input type="radio" name="method" value="crypto" {% if not stripe_enabled %}checked{% endif %}>
+          <span>{% icon "bitcoin" size=17 %}{% trans "Crypto" %}</span>
+        </label>
+        {% endif %}
+      </div>
+
+      <button class="btn btn-primary btn-lg btn-block mt-4" type="submit"
+              {% if not stripe_enabled and not crypto_enabled %}disabled{% endif %}>
+        {% trans "Continue to payment" %}{% icon "arrow-right" %}
+      </button>
+
+      <p class="xs muted-3 center mt-2">
+        {% url 'terms' as terms_url %}{% url 'refund' as refund_url %}
+        {% blocktrans %}Balance is store credit for {{ site_name }} plans. It does not expire, it cannot be withdrawn as cash, and it is covered by our <a href="{{ terms_url }}" class="link">terms</a> and <a href="{{ refund_url }}" class="link">refund policy</a>.{% endblocktrans %}
+      </p>
+    </form>
+  </div>
+</section>
+{% endblock %}

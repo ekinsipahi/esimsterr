@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load i18n ui humanize %}
+
+{% block content %}
+<section class="section">
+  <div class="shell">
+    <div class="dash-head"><div><h1 style="font-size:clamp(1.7rem,3.2vw,2.2rem)">{% trans "Balance" %}</h1></div></div>
+    {% include "partials/dash_tabs.html" %}
+
+    <div class="balance-hero mt-3">
+      <div>
+        <div class="balance-label">{% trans "Available balance" %}</div>
+        <div class="balance-amount">{{ wallet.balance_usd|usd }}</div>
+        <div class="balance-sub">{% blocktrans %}Spend it on any plan in one tap. It never expires.{% endblocktrans %}</div>
+      </div>
+      <a class="btn btn-gold btn-lg" href="{% url 'wallet_add' %}">{% icon "plus" size=17 %}{% trans "Add balance" %}</a>
+    </div>
+
+    <div class="grid g3 mt-3">
+      <div class="card stat-card">
+        <span class="stat-label">{% trans "Added, all time" %}</span>
+        <span class="stat-value">{{ wallet.topped_up_usd|usd }}</span>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-label">{% trans "Spent on plans" %}</span>
+        <span class="stat-value">{{ wallet.spent_usd|usd }}</span>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-label">{% trans "Movements" %}</span>
+        <span class="stat-value">{{ transactions|length }}</span>
+      </div>
+    </div>
+
+    {% if presets %}
+    <div class="card mt-3">
+      <h3>{% trans "Top up and get more" %}</h3>
+      <p class="small muted mt-1">{% blocktrans %}The more you add at once, the more we add on top. Bonus credit lands instantly and spends exactly like the rest.{% endblocktrans %}</p>
+      <div class="preset-grid mt-3">
+        {% for p in presets %}
+          <a class="preset {% if p.bonus %}preset-bonus{% endif %}" href="{% url 'wallet_add' %}?amount={{ p.amount }}">
+            <span class="preset-pay">{{ p.amount|usd }}</span>
+            {% if p.bonus %}<span class="preset-badge">{% blocktrans with pct=p.bonus_pct %}+{{ pct }}%{% endblocktrans %}</span>{% endif %}
+            <span class="preset-get">{% blocktrans with total=p.total|usd %}You get {{ total }}{% endblocktrans %}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card mt-3">
+      <h3>{% trans "History" %}</h3>
+      {% if transactions %}
+        <div class="tx-list mt-2">
+          {% for t in transactions %}
+            <div class="tx">
+              <span class="tx-icon {% if t.is_credit %}tx-in{% else %}tx-out{% endif %}">
+                {% if t.is_credit %}{% icon "arrow-down" size=15 %}{% else %}{% icon "arrow-right" size=15 %}{% endif %}
+              </span>
+              <span class="tx-main">
+                <b>{{ t.get_kind_display }}</b>
+                <span class="small muted">{{ t.description|default:"—" }}</span>
+              </span>
+              <span class="tx-right">
+                <b class="{% if t.is_credit %}tx-plus{% endif %}">{% if t.is_credit %}+{% endif %}{{ t.amount_usd|usd }}</b>
+                <span class="xs muted-3">{{ t.created_at|date:"j M Y, H:i" }}</span>
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="small muted mt-2">{% blocktrans %}Nothing yet. Add balance once and buying a plan becomes a single tap.{% endblocktrans %}</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

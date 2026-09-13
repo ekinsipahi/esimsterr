@@ -130,6 +130,15 @@ _P = {
     "trash": '<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"/>',
     "logout": '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
 }
+# Wallet set. "wallet" is drawn as a card-in-pocket rather than a purse: the
+# purse glyph reads as "savings" and this is spendable credit.
+_P["plus"] = '<path d="M12 5v14M5 12h14"/>'
+_P["wallet"] = ('<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a1 1 0 0 1 1 1v1.5"/>'
+                '<rect x="3" y="7.5" width="18" height="11.5" rx="2.5"/>'
+                '<path d="M21 11.5h-4a2 2 0 0 0 0 4h4"/>')
+_P["gift"] = ('<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12"/>'
+              '<path d="M12 9C12 9 10.5 3 8 3a2.5 2.5 0 0 0 0 6h4Zm0 0c0 0 1.5-6 4-6a2.5 2.5 0 0 1 0 6h-4Z"/>')
+
 _FILLED = {"star"}
 
 

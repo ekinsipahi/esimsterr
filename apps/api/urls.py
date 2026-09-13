@@ -23,6 +23,10 @@ urlpatterns = [
     path("orders/", views.my_orders, name="api_orders"),
     path("checkout-url/", views.checkout_url, name="api_checkout_url"),
     path("account/delete/", views.delete_account_api, name="api_account_delete"),
+    # wallet
+    path("wallet/", views.wallet, name="api_wallet"),
+    path("wallet/topup-url/", views.wallet_topup_url, name="api_wallet_topup_url"),
+    path("orders/pay-with-balance/", views.pay_with_balance, name="api_pay_with_balance"),
     # legal
     path("legal/", views.legal_index, name="api_legal"),
     path("legal/accept/", views.legal_accept, name="api_legal_accept"),

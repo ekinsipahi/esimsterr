@@ -58,10 +58,25 @@
 
           <div>
             <label class="small bold" style="display:block;margin-bottom:10px">{% trans "Payment method" %}</label>
+            {% url 'wallet_add' as wallet_add_url %}
             <div class="stack" style="gap:10px">
+              {% if wallet_enabled and user.is_authenticated %}
+              <label class="radio-card {% if not balance_covers %}radio-card-off{% endif %}">
+                <input type="radio" name="method" value="balance" {% if balance_covers %}checked{% endif %}
+                       {% if not balance_covers %}disabled{% endif %}>
+                <span class="flex-1">
+                  <span class="t">{% blocktrans with bal=balance_usd|usd %}Balance — {{ bal }}{% endblocktrans %}</span>
+                  <span class="d">
+                    {% if balance_covers %}{% trans "Instant. No card, no redirect, no payment step." %}
+                    {% else %}{% blocktrans %}Not enough for this order. <a href="{{ wallet_add_url }}" class="link">Add balance</a>{% endblocktrans %}{% endif %}
+                  </span>
+                </span>
+                {% icon "wallet" size=22 cls="muted-3" %}
+              </label>
+              {% endif %}
               {% if stripe_enabled %}
               <label class="radio-card">
-                <input type="radio" name="method" value="stripe" checked>
+                <input type="radio" name="method" value="stripe" {% if not balance_covers %}checked{% endif %}>
                 <span class="flex-1">
                   <span class="t">{% trans "Card" %}</span>
                   <span class="d">{% trans "Visa, Mastercard, Amex, Apple Pay and Google Pay via Stripe" %}</span>
@@ -71,7 +86,7 @@
               {% endif %}
               {% if crypto_enabled %}
               <label class="radio-card">
-                <input type="radio" name="method" value="crypto" {% if not stripe_enabled %}checked{% endif %}>
+                <input type="radio" name="method" value="crypto" {% if not stripe_enabled and not balance_covers %}checked{% endif %}>
                 <span class="flex-1">
                   <span class="t">{% trans "Crypto" %}</span>
                   <span class="d">{% trans "Bitcoin, Ethereum, USDT, TRON and 100 more via NOWPayments" %}</span>
@@ -95,6 +110,7 @@
             this is not optional wording: without the tick we may not issue the
             profile straight away, and the confirmation email repeats it.
           {% endcomment %}
+          <input type="hidden" name="src" value="{{ src }}">
           <label class="consent-check">
             <input type="checkbox" name="digital_consent" value="1" required
                    {% if digital_consent %}checked{% endif %}>

@@ -6,9 +6,12 @@ physical connectivity service. Nothing here creates an in-app purchase flow.
 """
 from __future__ import annotations
 
+from decimal import Decimal
+
 from django.conf import settings
 from django.db.models import Q
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
@@ -16,6 +19,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.accounts.emails import send_welcome
+from apps.accounts.views import _client_ip
 from apps.accounts.google import GoogleAuthError, user_from_google_token
 from apps.accounts.models import User
 from apps.catalog.models import Country, Device, Plan, Region
@@ -311,3 +315,166 @@ def delete_account_api(request):
     except DeletionBlocked as e:
         return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
     return Response({"ok": True, "deleted": report.as_lines()})
+
+
+# ---- wallet ------------------------------------------------------------------
+def _wallet_payload(request, wallet):
+    from apps.wallet.services import limits, presets
+
+    low, high = limits()
+    return {
+        "balance_usd": str(wallet.balance_usd),
+        "topped_up_usd": str(wallet.topped_up_usd),
+        "spent_usd": str(wallet.spent_usd),
+        "currency": "USD",
+        "min_topup_usd": str(low),
+        "max_topup_usd": str(high),
+        "presets": [
+            {"amount_usd": str(p["amount"]), "bonus_usd": str(p["bonus"]),
+             "total_usd": str(p["total"]), "bonus_pct": p["bonus_pct"]}
+            for p in presets()
+        ],
+        "transactions": [
+            {"id": str(t.id), "kind": t.kind, "kind_label": t.get_kind_display(),
+             "amount_usd": str(t.amount_usd), "balance_after_usd": str(t.balance_after_usd),
+             "description": t.description, "is_credit": t.is_credit,
+             "created_at": t.created_at.isoformat()}
+            for t in wallet.transactions.all()[:50]
+        ],
+    }
+
+
+@api_view(["GET"])
+def wallet(request):
+    from apps.wallet.models import Wallet
+
+    return Response(_wallet_payload(request, Wallet.for_user(request.user)))
+
+
+@api_view(["POST"])
+def wallet_topup_url(request):
+    """Return the WEB page where credit is bought.
+
+    The app opens this in the system browser and never collects payment itself.
+    That is the same rule that governs buying a plan, applied to buying credit:
+    money moves on the website, the app only ever spends what is already there.
+    """
+    amount = request.data.get("amount")
+    from apps.wallet.services import validate_amount
+
+    try:
+        amount = validate_amount(amount)
+    except ValueError as e:
+        return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    path = reverse("wallet_add")
+    url = request.build_absolute_uri(
+        f"{path}?amount={amount}&src={legal_surface(request)}"
+    )
+    return Response({"url": url, "amount_usd": str(amount)})
+
+
+@api_view(["POST"])
+@throttle_classes([CheckoutThrottle])
+def pay_with_balance(request):
+    """Buy a plan out of store credit, in the app, with no payment step.
+
+    Nothing here talks to a payment processor: the customer already bought the
+    credit on the website. Coupons still apply, because a discount on a plan is
+    a discount whichever pocket the money comes from.
+    """
+    from apps.coupons.services import CouponError, redeem, validate_coupon
+    from apps.legal.models import LegalAcceptance, record_acceptance
+    from apps.wallet.models import InsufficientBalance, Wallet
+    from apps.wallet.services import pay_order_with_balance
+
+    if not request.data.get("consent"):
+        # The same statutory acknowledgement the web checkout collects. An app
+        # that skipped it would deliver inside the withdrawal window without the
+        # buyer's express request, which is the seller's problem, not theirs.
+        return Response(
+            {"detail": "Confirm immediate delivery to continue.",
+             "code": "consent_required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    plan = Plan.objects.live().select_related("country", "region").filter(
+        pk=request.data.get("plan_id")).first()
+    if plan is None:
+        return Response({"detail": "Plan not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    target_esim = None
+    esim_id = request.data.get("esim_id")
+    if esim_id:
+        target_esim = request.user.esims.filter(pk=esim_id, is_deleted=False).first()
+        if target_esim is None:
+            return Response({"detail": "eSIM not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    subtotal = Decimal(plan.price)
+    coupon, discount = None, Decimal("0.00")
+    code = (request.data.get("coupon") or "").strip()
+    if code:
+        try:
+            coupon, discount = validate_coupon(
+                code, amount_usd=subtotal, plan=plan,
+                user=request.user, email=request.user.email,
+            )
+        except CouponError as e:
+            return Response({"detail": str(e), "code": "coupon_invalid"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    total = (subtotal - discount).quantize(Decimal("0.01"))
+    wallet_row = Wallet.for_user(request.user)
+    if wallet_row.balance_usd < total:
+        return Response(
+            {"detail": "Not enough balance.", "code": "insufficient_balance",
+             "balance_usd": str(wallet_row.balance_usd), "needed_usd": str(total)},
+            status=status.HTTP_402_PAYMENT_REQUIRED,
+        )
+
+    order = Order.objects.create(
+        user=request.user, email=request.user.email,
+        kind=Order.Kind.TOPUP if target_esim else Order.Kind.NEW,
+        plan=plan, plan_title=plan.title, plan_provider_id=plan.provider_plan_id,
+        plan_days=plan.days, plan_data_label=plan.data_label,
+        subtotal_usd=subtotal, discount_usd=discount, amount_usd=total,
+        coupon=coupon, coupon_code=coupon.code if coupon else "",
+        cost_amount=plan.cost_amount, cost_currency=plan.cost_currency,
+        target_esim=target_esim, withdrawal_waived_at=timezone.now(),
+        source=legal_surface(request), paid_with_balance=True,
+        ip=_client_ip(request),
+        user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:400],
+    )
+    if coupon is not None:
+        try:
+            redeem(coupon, order, user=request.user, email=request.user.email, ip=order.ip)
+        except CouponError as e:
+            order.coupon, order.coupon_code = None, ""
+            order.discount_usd = Decimal("0.00")
+            order.amount_usd = subtotal
+            order.save(update_fields=["coupon", "coupon_code", "discount_usd", "amount_usd"])
+            return Response({"detail": str(e), "code": "coupon_invalid"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        pay_order_with_balance(request.user, order)
+    except InsufficientBalance as e:
+        # Someone spent the balance between the check above and here. Releasing
+        # the coupon seat matters: a capped code must not be burned by an order
+        # that never happened.
+        from apps.coupons.services import release
+
+        release(order)
+        order.status = Order.Status.FAILED
+        order.save(update_fields=["status"])
+        return Response({"detail": str(e), "code": "insufficient_balance"},
+                        status=status.HTTP_402_PAYMENT_REQUIRED)
+
+    record_acceptance(request, user=request.user, email=request.user.email,
+                      context=LegalAcceptance.Context.CHECKOUT,
+                      order_ref=order.ref, surface=legal_surface(request))
+
+    order.refresh_from_db()
+    return Response({
+        "order": OrderSerializer(order).data,
+        "wallet": _wallet_payload(request, Wallet.for_user(request.user)),
+    }, status=201)

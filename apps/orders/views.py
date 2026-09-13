@@ -72,6 +72,28 @@ def _can_view_order(request, order):
     return order.ref in request.session.get(SESSION_ORDERS, [])
 
 
+# The app opens web checkout with ?src=android. Anything unrecognised is "web",
+# so a crafted link can mislabel an order but never do anything else.
+_SOURCES = {"web", "ios", "android"}
+
+
+def _balance_of(user) -> Decimal:
+    """Store credit available to this customer, or zero for a guest."""
+    if not getattr(user, "is_authenticated", False):
+        return Decimal("0.00")
+    if not getattr(settings, "WALLET_ENABLED", True):
+        return Decimal("0.00")
+    from apps.wallet.models import Wallet
+
+    wallet = Wallet.objects.filter(user=user).first()
+    return wallet.balance_usd if wallet else Decimal("0.00")
+
+
+def _source(request) -> str:
+    value = (request.GET.get("src") or request.POST.get("src") or "").strip().lower()
+    return value if value in _SOURCES else "web"
+
+
 @rate_limit("checkout", limit=12, window=3600)
 def checkout(request, plan_id):
     """Plan summary, optional coupon, email and payment method.
@@ -156,6 +178,7 @@ def checkout(request, plan_id):
                 cost_currency=plan.cost_currency,
                 target_esim=topup_esim,
                 withdrawal_waived_at=timezone.now(),
+                source=_source(request),
                 **_fingerprint(request),
             )
             _remember_order(request, order)
@@ -177,6 +200,24 @@ def checkout(request, plan_id):
                     order.amount_usd = subtotal
                     order.save(update_fields=["coupon", "coupon_code", "discount_usd", "amount_usd"])
                     error = str(e)
+
+            if not error and method == "balance":
+                # Credit already bought: nothing leaves for a payment provider,
+                # the order settles here and goes straight to provisioning.
+                from apps.wallet.models import InsufficientBalance
+                from apps.wallet.services import pay_order_with_balance
+
+                try:
+                    pay_order_with_balance(request.user, order)
+                except InsufficientBalance as e:
+                    release(order)
+                    order.status = Order.Status.FAILED
+                    order.save(update_fields=["status"])
+                    error = str(e)
+                else:
+                    order.paid_with_balance = True
+                    order.save(update_fields=["paid_with_balance"])
+                    return redirect("order_detail", ref=order.ref)
 
             if not error:
                 try:
@@ -214,6 +255,9 @@ def checkout(request, plan_id):
         "plan": plan,
         "topup_esim": topup_esim,
         "digital_consent": request.method == "POST" and bool(request.POST.get("digital_consent")),
+        "src": _source(request),
+        "balance_usd": _balance_of(request.user),
+        "balance_covers": _balance_of(request.user) >= (subtotal - discount),
         "email": email,
         "coupon_code": code,
         "analytics_events": events,

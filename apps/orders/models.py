@@ -72,6 +72,15 @@ class Order(models.Model):
     # showing it was given is ours, which means it has to be a stored fact and
     # not an inference from the order existing.
     withdrawal_waived_at = models.DateTimeField(null=True, blank=True)
+    # Which client the order came from: web, ios, android. Guest checkout stays
+    # anonymous in the sense that matters -- no account, no identity document --
+    # but "which surface sells" is a question the business has to be able to
+    # answer, and it cannot be recovered from a user agent after the fact.
+    source = models.CharField(max_length=12, default="web", db_index=True)
+    # Set when the order was settled from store credit rather than a card or
+    # crypto invoice. Kept as its own flag because such an order has no Payment
+    # row at all, and "paid but no payment" would otherwise look like a bug.
+    paid_with_balance = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)

@@ -50,6 +50,16 @@ def send_esim_ready(order, esim):
     )
 
 
+def send_balance_added(topup):
+    """Receipt for store credit. Sent even though nothing was delivered: money
+    left the customer's account, so there has to be a record they can find."""
+    send_email_bg(
+        topup.user.email,
+        f"You added {topup.amount_usd:.2f} USD to your {settings.SITE_NAME} balance",
+        "balance_added", {"topup": topup, "wallet": topup.user.wallet},
+    )
+
+
 def send_password_reset(user, reset_url):
     send_email_bg(user.email, "Reset your password", "password_reset", {"user": user, "reset_url": reset_url})
 
