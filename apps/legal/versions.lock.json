@@ -29,36 +29,36 @@
   "privacy": {
     "effective": "2026-09-13",
     "hashes": {
-      "android": "80e3304fdd3e6d23",
-      "ios": "4b956e45c91f4697",
-      "web": "5b3ef09a395ae4db"
+      "android": "9b16f3b8bfd59433",
+      "ios": "eee022e368846a7d",
+      "web": "812dc5ca75b0a1be"
     },
     "version": "2026.1"
   },
   "refund": {
     "effective": "2026-09-13",
     "hashes": {
-      "android": "a3293dc985d3dba4",
-      "ios": "0dd3652cf34ac8b7",
-      "web": "3952f206e3c84bd7"
+      "android": "93e2cab252c3a696",
+      "ios": "c5c98b6d7ce9a70a",
+      "web": "f7b5531c81e14900"
     },
     "version": "2026.1"
   },
   "subprocessors": {
     "effective": "2026-09-13",
     "hashes": {
-      "android": "b36615c5d9dc0be7",
-      "ios": "a582b474ca9920a5",
-      "web": "09ed1dbd2a7dbafa"
+      "android": "6bfaa96cae9fe53b",
+      "ios": "a5f9f9ee24196202",
+      "web": "eaace8f67300fcff"
     },
     "version": "2026.1"
   },
   "terms": {
     "effective": "2026-09-13",
     "hashes": {
-      "android": "98cbb47b3673abe5",
-      "ios": "c12d853d30ca99ad",
-      "web": "082008e03d5425f4"
+      "android": "f945721843425d66",
+      "ios": "59c873c12bb70f20",
+      "web": "8212bd220cd09a08"
     },
     "version": "2026.1"
   }

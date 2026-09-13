@@ -62,6 +62,17 @@ CLAUSES = {c.id: c for c in [
             "again; if the refund was our fault, ask us and we will reissue it.")),
     )),
 
+    Clause("refund-statutory", _("Your statutory rights, if you are in the EU"), (
+        P(_("We sell from Estonia, so European consumer law applies to you wherever in the "
+            "Union you are. That law gives you 14 days to withdraw from a distance "
+            "contract — and lets you give that up for digital content delivered at once, "
+            "which is what the tick box at checkout does.")),
+        P(_("What is left after the tick is this policy, and it is more generous than the "
+            "law requires: 24 hours to change your mind on an eSIM you have not installed, "
+            "and a full refund whenever the fault is ours. Nothing here removes a right "
+            "you have by law, and where the two differ the law wins.")),
+    )),
+
     Clause("refund-how", _("How to request one"), (
         P(_("Email [[mail]] with your order reference (ES-XXXXXXX), or open a ticket from "
             "your dashboard. We answer within one business day and, when a refund is due, "

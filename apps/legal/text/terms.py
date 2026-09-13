@@ -95,13 +95,18 @@ CLAUSES = {c.id: c for c in [
     Clause("refunds-ref", _("Refunds and withdrawal"), (
         P(_("Refund terms are set out in our [[doc:refund|refund policy]], which forms "
             "part of these terms.")),
-        P(_("If you are a consumer in the EU, the UK or another jurisdiction with a "
-            "statutory cooling-off period for distance selling, that right normally "
-            "lasts 14 days. An eSIM plan is digital content supplied immediately, and by "
-            "completing checkout you ask us to begin supply at once and acknowledge that "
-            "you lose the right of withdrawal once the profile has been issued to you. "
-            "Until it is issued, and for an issued profile you have not installed, our "
-            "refund policy gives you at least what the statutory right would.")),
+        P(_("As a consumer in the European Union you normally have 14 days to withdraw "
+            "from a distance contract without giving a reason. An eSIM plan is digital "
+            "content supplied immediately, and the law lets you give that up in exchange "
+            "for getting it now.")),
+        Callout(_("So checkout asks you to tick a box: you ask us to begin supply at once, "
+                  "and you acknowledge that you lose the right of withdrawal once the "
+                  "profile has been issued. Without that tick we cannot issue the eSIM "
+                  "immediately. We keep a record of the tick and repeat it on your "
+                  "receipt.")),
+        P(_("Until the profile is issued, the withdrawal right is untouched. After it is "
+            "issued but before you install it, our [[doc:refund|refund policy]] still "
+            "gives you 24 hours to change your mind — more than the law leaves you.")),
     )),
 
     Clause("acceptable-use-ref", _("Acceptable use"), (
@@ -184,11 +189,15 @@ CLAUSES = {c.id: c for c in [
     )),
 
     Clause("law", _("Governing law and disputes"), (
-        P(_("These terms are governed by the law of {jurisdiction}, and the courts of "
-            "{courts} have jurisdiction. If you are a consumer resident "
-            "elsewhere, this does not take away the protection of the mandatory consumer "
-            "law of the country you live in, or your right to bring a claim in your local "
-            "courts.")),
+        P(_("These terms are governed by the law of {jurisdiction}, and the {courts} has "
+            "jurisdiction. If you are a consumer resident elsewhere, this does not take "
+            "away the protection of the mandatory consumer law of the country you live in, "
+            "or your right to bring a claim in your local courts.")),
+        P(_("As an Estonian company we are bound by European Union consumer law wherever "
+            "in the Union you are buying from. If we cannot settle a complaint between us, "
+            "you may take it to the Consumer Disputes Committee of the Estonian Consumer "
+            "Protection and Technical Regulatory Authority, free of charge, at "
+            "komisjon.ee — or to the equivalent body in your own country.")),
         P(_("Before any of that: email [[mail]]. Almost everything is a support problem "
             "with a same-day answer, and a dispute costs us both more than a refund does.")),
     )),
@@ -203,8 +212,16 @@ CLAUSES = {c.id: c for c in [
             "before it takes effect if you do not accept it.")),
     )),
 
-    Clause("contact", _("Contact"), (
-        P(_("{company}, trading as {site}. Email [[mail]] — we answer within one business "
-            "day.")),
+    Clause("contact", _("Who you are buying from"), (
+        P(_("{company}, trading as {site}, a private limited company registered in Estonia "
+            "under registry code {registration}.")),
+        UL(
+            _("Registered address: {address}"),
+            _("Email: {support} — we answer within one business day"),
+            _("Website: {host}"),
+        ),
+        P(_("We are entered in the Estonian commercial register held by the registration "
+            "department of Tartu County Court, and the company is represented by its "
+            "management board.")),
     )),
 ]}

@@ -17,8 +17,11 @@ CLAUSES = {c.id: c for c in [
             "The short version: we need an email address to deliver an eSIM, we keep "
             "enough of a record to defend a payment dispute, and we do not look at your "
             "traffic.")),
-        P(_("{company} is the data controller for everything described here. For "
-            "anything about your data, write to [[mail]].")),
+        P(_("{company} (registry code {registration}, {address}) is the data controller "
+            "for everything described here. We are established in Estonia, so this policy "
+            "is written to the General Data Protection Regulation and the Estonian "
+            "Personal Data Protection Act. For anything about your data, write to "
+            "[[mail]].")),
     )),
 
     Clause("collect", _("What we collect"), (
@@ -176,14 +179,17 @@ CLAUSES = {c.id: c for c in [
     )),
 
     Clause("transfers", _("Where your data goes"), (
-        P(_("We are based in {jurisdiction} and our providers are mostly in the European "
-            "Union and the United States, so personal data is transferred outside the "
-            "country you live in. Where data leaves the European Economic Area, the "
-            "transfer is covered by the European Commission's standard contractual clauses "
-            "in our contract with that provider, or by an adequacy decision where one "
-            "applies.")),
+        P(_("We are established in Estonia and your data is held in the European Union — "
+            "the database and the application both run in Frankfurt. Nothing has to leave "
+            "the European Economic Area for you to buy and use an eSIM.")),
+        P(_("Three providers do process data in the United States: the email service that "
+            "delivers your QR code, the AI provider behind the chat assistant, and parts "
+            "of Stripe's payment network. Those transfers rely on the EU–US Data Privacy "
+            "Framework where the provider is certified under it, and otherwise on the "
+            "European Commission's standard contractual clauses in our contract with them.")),
         P(_("The [[doc:subprocessors|sub-processors page]] names the region each provider "
-            "processes in.")),
+            "processes in, so you can see exactly which of your data crosses and which "
+            "does not.")),
     )),
 
     Clause("cookies-ref", _("Cookies and analytics"), (
@@ -230,9 +236,12 @@ CLAUSES = {c.id: c for c in [
             "including the fraud record described above — though we may need to keep it "
             "where a payment dispute is open. You can withdraw marketing consent at any "
             "time from the unsubscribe link or your account page.")),
-        P(_("Email [[mail]] and we will action it within 30 days, free of charge. We answer "
-            "requests from anywhere, not only from the jurisdictions whose law compels it. "
-            "You also have the right to complain to your local data protection authority.")),
+        P(_("Email [[mail]] and we will action it within one month, free of charge, as the "
+            "GDPR requires. We answer requests from anywhere, not only from the "
+            "jurisdictions whose law compels it.")),
+        P(_("You can also complain to a supervisory authority. Ours is the Estonian Data "
+            "Protection Inspectorate — Andmekaitse Inspektsioon, aki.ee — and you may "
+            "equally go to the authority in the EU country you live or work in.")),
         P(_("If you are in California: the categories above are all we collect, we do not "
             "sell or share personal information, we do not use it for cross-context "
             "behavioural advertising, and exercising any of these rights will never get you "

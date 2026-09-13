@@ -11,7 +11,8 @@ that text is escaped on render with only a fixed set of tokens resolved:
     [[url:compatible_devices]]  link to a named Django URL, label required
     [[mail]]                    the support address as a mailto link
     **emphasis**                <strong>
-    {site} {company} {support}  substituted from settings
+    {site} {company} {address}  substituted from settings
+    {registration} {jurisdiction} {courts} {support} {host} {vat}
 
 Nothing else in the source survives as markup, so a translator cannot break a
 page and a clause cannot smuggle a script tag in.
@@ -45,7 +46,9 @@ def _substitutions() -> dict:
         "host": settings.CANONICAL_HOST,
         "jurisdiction": settings.LEGAL_JURISDICTION,
         "courts": settings.LEGAL_COURTS,
-        "entity_address": settings.COMPANY_ADDRESS,
+        "address": settings.COMPANY_ADDRESS,
+        "registration": settings.COMPANY_REGISTRATION,
+        "vat": settings.COMPANY_VAT,
     }
 
 

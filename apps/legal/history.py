@@ -33,6 +33,14 @@ HISTORY = (
             _("Corrected: the legal pages previously printed today's date as their last "
               "update, on every visit. Each document now carries a version and a real "
               "effective date."),
+            _("Set throughout: the seller is Sterr Technologies OÜ, a private limited "
+              "company registered in Estonia under code 17591465. Estonian law governs, "
+              "the Harju County Court has jurisdiction, EU consumer law applies to every "
+              "buyer in the Union, and the supervisory authority for data protection is "
+              "the Estonian Data Protection Inspectorate."),
+            _("Added: checkout and subscription now ask you to expressly request immediate "
+              "delivery and acknowledge the effect on the 14-day withdrawal right, and "
+              "your receipt repeats what you agreed to."),
         ),
     },
 )

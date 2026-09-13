@@ -88,6 +88,10 @@
 
         <form method="post" class="mt-3">
           {% csrf_token %}
+          <label class="consent-check">
+            <input type="checkbox" name="digital_consent" value="1" required>
+            <span>{% blocktrans %}I ask for the first period to be delivered immediately, and I understand that I lose my 14-day right of withdrawal on it once the data is on my line. Future renewals can be cancelled any time before they are charged.{% endblocktrans %}</span>
+          </label>
           <button class="btn btn-primary btn-lg btn-block" type="submit">
             {% blocktrans with price=sub_price|usd %}Subscribe for {{ price }}{% endblocktrans %}
           </button>

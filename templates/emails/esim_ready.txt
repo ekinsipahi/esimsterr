@@ -20,4 +20,10 @@ Three things that matter:
 Install at home on Wi-Fi. The plan only starts counting when the eSIM first
 connects at your destination.
 
+{% if order.withdrawal_waived_at %}
+Your order confirmation: at checkout on {{ order.withdrawal_waived_at|date:"j F Y" }} you
+asked for this eSIM to be issued immediately and acknowledged that, once issued,
+your 14-day right of withdrawal no longer applies. Our refund policy still gives
+you 24 hours to change your mind while the profile is uninstalled and unused.
+{% endif %}
 -- {{ site_name }} · {{ support_email }}

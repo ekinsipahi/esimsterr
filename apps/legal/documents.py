@@ -79,8 +79,8 @@ DOCUMENTS: tuple = (
         numbered=False,
         clauses=(
             "refund-lead", "full-refund", "no-refund", "refund-subscriptions",
-            "refund-coupons", "refund-how", "refund-app", "refund-methods",
-            "refund-partial", "chargebacks",
+            "refund-coupons", "refund-statutory", "refund-how", "refund-app",
+            "refund-methods", "refund-partial", "chargebacks",
         ),
     ),
     Document(

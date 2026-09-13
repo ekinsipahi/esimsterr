@@ -1218,3 +1218,14 @@ html[data-theme="dark"] .legal-callout { background: rgba(26,143,209,.12); }
 }
 .footer-legal-rail a { color: var(--text-3); text-decoration: none; }
 .footer-legal-rail a:hover { color: var(--b-500); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Consent tick at checkout. Deliberately not styled down into the fine print:
+   it is a statutory acknowledgement, and one the buyer has to actually make. */
+.consent-check {
+  display: flex; gap: 11px; align-items: flex-start; margin: 4px 0 16px;
+  padding: 13px 15px; border: 1px solid var(--line-2); border-radius: var(--r);
+  background: var(--card); font-size: .9rem; line-height: 1.5; cursor: pointer;
+}
+.consent-check input { margin-top: 2px; width: 17px; height: 17px; flex: none; accent-color: var(--b-500); }
+.consent-check span { color: var(--text-2); }
+.consent-check:has(input:checked) { border-color: var(--b-400); }

@@ -38,14 +38,22 @@ services:
       - key: CANONICAL_HOST        # esimsterr.com
         sync: false
 
-      # --- Legal identity (printed in the terms; set these before selling) ---
-      - key: COMPANY_LEGAL_NAME    # the registered selling entity
-        sync: false
-      - key: LEGAL_JURISDICTION    # e.g. "the Republic of Türkiye"
-        sync: false
-      - key: LEGAL_COURTS          # e.g. "Istanbul"
-        sync: false
-      - key: COMPANY_ADDRESS       # registered address, shown on the imprint
+      # --- Legal identity (Sterr Technologies OÜ, Estonian registry 17591465) ---
+      # Printed in the terms imprint and the privacy policy. The defaults in
+      # settings.py are already correct; these exist so a change does not need a
+      # code deploy.
+      - key: COMPANY_LEGAL_NAME
+        value: "Sterr Technologies OÜ"
+      - key: COMPANY_REGISTRATION
+        value: "17591465"
+      - key: COMPANY_ADDRESS
+        value: "Tornimäe tn 5, Kesklinna linnaosa, 10145 Tallinn, Estonia"
+      - key: LEGAL_JURISDICTION
+        value: "Estonia"
+      - key: LEGAL_COURTS
+        value: "Harju County Court, Tallinn"
+      # Fill once VAT-registered; the imprint omits it while empty.
+      - key: COMPANY_VAT
         sync: false
       - key: ALLOWED_HOSTS         # esimsterr.com,www.esimsterr.com,esimsterr.onrender.com
         sync: false

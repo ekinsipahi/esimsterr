@@ -33,4 +33,12 @@ Install it at home on Wi-Fi; the plan only starts counting when it first connect
   <li>Keep your normal SIM as the default line for calls and SMS, so your own number keeps working.</li>
 </ol>
 {% endblock %}
-{% block footer_note %}You are receiving this because you bought order {{ order.ref }} at {{ site_name }}.{% endblock %}
+{% block footer_note %}You are receiving this because you bought order {{ order.ref }} at {{ site_name }}.{% if order.withdrawal_waived_at %}
+<p style="margin:22px 0 0;padding-top:16px;border-top:1px solid #e6e8f5;font-size:12px;color:#575c86">
+  <b>Your order confirmation.</b> At checkout on {{ order.withdrawal_waived_at|date:"j F Y" }} you asked for
+  this eSIM to be issued immediately and acknowledged that, once issued, your 14-day right of withdrawal
+  no longer applies. Our refund policy still gives you 24 hours to change your mind while the profile is
+  uninstalled and unused.
+</p>
+{% endif %}
+{% endblock %}

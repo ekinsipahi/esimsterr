@@ -14,9 +14,12 @@ from apps.legal.registry import Clause
 CLAUSES = {c.id: c for c in [
     Clause("subp-lead", None, (
         P(_("These are the companies that process personal data on our behalf so that {site} "
-            "can work. Each one is under a contract limiting it to the purpose listed, and "
-            "each transfer outside the European Economic Area is covered by the European "
-            "Commission's standard contractual clauses or by an adequacy decision.")),
+            "can work. {company} is established in Estonia, so most of this list sits "
+            "inside the European Economic Area by default; each one is under a contract "
+            "limiting it to the purpose listed.")),
+        P(_("Where a provider processes in the United States, the transfer relies on the "
+            "EU–US Data Privacy Framework where that provider is certified under it, and "
+            "otherwise on the European Commission's standard contractual clauses.")),
     )),
 
     Clause("subp-list", _("Current sub-processors"), (

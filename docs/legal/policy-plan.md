@@ -1,9 +1,21 @@
 # Policy plan
 
 Written for the operator of eSIMsterr and whoever reviews this before the mobile
-app ships. It is not legal advice, and the documents it describes are templates
-that a lawyer in the selling entity's jurisdiction should read before the first
-significant month of revenue.
+app ships. It is not legal advice, and the documents it describes should be read
+by an Estonian lawyer and an Estonian accountant before the first significant
+month of revenue.
+
+**The seller is Sterr Technologies OÜ**, a private limited company registered in
+Estonia on 4 September 2026 under code 17591465, registered office Tornimäe tn 5,
+Kesklinna linnaosa, 10145 Tallinn, share capital €300, sole board member and
+shareholder Ekin Ahmed Sipahi, contact person DigiRepresent Services OÜ.
+
+That is not a footnote. Being established in the European Union is the single
+fact the rest of this plan turns on: the GDPR applies to us directly rather than
+extraterritorially, EU consumer law applies to every buyer in the Union, our
+supervisory authority is the Estonian Data Protection Inspectorate, and the
+14-day withdrawal right is something we have to handle at checkout rather than
+mention in a document.
 
 ## The three layers
 
@@ -97,8 +109,10 @@ answered with an order record — say so rather than volunteering more.
 ### 8. Incident response
 If personal data is breached and there is a risk to people: contain, assess,
 notify the supervisory authority within 72 hours of becoming aware, notify
-affected customers, write it down. The privacy policy now promises this, so the
-contact point for the authority has to be known **before** it is needed.
+affected customers, write it down. Our authority is the Estonian Data Protection
+Inspectorate (aki.ee), and the privacy policy now promises this — so find their
+breach-notification form and keep the link somewhere you will find it at 3am,
+before it is needed.
 
 ### 9. Sub-processor management
 Before a new provider touches customer data: check its terms, confirm the
@@ -141,7 +155,8 @@ claim becomes a misleading-pricing problem in the EU and the UK.
 | Ship the mobile app | Set `APP_STORE_URL`/`PLAY_STORE_URL`; the EULA becomes listed and app clauses appear |
 | Start advertising | Cookie policy + a consent banner, **before** ad signals are enabled |
 | Register for VAT/sales tax anywhere | Terms: prices and payment clause; invoice content |
-| Incorporate, or move entity | `COMPANY_LEGAL_NAME`, `LEGAL_JURISDICTION`, `LEGAL_COURTS`, `COMPANY_ADDRESS` |
+| Move the entity, or change its address | `COMPANY_LEGAL_NAME`, `COMPANY_REGISTRATION`, `COMPANY_ADDRESS`, `LEGAL_JURISDICTION`, `LEGAL_COURTS` — and re-read the transfers and disputes clauses |
+| Register for VAT | Set `COMPANY_VAT`; add tax handling to pricing and the terms |
 | Add a new data field to checkout | Privacy: what we collect, and the retention table |
 | Change the retention window | `RETENTION_DAYS` **and** the privacy policy together |
 | A new abuse pattern | Acceptable use: new version; usually not material |
@@ -158,21 +173,49 @@ actually calls; re-read the retention table against the code.
 still matches where the entity is; check store requirements have not moved.
 **On every deploy** — `check_legal` (already wired into `build.sh`).
 
-## Open decisions
+## Being an Estonian company
 
-These need the operator, not the code:
+### What is already handled
+- Governing law is Estonian, forum is the Harju County Court, and consumers keep
+  their local mandatory protections and local courts.
+- The terms name the Consumer Disputes Committee at the Estonian Consumer
+  Protection and Technical Regulatory Authority as the free out-of-court route,
+  which Estonian consumer law requires a trader to disclose.
+- The imprint — legal name, registry code, registered address, email — is in the
+  terms, as the e-Commerce Directive requires.
+- The privacy policy names our supervisory authority (Andmekaitse Inspektsioon)
+  and tells the reader they may equally go to their own.
+- Data stays in the EU by default: Supabase and Render both run in Frankfurt.
+  The three US processors are disclosed by name with the transfer mechanism.
+- The 14-day withdrawal right is waived by an express tick at checkout and on
+  the subscription page, stored on the order as `withdrawal_waived_at`, and
+  repeated on the receipt — the durable-medium confirmation the directive wants.
 
-1. **The selling entity.** `COMPANY_LEGAL_NAME` is "Sterr Technologies" and
-   `LEGAL_JURISDICTION` defaults to Türkiye. If the registered entity is
-   somewhere else, the governing-law clause is unenforceable as written.
-2. **Registered address.** `COMPANY_ADDRESS` is empty, so the imprint block is
-   omitted rather than printed wrong. EU distance selling expects a contactable
-   postal address; supply it before EU volume matters.
-3. **VAT / sales tax.** Not addressed anywhere yet. Prices are stated as
-   inclusive of our margin, silent on tax. Selling digital services to EU
-   consumers eventually triggers VAT-OSS registration; the trigger is revenue,
-   so decide the threshold at which you deal with it.
-4. **Consumer withdrawal wording.** The terms rely on the customer consenting to
-   immediate supply and thereby losing the 14-day withdrawal right. That consent
-   should be an explicit checkbox at checkout in the EU, not an implied
-   acceptance. It is currently implied.
+### Do not add a link to the EU ODR platform
+Most European terms templates still carry one. The European Commission shut the
+ODR platform down in July 2025 and the regulation behind it was repealed. A link
+to it now is a dead link in a legal document, which is worse than no link. The
+national consumer disputes body is the correct signpost, and it is already there.
+
+### What still needs a human
+
+1. **VAT.** Nothing in the site charges or shows tax, and prices are presented
+   as final. Two separate questions, and an eSIM is the awkward case for both:
+   - Estonia's domestic VAT registration threshold is €40,000 of taxable
+     turnover in a calendar year.
+   - A data plan is a **telecommunications service**, not an ordinary
+     "electronically supplied service". B2C supplies to consumers in other EU
+     states are taxed where the customer is, through the One Stop Shop, once
+     cross-border supplies pass €10,000 a year EU-wide. Below that you may
+     charge the Estonian rate.
+   Ask an Estonian accountant specifically about telecoms place-of-supply, not
+   about "digital goods" — the answers differ. Until this is settled, the margin
+   in `PRICING_MARKUP` is quietly absorbing a tax that may become payable.
+2. **Corporate tax.** Estonia taxes distributed profit, not retained profit, so
+   there is nothing to do until money leaves the company. The annual report is
+   due 30 June for the year ending 31 December.
+3. **Official notices go to the contact person.** DigiRepresent Services OÜ is
+   the registered contact; anything the registry or a court sends lands there
+   first. Make sure that mail is actually being read.
+4. **A lawyer should read all seven documents once.** They are written to be
+   accurate and enforceable, not to be a substitute for that reading.

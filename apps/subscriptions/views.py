@@ -98,7 +98,12 @@ def subscribe(request, plan_id):
         messages.info(request, _("You already have a subscription for this plan."))
         return redirect(existing.get_absolute_url())
 
-    if request.method == "POST":
+    if request.method == "POST" and not request.POST.get("digital_consent"):
+        # Same statutory waiver as one-off checkout: the first period is digital
+        # content supplied at once, and an Estonian seller needs the buyer's
+        # express request before delivering inside the withdrawal window.
+        error = _("Please confirm you want the first period delivered immediately.")
+    elif request.method == "POST":
         sub = _pending_subscription(request.user, plan, price)
         success_url = _abs(request, reverse("subscription_detail", kwargs={"pk": sub.pk}))
         cancel_url = _abs(request, reverse("subscribe", kwargs={"plan_id": plan.pk}))

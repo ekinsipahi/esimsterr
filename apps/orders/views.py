@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
@@ -103,12 +104,21 @@ def checkout(request, plan_id):
         email = (request.POST.get("email") or email).strip().lower()
         code = (request.POST.get("coupon") or "").strip()
         method = request.POST.get("method") or "stripe"
+        digital_consent = bool(request.POST.get("digital_consent"))
         try:
             validate_email(email)
         except ValidationError:
             if not apply_only:
                 error = _("Please enter a valid email address. This is where your QR code goes.")
             email = ""
+
+        # EU consumer law lets a buyer trade the 14-day withdrawal right for
+        # immediate supply, but only on an express request. The browser marks
+        # the box required; a client that skips it is stopped here, because the
+        # waiver has to be something we can prove they actually made.
+        if not error and not apply_only and not digital_consent:
+            error = _("Please confirm you want the eSIM issued immediately. We cannot "
+                      "deliver it before your withdrawal period otherwise.")
 
         if not error and code:
             try:
@@ -145,6 +155,7 @@ def checkout(request, plan_id):
                 cost_amount=plan.cost_amount,
                 cost_currency=plan.cost_currency,
                 target_esim=topup_esim,
+                withdrawal_waived_at=timezone.now(),
                 **_fingerprint(request),
             )
             _remember_order(request, order)
@@ -202,6 +213,7 @@ def checkout(request, plan_id):
     ctx = {
         "plan": plan,
         "topup_esim": topup_esim,
+        "digital_consent": request.method == "POST" and bool(request.POST.get("digital_consent")),
         "email": email,
         "coupon_code": code,
         "analytics_events": events,

@@ -88,6 +88,19 @@
             </div>
           </div>
 
+          {% comment %}
+            EU consumer law gives a 14-day withdrawal right and lets the buyer
+            give it up in exchange for immediate supply -- but only by an
+            express request and acknowledgement. We are an Estonian company, so
+            this is not optional wording: without the tick we may not issue the
+            profile straight away, and the confirmation email repeats it.
+          {% endcomment %}
+          <label class="consent-check">
+            <input type="checkbox" name="digital_consent" value="1" required
+                   {% if digital_consent %}checked{% endif %}>
+            <span>{% blocktrans %}I ask for my eSIM to be issued immediately, and I understand that I lose my 14-day right of withdrawal once it has been issued.{% endblocktrans %}</span>
+          </label>
+
           <button class="btn btn-primary btn-lg btn-block" type="submit"
                   {% if not stripe_enabled and not crypto_enabled %}disabled{% endif %}>
             {% blocktrans with amount=total|usd %}Pay {{ amount }}{% endblocktrans %}
@@ -102,7 +115,7 @@
 
           <p class="xs muted-3 center">
             {% url 'terms' as terms_url %}{% url 'refund' as refund_url %}
-            {% blocktrans %}By paying you accept our <a href="{{ terms_url }}" class="link">terms</a> and <a href="{{ refund_url }}" class="link">refund policy</a>. An installed eSIM cannot be refunded.{% endblocktrans %}
+            {% blocktrans %}By paying you accept our <a href="{{ terms_url }}" class="link">terms</a> and <a href="{{ refund_url }}" class="link">refund policy</a>. An installed eSIM cannot be refunded — but an uninstalled one can, for 24 hours.{% endblocktrans %}
           </p>
         </form>
       </div>

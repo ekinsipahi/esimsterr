@@ -66,6 +66,12 @@ class Order(models.Model):
     # page is refreshable and shareable, so the guard lives in the database
     # rather than in the session.
     analytics_sent = models.BooleanField(default=False)
+    # When the buyer expressly asked for immediate supply and acknowledged
+    # losing the EU 14-day withdrawal right. The seller is an Estonian company,
+    # so this waiver is what makes instant delivery lawful -- and the burden of
+    # showing it was given is ours, which means it has to be a stored fact and
+    # not an inference from the order existing.
+    withdrawal_waived_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)

@@ -4,6 +4,11 @@ Written for whoever prepares the iOS and Android submissions. It covers only the
 legal and policy surface — not the app build. Nothing here needs to be done
 today; it exists so that shipping the app is a checklist rather than a rewrite.
 
+The seller is Sterr Technologies OÜ, registered in Estonia. Both stores will
+ask for a legal entity, an address and a support contact that match what the
+website publishes — they are in `/terms/`, and they must be entered identically
+in App Store Connect and the Play Console or review comes back.
+
 ## The one question that decides everything
 
 The app does not take payment. `POST /api/v1/checkout-url/` returns a web URL
