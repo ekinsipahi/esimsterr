@@ -125,6 +125,14 @@ html[data-theme="dark"] body::before {
 img, svg, video { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; color: inherit; }
+/* Buttons keep the user agent's grey fill and outset border unless told
+   otherwise, which is why a <button> styled as a nav link showed up as a pale
+   box next to its <a> siblings. Reset it once here; .btn and the other button
+   components set their own and win on specificity. */
+button {
+  background: none; border: 0; padding: 0;
+  cursor: pointer; -webkit-appearance: none; appearance: none;
+}
 ::selection { background: var(--b-500); color: #fff; }
 
 h1, h2, h3, h4 { line-height: 1.15; letter-spacing: -.02em; font-weight: 800; }
@@ -334,6 +342,7 @@ html[data-theme="dark"] .icon-tile.v-amber { color: #fbbf24; }
 .nav-link {
   position: relative; display: inline-flex; align-items: center; gap: 5px;
   padding: 9px 13px; border-radius: 10px;
+  background: transparent; border: 0;
   font-size: .935rem; font-weight: 550; color: var(--text-2);
   transition: color .18s ease, background .18s ease;
 }
