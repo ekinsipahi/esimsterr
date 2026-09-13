@@ -229,6 +229,42 @@
     }
   });
 
+  /* ---------- analytics: the interactions only the browser can see --------- */
+  // Everything that involves money is reported from the server, where the
+  // numbers are authoritative. What is left here is intent: which plan a person
+  // clicked, and what they searched for.
+  function track(name, params) {
+    if (typeof gtag === "function") {
+      try { gtag("event", name, params || {}); } catch (e) {}
+    }
+  }
+  window.esimsterrTrack = track;
+
+  document.addEventListener("click", function (e) {
+    var card = e.target.closest("[data-item]");
+    if (!card) { return; }
+    try {
+      track("select_item", {
+        item_list_id: card.getAttribute("data-list") || "",
+        items: [JSON.parse(card.getAttribute("data-item"))],
+      });
+    } catch (err) {}
+  });
+
+  // One search event per settled query, not per keystroke: the type-ahead fires
+  // on every input, and GA4 would otherwise record "i", "it", "ita" as searches.
+  var searchTimer = null, lastTracked = "";
+  document.addEventListener("input", function (e) {
+    if (!e.target.matches("[data-search] input")) { return; }
+    var term = e.target.value.trim();
+    clearTimeout(searchTimer);
+    if (term.length < 2 || term === lastTracked) { return; }
+    searchTimer = setTimeout(function () {
+      lastTracked = term;
+      track("search", { search_term: term });
+    }, 1200);
+  });
+
   /* ---------- Google Identity Services ------------------------------------ */
   window.esimsterrGoogle = function (response) {
     var form = document.getElementById("google-form");

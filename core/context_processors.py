@@ -44,7 +44,14 @@ def site(request):
             except Exception:  # noqa: BLE001
                 continue
 
+    # sign_up and login both end in a redirect, so the event has to survive one
+    # hop. Popping it here means it fires on the next page and never again.
+    session_events = []
+    if settings.GA_MEASUREMENT_ID and hasattr(request, "session"):
+        session_events = request.session.pop("pending_analytics", []) or []
+
     return {
+        "session_analytics_events": session_events,
         "site_name": settings.SITE_NAME,
         "site_tagline": "Connect without borders.",
         "company_legal_name": settings.COMPANY_LEGAL_NAME,

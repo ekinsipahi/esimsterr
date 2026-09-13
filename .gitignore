@@ -16,3 +16,6 @@ assets-src/
 # One-off operational notes that carry account identifiers or personal
 # addresses. Useful locally, not something to publish.
 docs/email-dns.md
+
+# Generated for pasting into Render. Same secrets as .env.
+.env.render

@@ -11,6 +11,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from apps.common import analytics
 from core.ratelimit import rate_limit
 
 from .emails import send_welcome
@@ -51,6 +52,7 @@ def signup(request):
                 user.save(update_fields=["referred_by"])
         auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         send_welcome(user)
+        request.session["pending_analytics"] = [analytics.sign_up("email")]
         return redirect(_safe_next(request))
     return render(request, "accounts/signup.html", {
         "form": form, "next": request.GET.get("next", ""),
@@ -67,6 +69,7 @@ def login_view(request):
     form = LoginForm(request, request.POST or None)
     if request.method == "POST" and form.is_valid():
         auth_login(request, form.user, backend="django.contrib.auth.backends.ModelBackend")
+        request.session["pending_analytics"] = [analytics.login("email")]
         return redirect(_safe_next(request))
     return render(request, "accounts/login.html", {
         "form": form, "next": request.GET.get("next", ""),
@@ -103,6 +106,9 @@ def google_finish(request):
     auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     if created:
         send_welcome(user)
+    request.session["pending_analytics"] = [
+        analytics.sign_up("google") if created else analytics.login("google")
+    ]
     return JsonResponse({"ok": True, "next": _safe_next(request)})
 
 

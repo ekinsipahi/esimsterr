@@ -62,6 +62,10 @@ class Order(models.Model):
 
     fulfillment_error = models.TextField(blank=True)
     fulfillment_attempts = models.PositiveIntegerField(default=0)
+    # A purchase must be reported to analytics exactly once. The confirmation
+    # page is refreshable and shareable, so the guard lives in the database
+    # rather than in the session.
+    analytics_sent = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)

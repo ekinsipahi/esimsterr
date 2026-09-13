@@ -7,6 +7,7 @@ SVG we ship, so it looks identical everywhere and inherits `currentColor`.
 """
 from __future__ import annotations
 
+import json
 import os
 from decimal import Decimal
 
@@ -143,6 +144,19 @@ def icon(name, size=20, cls="", stroke=1.8):
         f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" '
         f'focusable="false">{path}</svg>'
     )
+
+
+@register.simple_tag
+def item_attrs(plan, list_id="", index=0):
+    """data- attributes that let a click on a plan be reported as select_item.
+
+    The payload is built here rather than in JavaScript so the item shape stays
+    identical to the one the server sends with view_item_list and purchase; a
+    mismatch would split the same plan into two rows in the GA4 reports."""
+    from apps.common.analytics import plan_item
+
+    payload = json.dumps(plan_item(plan, index=index), separators=(",", ":"))
+    return format_html('data-item="{}" data-list="{}"', payload, list_id)
 
 
 # --- Money -------------------------------------------------------------------

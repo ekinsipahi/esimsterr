@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET
 from django.utils.translation import ngettext
 
 from apps.blog.models import Post
+from apps.common import analytics
 from apps.common.templatetags.ui import flag_url
 
 from .data import POPULAR_ISO2
@@ -55,6 +56,9 @@ def home(request):
         "seo_description": settings.DEFAULT_DESCRIPTION,
         "faq": HOME_FAQ,
         "faq_jsonld": _faq_jsonld(HOME_FAQ),
+        "analytics_events": [
+            analytics.view_item_list(list(cheapest), "home_cheapest", "Home cheapest plans"),
+        ],
     }
     return render(request, "catalog/home.html", ctx)
 
@@ -115,6 +119,10 @@ def country_detail(request, slug):
             f"Buy a {country.name} travel eSIM with instant QR delivery. Local 4G/5G data, "
             f"no roaming fees, unlimited options. Install before you fly."
         ),
+        "analytics_events": [
+            analytics.view_item_list(data_plans + unlimited,
+                                     f"country_{country.iso2}", f"{country.name} plans"),
+        ],
     }
     return render(request, "catalog/country_detail.html", ctx)
 
@@ -153,6 +161,10 @@ def region_detail(request, slug):
             f"{region.name} travel eSIM covering {region.country_count} countries. Instant QR delivery, "
             "local networks, unlimited options."
         ),
+        "analytics_events": [
+            analytics.view_item_list(data_plans + unlimited,
+                                     f"region_{region.slug}", f"{region.name} plans"),
+        ],
     }
     return render(request, "catalog/region_detail.html", ctx)
 
@@ -177,6 +189,9 @@ def unlimited(request):
             "Unlimited data eSIMs for 7, 15 or 30 days in 100+ countries. No throttling games, "
             "no roaming bills — one QR code and you're online."
         ),
+        "analytics_events": [
+            analytics.view_item_list(list(plans[:20]), "unlimited", "Unlimited plans"),
+        ],
     }
     return render(request, "catalog/unlimited.html", ctx)
 

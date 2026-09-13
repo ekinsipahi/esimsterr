@@ -60,6 +60,8 @@
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    // Advertising signals stay denied: we run no ad products, and a shop selling
+    // into the EU should not ship consent it never asked for.
     gtag('consent', 'default', {ad_storage:'denied', ad_user_data:'denied',
                                 ad_personalization:'denied', analytics_storage:'granted'});
     gtag('js', new Date());
@@ -86,6 +88,27 @@
 
     {% block content %}{% endblock %}
   </main>
+
+  {% if GA_MEASUREMENT_ID %}
+    {% if analytics_events %}{{ analytics_events|json_script:"ga-events" }}{% endif %}
+    {% if session_analytics_events %}{{ session_analytics_events|json_script:"ga-events-carried" }}{% endif %}
+    {% if analytics_events or session_analytics_events %}
+    <script>
+      (function () {
+        if (typeof gtag !== "function") { return; }
+        ["ga-events", "ga-events-carried"].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (!el) { return; }
+          try {
+            JSON.parse(el.textContent).forEach(function (e) {
+              gtag("event", e.name, e.params || {});
+            });
+          } catch (err) {}
+        });
+      })();
+    </script>
+    {% endif %}
+  {% endif %}
 
   {% include "partials/footer.html" %}
   {% if assistant_enabled %}{% include "partials/assistant_widget.html" %}{% endif %}

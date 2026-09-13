@@ -24,6 +24,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy as _lazy
 from django.views.decorators.csrf import ensure_csrf_cookie
 
+from apps.common import analytics
 from apps.accounts.emails import notify_admin, send_email_bg
 from core.ratelimit import client_ip, rate_limit
 
@@ -154,6 +155,9 @@ def support(request):
         )
         _notify_new_ticket(ticket, body)
 
+        # A ticket is intent worth measuring: it tells us which pages send
+        # people to support instead of to checkout.
+        request.session["pending_analytics"] = [analytics.generate_lead("support_ticket")]
         flash.success(request, _("Thanks — your reference is %(ref)s. We reply by email, usually "
                                  "within a few hours.") % {"ref": ticket.ref})
         # The guest link carries the signed token; the account holder gets the

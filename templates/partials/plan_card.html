@@ -1,6 +1,7 @@
 {% load i18n ui %}
 {# One sellable plan. Context: plan, optional topup_esim, optional show_subscribe #}
-<div class="plan {% if plan.badge == 'Most popular' %}plan-featured{% endif %}">
+<div class="plan {% if plan.badge == 'Most popular' %}plan-featured{% endif %}"
+     {% item_attrs plan list_id|default:"" forloop.counter0|default:0 %}>
   {% if plan.badge %}
     <span class="plan-badge badge {% if plan.badge == 'Best value' %}badge-mint{% else %}badge-hot{% endif %}">
       {% if plan.badge == 'Best value' %}{% trans "Best value" %}{% else %}{% trans "Most popular" %}{% endif %}

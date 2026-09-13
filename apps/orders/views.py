@@ -20,6 +20,7 @@ from django.views.decorators.http import require_POST
 from core.ratelimit import rate_limit
 
 from apps.catalog.models import Plan
+from apps.common import analytics
 from apps.coupons.services import CouponError, redeem, release, validate_coupon
 from apps.payments import services as payment_services
 from apps.providers.yesim import YesimError
@@ -181,11 +182,21 @@ def checkout(request, plan_id):
         except CouponError:
             coupon, discount = None, Decimal("0.00")
 
+    events = [analytics.begin_checkout(plan, coupon=(coupon.code if coupon else ""),
+                                       value=(subtotal - discount))]
+    if request.method == "POST" and not apply_only:
+        # They chose a method and pressed pay; the redirect leaves our site, so
+        # this is the last moment we can report it.
+        events.append(analytics.add_payment_info(
+            plan, request.POST.get("method") or "stripe",
+            coupon=(coupon.code if coupon else ""), value=(subtotal - discount)))
+
     ctx = {
         "plan": plan,
         "topup_esim": topup_esim,
         "email": email,
         "coupon_code": code,
+        "analytics_events": events,
         "coupon": coupon,
         "discount": discount,
         "subtotal": subtotal,
@@ -209,9 +220,17 @@ def order_detail(request, ref):
         raise Http404
     _settle_on_return(request, order)
     esim = order.esims.first() or order.target_esim
+    events = []
+    if order.status == Order.Status.COMPLETED and not order.analytics_sent:
+        events.append(analytics.purchase(order))
+        # Flip the flag in the same request that emits the event, so a refresh,
+        # a shared link or a second tab never reports the sale again.
+        Order.objects.filter(pk=order.pk, analytics_sent=False).update(analytics_sent=True)
+
     ctx = {
         "order": order,
         "esim": esim,
+        "analytics_events": events,
         "seo_title": f"Order {order.ref} — {settings.SITE_NAME}",
         "meta_robots": "noindex,nofollow",
         # The page polls while the provider provisions (usually a second or two).

@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import Http404
+from apps.common import analytics
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -127,6 +128,9 @@ def subscribe(request, plan_id):
         "sub_price": price,
         "saving_pct": saving_pct(plan),
         "error": error,
+        # Reported as begin_checkout so subscriptions and one-off sales share one
+        # funnel; the recurring nature rides along in item_variant.
+        "analytics_events": [analytics.subscribe_start(plan, price)],
         "seo_title": _("Subscribe — %(plan)s") % {"plan": plan.title},
         "meta_robots": "noindex,nofollow",
         "breadcrumbs": [
