@@ -65,38 +65,34 @@ equity on one URL.
 
 ### Stripe
 
-The live webhook endpoint is already created on the account:
+Create a webhook endpoint at **Developers, Webhooks** pointing at
+`https://<your-domain>/webhooks/stripe/`, and copy its signing secret into
+`STRIPE_WEBHOOK_SECRET`. Stripe shows that secret once, at creation.
 
-| | |
+Subscribe it to these nine events, and no others:
+
+| Event | Why it is needed |
 |---|---|
-| Endpoint id | `we_xxxxxxxxxxxxxxxxxxxxxxxx` |
-| URL | `https://esimsterr.com/webhooks/stripe/` |
-| Events | 9, listed below |
+| `checkout.session.completed` | Settles a one-off purchase and starts a subscription's first cycle |
+| `checkout.session.async_payment_succeeded` | Bank-redirect methods confirm after the session closes |
+| `invoice.paid` | The only signal a renewal produces. Without it a subscription silently stops delivering |
+| `invoice.payment_failed` | Marks the subscription past due and emails the customer |
+| `customer.subscription.created` | Binds Stripe's subscription to ours |
+| `customer.subscription.updated` | Status, period end and pending cancellation |
+| `customer.subscription.deleted` | Ends the subscription our side |
+| `customer.subscription.paused` | Stops delivering while paused |
+| `customer.subscription.resumed` | Starts delivering again |
 
-Subscribed events, and why each one is needed:
+A card order does not depend on this endpoint alone: the return page asks Stripe
+about the session directly and settles it if the webhook has not arrived. Renewals
+do depend on it, because a renewal produces no redirect.
 
-- `checkout.session.completed` and `checkout.session.async_payment_succeeded`
-  settle a one-off eSIM purchase, and start the first cycle of a subscription.
-  The async variant matters for bank-redirect methods that confirm after the
-  session closes.
-- `invoice.paid` is the only signal a renewal produces. There is no return
-  redirect on a renewal, so without it a subscription silently stops delivering.
-- `invoice.payment_failed` marks the subscription past due and emails the
-  customer.
-- `customer.subscription.created` / `.updated` / `.deleted` / `.paused` /
-  `.resumed` keep our copy of the subscription in step with Stripe's.
-
-The signing secret is in `.env` as `STRIPE_WEBHOOK_SECRET`. Stripe only shows it
-once, at creation. If it is ever lost, roll it in the dashboard under Developers,
-Webhooks, and paste the new value.
-
-**This Stripe account is shared with vpnsterr, linksterr and ipsterr.** Stripe
-delivers every subscribed event type to every endpoint, so this endpoint also
-receives those projects' checkout sessions and invoices. That is handled: an
-event whose reference does not match one of our payments is logged and ignored,
-never settled and never a 500. Verified against foreign payloads of all four
-event shapes. The same applies in reverse, so do not add our event types to
-another project's endpoint unless that project ignores strangers too.
+**If this Stripe account also serves your other sites**, be aware that Stripe
+delivers every subscribed event type to every endpoint on the account, so this
+endpoint will receive their sessions and invoices too. That is handled here: an
+event whose reference matches none of our payments is logged and ignored, never
+settled and never a 500. Check that the other direction holds before adding our
+event types to another project's endpoint.
 
 Still to do by hand in the Stripe dashboard:
 

@@ -152,3 +152,16 @@ treat the app as selling digital goods outside their billing system.
 
 See [DEPLOY.md](DEPLOY.md). Render web service plus Supabase Postgres;
 `render.yaml` describes the cron jobs.
+
+## What is not in this repository
+
+- `.env` holds every credential and is gitignored. `render.yaml` lists the same
+  variable names with a comment on what each one is for, which is the reference
+  to fill in when deploying.
+- `db.sqlite3` is a local scratch database. Production runs on Postgres.
+- `assets-src/` holds the original artwork the derivatives in `static/img/` were
+  made from. Large, and not needed to run the site.
+
+## Licence
+
+Published source, not open source. See [LICENSE](LICENSE).

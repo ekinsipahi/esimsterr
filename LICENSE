@@ -1,0 +1,20 @@
+Copyright (c) 2026 Sterr Technologies. All rights reserved.
+
+This source code is published for transparency and for the convenience of
+deploying it. It is not open source.
+
+You may read this code and you may run it to operate the eSIMsterr service on
+behalf of the copyright holder. You may not copy, modify, redistribute, sell, or
+use it or any substantial part of it to operate a competing or derivative
+service, in whole or in part, without prior written permission.
+
+Third-party components keep their own licences:
+
+- Django and the Python packages listed in requirements.txt, under their
+  respective licences.
+- The country flag set in static/vendor/flags/ comes from flag-icons and is MIT
+  licensed. Its licence text is kept alongside it at
+  static/vendor/flags/LICENSE.txt.
+
+The eSIMsterr name, logo, artwork and brand film are not covered by any of the
+above and may not be used without permission.
