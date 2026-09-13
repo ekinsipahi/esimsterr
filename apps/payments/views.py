@@ -47,6 +47,11 @@ def stripe_webhook(request):
         log.warning("Rejected Stripe webhook: bad signature")
         return HttpResponseForbidden("invalid signature")
 
+    # construct_event hands back Stripe's own object types, and in stripe-python
+    # v15 those are NOT dicts: calling .get() on one raises AttributeError, which
+    # would turn every real webhook into a 500 and make Stripe retry for ever.
+    # Flatten once here so everything downstream handles plain data.
+    event = event.to_dict() if hasattr(event, "to_dict") else dict(event)
     etype = event["type"]
 
     # Subscriptions own their whole lifecycle, including the checkout that starts

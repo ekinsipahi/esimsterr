@@ -3,8 +3,9 @@
 Merge SEO_SITEMAPS into core.sitemaps.SITEMAPS; every class here sets
 protocol = "https" so the generated URLs match the canonical host.
 """
-from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
+
+from core.sitemaps import CanonicalSitemap
 
 from apps.catalog.models import Plan
 
@@ -22,7 +23,7 @@ def _catalogue_lastmod():
     )
 
 
-class _PricedSitemap(Sitemap):
+class _PricedSitemap(CanonicalSitemap):
     """Shared lastmod for the pages that render live prices, fetched once per
     sitemap render rather than once per URL."""
 

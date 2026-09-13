@@ -65,37 +65,51 @@ equity on one URL.
 
 ### Stripe
 
-1. Get `sk_live_...` and `pk_live_...` from the dashboard.
-2. **Developers, Webhooks, Add endpoint**: `https://esimsterr.com/webhooks/stripe/`
-   Enable **all** of these, or subscriptions silently never renew:
+The live webhook endpoint is already created on the account:
 
-   ```
-   checkout.session.completed
-   checkout.session.async_payment_succeeded
-   invoice.paid
-   invoice.payment_failed
-   customer.subscription.created
-   customer.subscription.updated
-   customer.subscription.deleted
-   customer.subscription.paused
-   customer.subscription.resumed
-   ```
+| | |
+|---|---|
+| Endpoint id | `we_xxxxxxxxxxxxxxxxxxxxxxxx` |
+| URL | `https://esimsterr.com/webhooks/stripe/` |
+| Events | 9, listed below |
 
-3. Copy the `whsec_...` signing secret into `STRIPE_WEBHOOK_SECRET`.
-4. **Settings, Billing, Customer portal**: activate it and allow subscription
-   cancellation. Without it the "Manage billing" button cannot open and customers
-   have no self-serve way to cancel.
-5. Fill in **Branding** (logo, colours). That is what customers see on the hosted
-   checkout and on Stripe's receipt email. Use `static/img/logo-mark-on-light.png`.
+Subscribed events, and why each one is needed:
 
-Discount codes are ours, not Stripe's: `allow_promotion_codes` is deliberately
-off so every discount goes through `apps/coupons`, where it has a redemption cap,
-an audit row and a code frozen onto the order. Do not turn it back on.
+- `checkout.session.completed` and `checkout.session.async_payment_succeeded`
+  settle a one-off eSIM purchase, and start the first cycle of a subscription.
+  The async variant matters for bank-redirect methods that confirm after the
+  session closes.
+- `invoice.paid` is the only signal a renewal produces. There is no return
+  redirect on a renewal, so without it a subscription silently stops delivering.
+- `invoice.payment_failed` marks the subscription past due and emails the
+  customer.
+- `customer.subscription.created` / `.updated` / `.deleted` / `.paused` /
+  `.resumed` keep our copy of the subscription in step with Stripe's.
+
+The signing secret is in `.env` as `STRIPE_WEBHOOK_SECRET`. Stripe only shows it
+once, at creation. If it is ever lost, roll it in the dashboard under Developers,
+Webhooks, and paste the new value.
+
+**This Stripe account is shared with vpnsterr, linksterr and ipsterr.** Stripe
+delivers every subscribed event type to every endpoint, so this endpoint also
+receives those projects' checkout sessions and invoices. That is handled: an
+event whose reference does not match one of our payments is logged and ignored,
+never settled and never a 500. Verified against foreign payloads of all four
+event shapes. The same applies in reverse, so do not add our event types to
+another project's endpoint unless that project ignores strangers too.
+
+Still to do by hand in the Stripe dashboard:
+
+1. Fill in **Branding** (logo, colours, business name). That is what the customer
+   sees on the hosted checkout page and on Stripe's receipt email.
+2. Activate the **Customer Portal** under Settings, Billing, Customer portal, and
+   allow subscription cancellation. Without it the "Manage billing" button
+   returns a graceful error and a subscriber cannot cancel on their own.
 
 Stripe will ask what you sell during review. Answer plainly: prepaid mobile data
-(eSIM profiles) for travellers, delivered electronically, one-off purchases, no
-subscriptions. Point them at `/terms/`, `/privacy/` and `/refund-policy/` — all
-three are live and written for exactly this question.
+(eSIM profiles) for travellers, delivered electronically, one-off purchases plus
+optional auto-renewing plans. Point them at `/terms/`, `/privacy/` and
+`/refund-policy/`, which are written for exactly that question.
 
 ### NOWPayments
 

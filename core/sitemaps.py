@@ -1,12 +1,35 @@
+from django.conf import settings
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
+
+
+class _CanonicalHost:
+    """Stands in for a Sites entry so sitemap URLs never inherit the request host.
+
+    We do not run django.contrib.sites, so Django falls back to RequestSite and
+    stamps whatever Host header arrived onto every <loc>. A crawler that reaches
+    the Render subdomain would then be handed a sitemap advertising that
+    subdomain, splitting the site in two as far as Google is concerned."""
+
+    @property
+    def domain(self):
+        return settings.CANONICAL_HOST
+
+    name = domain
+
+
+class CanonicalSitemap(Sitemap):
+    protocol = "https"
+
+    def get_urls(self, page=1, site=None, protocol=None):
+        return super().get_urls(page=page, site=_CanonicalHost(), protocol="https")
 
 from apps.blog.models import Post
 from apps.catalog.models import Country, Region
 from apps.seo.sitemaps import SEO_SITEMAPS
 
 
-class StaticSitemap(Sitemap):
+class StaticSitemap(CanonicalSitemap):
     protocol = "https"
     PAGES = [
         ("home", "daily", 1.0),
@@ -38,7 +61,7 @@ class StaticSitemap(Sitemap):
         return dict((n, p) for n, _, p in self.PAGES)[item]
 
 
-class CountrySitemap(Sitemap):
+class CountrySitemap(CanonicalSitemap):
     protocol = "https"
     changefreq = "weekly"
     priority = 0.8
@@ -50,7 +73,7 @@ class CountrySitemap(Sitemap):
         return obj.updated_at
 
 
-class RegionSitemap(Sitemap):
+class RegionSitemap(CanonicalSitemap):
     protocol = "https"
     changefreq = "weekly"
     priority = 0.7
@@ -62,7 +85,7 @@ class RegionSitemap(Sitemap):
         return obj.updated_at
 
 
-class BlogSitemap(Sitemap):
+class BlogSitemap(CanonicalSitemap):
     protocol = "https"
     changefreq = "monthly"
     priority = 0.5
