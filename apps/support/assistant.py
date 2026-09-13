@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import urllib.request
 
 from django.conf import settings
@@ -192,8 +193,168 @@ def build_user_context(user) -> dict:
     return ctx
 
 
+# --- Catalogue knowledge -----------------------------------------------------
+# Turkish names for the destinations people actually ask about. Without these a
+# Turkish customer asking "italya kac para" gets no price, which is the single
+# most common question the assistant receives.
+_TR_ALIASES = {
+    "italya": "IT", "ispanya": "ES", "fransa": "FR", "almanya": "DE",
+    "yunanistan": "GR", "ingiltere": "GB", "birlesik krallik": "GB",
+    "amerika": "US", "abd": "US", "japonya": "JP", "tayland": "TH",
+    "hollanda": "NL", "belcika": "BE", "avusturya": "AT", "isvicre": "CH",
+    "cekya": "CZ", "macaristan": "HU", "polonya": "PL", "portekiz": "PT",
+    "hirvatistan": "HR", "sirbistan": "RS", "arnavutluk": "AL",
+    "bosna": "BA", "karadag": "ME", "bulgaristan": "BG", "romanya": "RO",
+    "rusya": "RU", "ukrayna": "UA", "gurcistan": "GE", "azerbaycan": "AZ",
+    "ermenistan": "AM", "kazakistan": "KZ", "ozbekistan": "UZ",
+    "misir": "EG", "fas": "MA", "tunus": "TN", "cezayir": "DZ",
+    "dubai": "AE", "birlesik arap emirlikleri": "AE", "katar": "QA",
+    "suudi arabistan": "SA", "kuveyt": "KW", "umman": "OM", "bahreyn": "BH",
+    "urdun": "JO", "israil": "IL", "lubnan": "LB", "kibris": "CY",
+    "hindistan": "IN", "cin": "CN", "endonezya": "ID", "bali": "ID",
+    "malezya": "MY", "singapur": "SG", "filipinler": "PH", "vietnam": "VN",
+    "guney kore": "KR", "kore": "KR", "tayvan": "TW", "hong kong": "HK",
+    "avustralya": "AU", "yeni zelanda": "NZ", "kanada": "CA", "meksika": "MX",
+    "brezilya": "BR", "arjantin": "AR", "sili": "CL", "kolombiya": "CO",
+    "peru": "PE", "guney afrika": "ZA", "kenya": "KE", "nijerya": "NG",
+    "turkiye": "TR", "malta": "MT", "irlanda": "IE", "izlanda": "IS",
+    "norvec": "NO", "isvec": "SE", "danimarka": "DK", "finlandiya": "FI",
+    "maldivler": "MV", "sri lanka": "LK", "nepal": "NP", "pakistan": "PK",
+}
+
+
+_SHORT_ALIASES = {
+    "us": "US", "usa": "US", "u.s.": "US", "america": "US", "states": "US",
+    "uk": "GB", "britain": "GB", "england": "GB", "scotland": "GB",
+    "uae": "AE", "emirates": "AE", "abu dhabi": "AE",
+    "nz": "NZ", "aussie": "AU", "oz": "AU",
+    "korea": "KR", "holland": "NL", "czech": "CZ", "bali": "ID",
+    "phuket": "TH", "ibiza": "ES", "mallorca": "ES", "canaries": "ES",
+    "sicily": "IT", "rome": "IT", "milan": "IT", "paris": "FR", "nice": "FR",
+    "berlin": "DE", "munich": "DE", "amsterdam": "NL", "lisbon": "PT",
+    "barcelona": "ES", "madrid": "ES", "athens": "GR", "crete": "GR",
+    "london": "GB", "tokyo": "JP", "osaka": "JP", "bangkok": "TH",
+    "istanbul": "TR", "antalya": "TR", "new york": "US", "miami": "US",
+    "vegas": "US", "los angeles": "US", "toronto": "CA", "vancouver": "CA",
+}
+
+
+def _fold(text: str) -> str:
+    """Lowercase and strip Turkish diacritics so "İtalya" matches "italya"."""
+    text = (text or "").lower()
+    for a, b in (("ı", "i"), ("İ", "i"), ("ş", "s"), ("ğ", "g"),
+                 ("ü", "u"), ("ö", "o"), ("ç", "c"), ("â", "a")):
+        text = text.replace(a, b)
+    return text
+
+
+def build_catalogue_context() -> str:
+    """A small, true summary of what the shop currently sells.
+
+    Kept deliberately short: the assistant needs to know the shape of the
+    catalogue and the entry price, not 1,560 rows. Specific prices come from
+    `destination_context`, which only loads the place the customer asked about.
+    """
+    try:
+        from apps.catalog.models import Country, Plan, Region
+
+        live = Plan.objects.live()
+        countries = Country.objects.filter(is_active=True)
+        cheapest = live.order_by("price_usd").first()
+        regions = list(Region.objects.filter(is_active=True).order_by("sort_order")
+                       .values_list("name", flat=True))
+        unlimited_from = live.filter(is_unlimited=True).order_by("price_usd").first()
+        lines = [
+            f"Destinations on sale right now: {countries.count()} countries and "
+            f"{len(regions)} regional bundles ({', '.join(regions)}).",
+            f"Cheapest plan on the whole site: ${cheapest.price} ({cheapest.title})."
+            if cheapest else "",
+            f"Cheapest unlimited plan: ${unlimited_from.price} ({unlimited_from.title})."
+            if unlimited_from else "",
+            f"Countries with an unlimited option: {countries.filter(has_unlimited=True).count()}.",
+        ]
+        return "\n".join(line for line in lines if line)
+    except Exception:  # noqa: BLE001
+        log.exception("catalogue context failed")
+        return "Catalogue summary unavailable; point the customer at the destination pages."
+
+
+def destination_context(text: str, limit: int = 8) -> str:
+    """Real plans for the place the customer just named, or "".
+
+    This is what lets the assistant answer "how much is Italy" with a true price
+    instead of refusing. Only the named destination is loaded, so the prompt
+    stays small and can never drift out of date.
+    """
+    if not text:
+        return ""
+    try:
+        from apps.catalog.models import Country, Region
+
+        folded = _fold(text)
+        country = None
+
+        # Longest alias first: "new york" must beat "york", "abu dhabi" beat "uae".
+        for alias, iso in sorted(
+            {**_TR_ALIASES, **_SHORT_ALIASES}.items(), key=lambda kv: -len(kv[0])
+        ):
+            pattern = r"\b" + re.escape(alias) + r"\b"
+            if re.search(pattern, folded):
+                country = Country.objects.filter(iso2=iso, is_active=True).first()
+                if country:
+                    break
+
+        if country is None:
+            # Full names, longest first so "United States" wins over "State".
+            for c in sorted(Country.objects.filter(is_active=True),
+                            key=lambda c: -len(c.name)):
+                name = _fold(c.name)
+                if len(name) > 3 and re.search(r"\b" + re.escape(name) + r"\b", folded):
+                    country = c
+                    break
+
+        target, kind = country, "country"
+        if target is None:
+            for r in Region.objects.filter(is_active=True):
+                if _fold(r.name) in folded:
+                    target, kind = r, "region"
+                    break
+        if target is None:
+            return ""
+
+        # Take the data plans and the unlimited plans separately. A single
+        # ordered slice put every unlimited plan last and the limit cut them off,
+        # which made the assistant tell customers a destination had no unlimited
+        # option when it did.
+        live_plans = target.plans.live()
+        data_plans = list(live_plans.filter(is_unlimited=False)
+                          .order_by("days", "data_gb")[:limit])
+        unlimited = list(live_plans.filter(is_unlimited=True).order_by("days"))
+        plans = data_plans + unlimited
+        if not plans:
+            return ""
+        rows = [f"- {p.data_label}, {p.days} days, ${p.price}"
+                + (f" (${p.per_gb_usd}/GB)" if p.per_gb_usd else "")
+                for p in plans]
+        operators = ", ".join(getattr(target, "operator_list", [])[:3])
+        header = (f"LIVE PLANS FOR {target.name.upper()} (real prices, quote these freely):")
+        extra = []
+        if kind == "country" and operators:
+            extra.append(f"Networks there: {operators}.")
+        if kind == "region":
+            extra.append(f"This bundle covers {target.country_count} countries on one profile.")
+        extra.append("Unlimited plans for this destination: "
+                     + (", ".join(f"{p.days} days ${p.price}" for p in unlimited)
+                        if unlimited else "none, this destination has data plans only."))
+        extra.append(f"Page: {settings.SITE_URL}{target.get_absolute_url()}")
+        return "\n".join([header] + rows + extra)
+    except Exception:  # noqa: BLE001
+        log.exception("destination context failed")
+        return ""
+
+
 # --- System prompt -----------------------------------------------------------
-def build_system_prompt(user_ctx=None) -> str:
+def build_system_prompt(user_ctx=None, destination: str = "") -> str:
     ctx = user_ctx or {}
     name = (ctx.get("name") or "").strip()
     named = f" ({name})" if name else ""
@@ -206,6 +367,7 @@ def build_system_prompt(user_ctx=None) -> str:
     else:
         who = "Visitor without an account."
 
+    catalogue = build_catalogue_context()
     return f"""You are the eSIMsterr assistant, the in-site helper for eSIMsterr (esimsterr.com), a travel eSIM store. Tagline: "Connect without borders."
 
 LANGUAGE: reply in the SAME language the customer writes in (English to English, Turkish to Turkish, and so on). Keep replies to 2-4 sentences unless they ask for detail. Plain, warm, direct. No exclamation marks, no emoji.
@@ -235,13 +397,28 @@ Only in three cases: the eSIM is still uninstalled and unused and it is within 2
 - Never ask for or reveal passwords, card details, or the eSIM activation code / QR content.
 - You are read-only. You cannot change, cancel, refund or activate anything on an account.
 - If the customer reports a fault, a payment problem, or asks for a human: reassure them, say you are flagging it to the team now, and point them to the support page to open a ticket so it is tracked and answered by email.
-- Do not claim coverage for a specific country unless the customer's own data below shows it. Point them to the destination page instead.
+- PRICES: every figure you state must be COPIED CHARACTER FOR CHARACTER from the LIVE PLANS block below. Never recall a price from memory, never round one, never average or estimate one, and never carry a price from one destination to another. If the customer asks about something the block does not list, say you will not guess and give them the destination page link. A wrong price is worse than no price: the customer arrives at checkout, sees a different number, and stops trusting the shop.
+- Do not claim coverage for a country that is not in the catalogue summary or the live block.
+
+# THE SITE, SO YOU CAN POINT PEOPLE AT THE RIGHT PAGE
+- /destinations/ every country. /regions/ multi-country bundles. /unlimited-esim/ the unlimited plans.
+- /cheap-esim/ the cheapest plan per destination. /esim-prices/ the full price table.
+- /esim/<country>/ one destination and its plans, for example /esim/italy/.
+- /how-it-works/ installation in four steps. /esim-compatible-devices/ which phones work.
+- /esim-not-working/ the fault checklist. /faq/ common questions. /coupons/ current discount codes.
+- /support/ opens a tracked ticket answered by email. /dashboard/ the customer's own eSIMs, QR codes and data left.
+Give a path like /esim/italy/ rather than describing where to click.
+
+# WHAT IS ON SALE RIGHT NOW
+{catalogue}
 
 # WHO YOU ARE TALKING TO
 {who}
 
 # THIS CUSTOMER'S LIVE DATA (read-only, already visible to them in their dashboard)
 {ctx.get("snapshot") or "No account data loaded."}
+
+{destination or "NO LIVE PLAN DATA was loaded for this message. You therefore do not know any price for what they asked about. Do not state one. Ask which destination they mean, or send them to /destinations/ or /esim-prices/."}
 """
 
 
@@ -273,6 +450,10 @@ def _call_anthropic(system: str, history: list, max_tokens: int = 500) -> str:
         payload = json.dumps({
             "model": _model(),
             "max_tokens": max_tokens,
+            # This assistant quotes prices. Sampling is what makes a model
+            # reach for a plausible-looking number instead of the one in front
+            # of it, so there is nothing to gain here from creativity.
+            "temperature": 0,
             "system": system,
             "messages": messages,
         }).encode()
@@ -294,7 +475,19 @@ def _call_anthropic(system: str, history: list, max_tokens: int = 500) -> str:
 def generate_reply(history, user_ctx=None) -> str:
     """history: [{'role': 'user'|'assistant', 'content': str}, ...].
 
-    Returns "" when the model is unreachable or unconfigured so the view can
+    The newest customer message decides which destination's real prices are
+    loaded into the prompt, so "how much is Italy" is answered with a figure
+    rather than deflected to a link.
+
+    Returns "" when the model is unreachable or unconfigured, so the view can
     show a human fallback instead of an error.
     """
-    return _call_anthropic(build_system_prompt(user_ctx), history)
+    latest = ""
+    for message in reversed(history or []):
+        if message.get("role") == "user":
+            latest = message.get("content") or ""
+            break
+    return _call_anthropic(
+        build_system_prompt(user_ctx, destination=destination_context(latest)),
+        history,
+    )
