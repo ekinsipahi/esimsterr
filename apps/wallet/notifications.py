@@ -22,7 +22,9 @@ def topup_alert(topup) -> None:
     rows = [
         ("Customer", topup.user.email),
         ("Paid via", "Card" if provider == "stripe" else "Crypto"),
-        ("Paid", _money(topup.amount_usd)),
+        ("Invoiced", _money(topup.amount_usd)),
+        ("Provider reported", _money(topup.received_usd)
+            if topup.received_usd is not None else "not reported"),
         ("Processing fee", "-" + _money(fee)),
         ("Bonus given", "+" + _money(topup.bonus_usd)),
         ("Credited", _money(topup.credited_usd or topup.total_usd)),

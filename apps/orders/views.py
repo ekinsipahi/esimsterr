@@ -25,6 +25,7 @@ from apps.catalog.models import Plan
 from apps.common import analytics
 from apps.coupons.services import CouponError, redeem, release, validate_coupon
 from apps.legal.models import LegalAcceptance, record_acceptance
+from apps.wallet.services import presets as wallet_presets
 from apps.payments import services as payment_services
 from apps.providers.yesim import YesimError
 
@@ -420,6 +421,11 @@ def dashboard(request):
         "active_esims": active,
         "inactive_esims": inactive,
         "orders": orders,
+        # Shown on the dashboard itself, not only behind its own tab. Credit
+        # somebody has to go looking for is credit they forget they have, and
+        # forgotten credit is a customer who pays with a card instead.
+        "balance_usd": _balance_of(request.user),
+        "wallet_presets": wallet_presets() if getattr(settings, "WALLET_ENABLED", True) else [],
         "seo_title": f"My eSIMs — {settings.SITE_NAME}",
         "meta_robots": "noindex,nofollow",
     })

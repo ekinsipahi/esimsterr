@@ -169,6 +169,10 @@ class BalanceTopUp(models.Model):
     # rewrite what somebody was given at the time.
     amount_usd = models.DecimalField(max_digits=10, decimal_places=2)
     bonus_usd = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    # What the provider says actually arrived, read back from its own response.
+    # Crypto routinely lands over the invoice -- a moving rate, or somebody
+    # rounding up -- and the difference is the customer's money, not ours.
+    received_usd = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     credited_usd = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     status = models.CharField(max_length=12, choices=Status.choices,
                               default=Status.PENDING, db_index=True)
@@ -195,9 +199,22 @@ class BalanceTopUp(models.Model):
     def total_usd(self) -> Decimal:
         return _money(self.amount_usd + self.bonus_usd)
 
-    def mark_credited(self) -> None:
+    def payable_usd(self) -> Decimal:
+        """What to credit before the bonus.
+
+        Whichever is larger: the invoice, or what the provider says arrived.
+        Never less than the invoice -- if we accepted a payment as complete, the
+        customer gets what they were quoted -- and never less than they actually
+        handed over either.
+        """
+        received = _money(self.received_usd) if self.received_usd is not None else None
+        if received is None:
+            return _money(self.amount_usd)
+        return max(_money(self.amount_usd), received)
+
+    def mark_credited(self, credited: Decimal | None = None) -> None:
         self.status = self.Status.CREDITED
-        self.credited_usd = self.total_usd
+        self.credited_usd = _money(credited if credited is not None else self.total_usd)
         self.credited_at = timezone.now()
         self.save(update_fields=["status", "credited_usd", "credited_at"])
 

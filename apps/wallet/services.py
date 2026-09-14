@@ -98,17 +98,34 @@ def credit_topup(topup: BalanceTopUp) -> BalanceTopUp:
         if topup.status == BalanceTopUp.Status.CREDITED:
             return topup
 
-        Wallet.credit(topup.user, topup.amount_usd,
+        # Read what the provider says actually arrived rather than trusting the
+        # invoice. Stripe sends the exact captured amount; a crypto invoice
+        # frequently settles over the quote because the rate moved between
+        # quoting and confirmation, and that difference belongs to the customer.
+        payment = topup.payments.order_by("-created_at").first()
+        if payment is not None and payment.paid_amount_usd is not None:
+            topup.received_usd = _money(payment.paid_amount_usd)
+            topup.save(update_fields=["received_usd"])
+
+        payable = topup.payable_usd()
+        Wallet.credit(topup.user, payable,
                       kind=WalletTransaction.Kind.TOPUP,
                       description=f"Top-up {topup.ref}", balance_topup=topup)
         if topup.bonus_usd > 0:
             Wallet.credit(topup.user, topup.bonus_usd,
                           kind=WalletTransaction.Kind.BONUS,
                           description=f"Bonus on {topup.ref}", balance_topup=topup)
-        topup.mark_credited()
+        topup.mark_credited(payable + _money(topup.bonus_usd))
 
-    log.info("Credited %s: $%s + $%s bonus to %s",
-             topup.ref, topup.amount_usd, topup.bonus_usd, topup.user.email)
+    over = topup.payable_usd() - _money(topup.amount_usd)
+    reported = (f"${topup.received_usd}" if topup.received_usd is not None
+                else "no amount reported")
+    log.info(
+        "Credited %s to %s: invoiced $%s, provider said %s, credited $%s (+ $%s bonus)%s",
+        topup.ref, topup.user.email, topup.amount_usd, reported,
+        topup.payable_usd(), topup.bonus_usd,
+        f" — OVERPAID by ${over}, credited in full" if over > 0 else "",
+    )
     pay_referral_if_due(topup.user)
     from .notifications import topup_alert
     topup_alert(topup)

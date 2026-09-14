@@ -14,6 +14,28 @@
 
     {% include "partials/dash_tabs.html" %}
 
+    {% if wallet_enabled %}
+    {% comment %}
+      Balance sits on the dashboard rather than only behind its own tab. Credit
+      somebody has to go looking for is credit they forget they have, and a
+      customer who forgets it pays with a card instead.
+    {% endcomment %}
+    <div class="dash-balance mt-3">
+      <div>
+        <span class="dash-balance-label">{% trans "Your balance" %}</span>
+        <span class="dash-balance-amount">{{ balance_usd|usd }}</span>
+        <span class="dash-balance-sub">
+          {% if balance_usd > 0 %}{% trans "Spend it on any plan in one tap — no card, no checkout." %}
+          {% else %}{% trans "Top up once and buying a plan takes a single tap, with bonus credit on bigger amounts." %}{% endif %}
+        </span>
+      </div>
+      <div class="row" style="gap:10px;flex-wrap:wrap">
+        <a class="btn btn-gold" href="{% url 'wallet_add' %}">{% icon "plus" size=16 %}{% trans "Add balance" %}</a>
+        <a class="btn btn-ghost btn-on-dark" href="{% url 'wallet' %}">{% trans "History" %}</a>
+      </div>
+    </div>
+    {% endif %}
+
     {% if active_esims %}
     <div class="grid g2">
       {% for esim in active_esims %}{% include "partials/esim_card.html" %}{% endfor %}
