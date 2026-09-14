@@ -61,8 +61,9 @@ CLAUSES = {c.id: c for c in [
         UL(
             _("The content of your traffic — the sites you visit, your messages, your "
               "calls. We are a reseller of connectivity, and none of that reaches us."),
-            _("Card numbers. Card payments are handled entirely by Stripe; we receive only "
-              "a token and the outcome."),
+            _("Card numbers. Card payments are handled entirely by Stripe — in the app the "
+              "details go from your phone to Stripe directly — and we receive only a token "
+              "and the outcome."),
             _("Identity documents. There is no KYC, no passport upload, no ID check."),
             _("Location beyond the country of the network your eSIM registers on, which is "
               "simply the destination you bought."),
@@ -117,6 +118,20 @@ CLAUSES = {c.id: c for c in [
         Callout(_("Deletion is automatic. A scheduled job clears the IP address, user agent, "
                   "language and referrer from every order older than 24 months, so this is a "
                   "promise the system keeps rather than one a person has to remember.")),
+    )),
+
+    Clause("cards", _("Saved cards"), (
+        P(_("If you tick \"remember this card\" when you pay in the app, the card is stored "
+            "by Stripe against a customer record they hold for you. We never see the card "
+            "number, and nothing we store could be used to charge it anywhere else.")),
+        P(_("What we keep is an identifier for that Stripe customer, attached to your "
+            "account — or, if you bought without one, to the app installation. That is why "
+            "a saved card follows you when you later register, and why it stays on the "
+            "device if you never do.")),
+        P(_("You can remove a saved card at any time from Profile, Saved cards. It is "
+            "removed at Stripe, not just hidden, and plans you have already bought are "
+            "unaffected. Declining to save is a tick box, not a hidden setting: an unticked "
+            "box means the card is used once and forgotten.")),
     )),
 
     Clause("gifts", _("Gifts and referrals"), (

@@ -11,6 +11,23 @@ from django.utils.translation import gettext_noop as _
 # Newest first.
 HISTORY = (
     {
+        "date": date(2026, 9, 15),
+        "version": "2026.3",
+        "documents": ("privacy",),
+        "material": True,
+        "summary": _("The app can now take payment directly instead of sending you to the "
+                     "website, and can remember a card for next time. Saving a card is new "
+                     "processing, so it is described."),
+        "detail": (
+            _("Added: what happens when you save a card. Stripe holds it; we hold an "
+              "identifier for their customer record and never see the number. It is "
+              "attached to your account, or to the app installation if you bought without "
+              "one, which is why it follows you if you later register."),
+            _("Added: removing a saved card removes it at Stripe rather than hiding it, and "
+              "not saving is a tick box rather than a buried setting."),
+        ),
+    },
+    {
         "date": date(2026, 9, 14),
         "version": "2026.2",
         "documents": ("privacy",),

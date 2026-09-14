@@ -379,6 +379,10 @@ NOWPAYMENTS_API_BASE = env("NOWPAYMENTS_API_BASE", "https://api.nowpayments.io/v
 # sale alert, never to price a plan. Stripe's cut varies by country and card
 # type, so check your own dashboard and correct these rather than trusting the
 # defaults: a wrong rate here silently misreports the profit on every sale.
+# Cards are saved and reused in the app. Off means the app falls back to
+# opening web checkout, so a misconfigured deploy degrades rather than breaks.
+IN_APP_PAYMENTS = env_bool("IN_APP_PAYMENTS", True)
+
 STRIPE_FEE_PCT = env("STRIPE_FEE_PCT", "2.9")
 STRIPE_FEE_FIXED_USD = env("STRIPE_FEE_FIXED_USD", "0.30")
 NOWPAYMENTS_FEE_PCT = env("NOWPAYMENTS_FEE_PCT", "0.5")

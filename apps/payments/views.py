@@ -71,6 +71,19 @@ def stripe_webhook(request):
                 return HttpResponse("error", status=500)
             return JsonResponse({"received": True})
 
+    # In-app purchases have no Checkout session at all: PaymentSheet drives a
+    # PaymentIntent straight from the device, so this is the only event that
+    # ever tells us the money arrived.
+    if etype in ("payment_intent.succeeded", "payment_intent.payment_failed"):
+        intent = event["data"]["object"]
+        reference = (intent.get("metadata") or {}).get("reference", "")
+        try:
+            services.settle_stripe_intent(intent, reference, failed=etype.endswith("failed"))
+        except Exception:  # noqa: BLE001
+            log.exception("Stripe intent settlement failed")
+            return HttpResponse("error", status=500)
+        return JsonResponse({"received": True})
+
     if etype in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
         session = event["data"]["object"]
         if session.get("mode") == "subscription":

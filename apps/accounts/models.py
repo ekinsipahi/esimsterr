@@ -27,6 +27,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # Provider-side account (Yesim /new_user). Created lazily on first purchase.
     yesim_user_id = models.CharField(max_length=32, blank=True, db_index=True)
+    # Where saved cards live. Stripe holds the card; we hold this id and nothing
+    # that could be used to charge anyone anywhere else.
+    stripe_customer_id = models.CharField(max_length=64, blank=True, db_index=True)
 
     signup_ip = models.GenericIPAddressField(null=True, blank=True)
     marketing_opt_in = models.BooleanField(default=True)
@@ -88,6 +91,10 @@ class AppInstall(models.Model):
     app_version = models.CharField(max_length=20, blank=True)
     # Play Integrity outcome, in words, so a support answer does not require
     # decoding a verdict blob. Empty means never checked.
+    # A device that buys without an account still gets its card back next time,
+    # which is the only reason saving one is worth anything to a guest.
+    stripe_customer_id = models.CharField(max_length=64, blank=True, db_index=True)
+
     integrity_verdict = models.CharField(max_length=120, blank=True)
     integrity_checked_at = models.DateTimeField(null=True, blank=True)
 

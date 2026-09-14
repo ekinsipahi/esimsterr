@@ -249,6 +249,37 @@ def settle_stripe_session(session: dict) -> Payment | None:
     )
 
 
+def settle_stripe_intent(intent: dict, reference: str, *, failed: bool = False) -> Payment | None:
+    """Settle an in-app purchase. There is no Checkout session for these.
+
+    A failure is recorded rather than ignored: the customer is looking at a
+    declined card in the app and support needs the same story they have.
+    """
+    payment = _payment_by_reference(reference)
+    if payment is None:
+        log.warning("Stripe intent for unknown reference %r", reference)
+        return None
+
+    if failed:
+        error = (intent.get("last_payment_error") or {}).get("message", "")
+        payment.status = Payment.Status.FAILED
+        payment.raw = {**(payment.raw or {}), "error": error[:300]}
+        payment.save(update_fields=["status", "raw"])
+        if payment.order_id:
+            release(payment.order)
+        log.info("In-app payment %s failed: %s", payment.id, error[:120])
+        return payment
+
+    amount = intent.get("amount_received")
+    paid = Decimal(str(amount)) / 100 if amount is not None else None
+    return settle_payment(
+        payment.pk,
+        paid_amount_usd=paid,
+        provider_payment_id=str(intent.get("id") or ""),
+        raw={"stripe_status": intent.get("status")},
+    )
+
+
 NOWPAY_PAID = {"finished", "confirmed"}
 NOWPAY_DEAD = {"failed", "expired", "refunded"}
 

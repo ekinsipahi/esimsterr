@@ -27,6 +27,7 @@ from apps.accounts.views import _client_ip
 from apps.accounts.google import GoogleAuthError, user_from_google_token
 from apps.accounts.models import User
 from apps.catalog.models import Country, Device, Plan, Region
+from apps.coupons.services import CouponError, redeem, release, validate_coupon
 from apps.legal.documents import (BY_SLUG, DOCUMENTS, contract_stamps,
                                   document_url, stamp)
 from apps.legal.models import LegalAcceptance, record_acceptance
@@ -266,6 +267,8 @@ def checkout_url(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def config(request):
+    from apps.payments.inapp import enabled as in_app_enabled
+
     """Bootstrap payload so the app can render without hardcoding anything."""
     return Response({
         "site_name": settings.SITE_NAME,
@@ -278,6 +281,10 @@ def config(request):
         # shows the changed document. Cheaper than a push, and it cannot be
         # missed by someone who has notifications switched off.
         "legal": contract_stamps(legal_surface(request)),
+        # The app reads the publishable key from here rather than baking it in:
+        # rotating a Stripe key should not need a store release.
+        "in_app_payments": in_app_enabled(),
+        "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY if in_app_enabled() else "",
     })
 
 
@@ -433,7 +440,6 @@ def pay_with_balance(request):
     credit on the website. Coupons still apply, because a discount on a plan is
     a discount whichever pocket the money comes from.
     """
-    from apps.coupons.services import CouponError, redeem, validate_coupon
     from apps.legal.models import LegalAcceptance, record_acceptance
     from apps.wallet.models import InsufficientBalance, Wallet
     from apps.wallet.services import pay_order_with_balance
@@ -710,6 +716,19 @@ def device_claim(request):
                     .values_list("pk", flat=True))
     moved = orders.update(user=request.user)
     Esim.objects.filter(pk__in=esim_ids).update(user=request.user)
+
+    # Carry the saved cards over too. A guest who saved a card and then
+    # registered should not have to type it again -- and leaving the customer on
+    # the device row would strand the card somewhere nothing reads.
+    from apps.accounts.models import AppInstall
+
+    install = AppInstall.objects.filter(support_id=support_id).first()
+    if install and install.stripe_customer_id and not request.user.stripe_customer_id:
+        request.user.stripe_customer_id = install.stripe_customer_id
+        request.user.save(update_fields=["stripe_customer_id"])
+        install.stripe_customer_id = ""
+        install.save(update_fields=["stripe_customer_id"])
+
     return Response({"ok": True, "orders_claimed": moved, "esims_claimed": len(esim_ids)})
 
 
@@ -776,3 +795,190 @@ def device_attest(request):
     ok, reason = attest(install, token)
     return Response({"enabled": True, "verified": ok, "detail": reason},
                     status=status.HTTP_200_OK if ok else status.HTTP_403_FORBIDDEN)
+
+
+# ---- paying with a card, inside the app --------------------------------------
+def _build_order(request, *, plan, email: str, paid_with_balance: bool):
+    """Create a pending order from the request, or return (None, error Response).
+
+    Shared by both in-app payment routes so a coupon, a gift or a top-up target
+    behaves identically whether the money comes from a card or from balance.
+    """
+    user = request.user if request.user.is_authenticated else None
+
+    target_esim = None
+    esim_id = request.data.get("esim_id")
+    if esim_id:
+        owned = Esim.objects.filter(pk=esim_id, is_deleted=False)
+        target_esim = owned.filter(user=user).first() if user else None
+        if target_esim is None:
+            return None, Response({"detail": "eSIM not found."},
+                                  status=status.HTTP_404_NOT_FOUND)
+
+    subtotal = Decimal(plan.price)
+    coupon, discount = None, Decimal("0.00")
+    code = (request.data.get("coupon") or "").strip()
+    if code:
+        try:
+            coupon, discount = validate_coupon(
+                code, amount_usd=subtotal, plan=plan, user=user, email=email,
+            )
+        except CouponError as e:
+            return None, Response({"detail": str(e), "code": "coupon_invalid"},
+                                  status=status.HTTP_400_BAD_REQUEST)
+
+    order = Order.objects.create(
+        user=user, email=email,
+        kind=Order.Kind.TOPUP if target_esim else Order.Kind.NEW,
+        plan=plan, plan_title=plan.title, plan_provider_id=plan.provider_plan_id,
+        plan_days=plan.days, plan_data_label=plan.data_label,
+        subtotal_usd=subtotal, discount_usd=discount,
+        amount_usd=(subtotal - discount).quantize(Decimal("0.01")),
+        coupon=coupon, coupon_code=coupon.code if coupon else "",
+        cost_amount=plan.cost_amount, cost_currency=plan.cost_currency,
+        target_esim=target_esim, withdrawal_waived_at=timezone.now(),
+        source=legal_surface(request), paid_with_balance=paid_with_balance,
+        support_id=_support_id(request),
+        gift_email=(request.data.get("gift_email") or "").strip()[:254],
+        gift_name=(request.data.get("gift_name") or "").strip()[:80],
+        gift_message=(request.data.get("gift_message") or "").strip()[:300],
+        ip=_client_ip(request),
+        user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:400],
+    )
+    if coupon is not None:
+        try:
+            redeem(coupon, order, user=user, email=email, ip=order.ip)
+        except CouponError as e:
+            order.coupon, order.coupon_code = None, ""
+            order.discount_usd = Decimal("0.00")
+            order.amount_usd = subtotal
+            order.save(update_fields=["coupon", "coupon_code", "discount_usd", "amount_usd"])
+            return None, Response({"detail": str(e), "code": "coupon_invalid"},
+                                  status=status.HTTP_400_BAD_REQUEST)
+    return order, None
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([CheckoutThrottle])
+def payment_sheet(request):
+    """Start an in-app card payment.
+
+    Returns what Stripe's PaymentSheet needs and nothing else. Card details go
+    from the device to Stripe directly and never reach this server -- what comes
+    back afterwards is a payment method id, which cannot charge anything
+    anywhere else.
+
+    Works signed out. The customer is keyed to the device install then, so a
+    guest who saves a card gets it back next time, which is the only thing that
+    makes saving one worth doing.
+    """
+    from apps.accounts.models import AppInstall
+    from apps.legal.models import LegalAcceptance, record_acceptance
+    from apps.payments.inapp import InAppError, customer_for, enabled, payment_sheet as build_sheet
+    from apps.payments.stripe_client import StripeError
+
+    if not enabled():
+        return Response({"detail": "In-app payments are unavailable.",
+                         "code": "in_app_unavailable"},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    if not request.data.get("consent"):
+        return Response({"detail": "Confirm immediate delivery to continue.",
+                         "code": "consent_required"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    plan = Plan.objects.live().select_related("country", "region").filter(
+        pk=request.data.get("plan_id")).first()
+    if plan is None:
+        return Response({"detail": "Plan not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # A guest has to give us somewhere to send the eSIM.
+    email = (request.data.get("email") or "").strip().lower()
+    if request.user.is_authenticated:
+        email = request.user.email
+    elif not email or "@" not in email:
+        return Response({"detail": "Enter an email address so we can send the eSIM.",
+                         "code": "email_required"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    install = None
+    if not request.user.is_authenticated:
+        support_id = _support_id(request)
+        if not support_id:
+            return Response({"detail": "No device id."}, status=status.HTTP_400_BAD_REQUEST)
+        install, _ = AppInstall.objects.get_or_create(
+            support_id=support_id,
+            defaults={"platform": (request.headers.get("X-Client-Platform") or "android")[:12]},
+        )
+
+    order, error = _build_order(request, plan=plan, email=email, paid_with_balance=False)
+    if error is not None:
+        return error
+
+    try:
+        customer_id, _owner = customer_for(
+            user=request.user if request.user.is_authenticated else None,
+            install=install, email=email,
+        )
+        sheet = build_sheet(
+            order,
+            customer_id=customer_id,
+            api_version=(request.data.get("stripe_version") or "2024-06-20"),
+            save_card=bool(request.data.get("save_card", True)),
+        )
+    except (InAppError, StripeError) as e:
+        release(order)
+        order.status = Order.Status.FAILED
+        order.save(update_fields=["status"])
+        return Response({"detail": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+
+    record_acceptance(request, user=request.user if request.user.is_authenticated else None,
+                      email=email, context=LegalAcceptance.Context.CHECKOUT,
+                      order_ref=order.ref, surface=legal_surface(request))
+    return Response(sheet, status=201)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+@throttle_classes([DeviceLookupThrottle])
+def saved_cards(request):
+    """The cards this customer, or this device, has saved."""
+    from apps.accounts.models import AppInstall
+    from apps.payments.inapp import enabled
+    from apps.payments.stripe_client import list_cards
+
+    if not enabled():
+        return Response({"cards": []})
+
+    if request.user.is_authenticated:
+        customer_id = request.user.stripe_customer_id
+    else:
+        support_id = _support_id(request)
+        install = AppInstall.objects.filter(support_id=support_id).first() if support_id else None
+        customer_id = install.stripe_customer_id if install else ""
+    return Response({"cards": list_cards(customer_id)})
+
+
+@api_view(["DELETE", "POST"])
+@permission_classes([AllowAny])
+@throttle_classes([DeviceLookupThrottle])
+def delete_card(request, pm_id):
+    """Forget a card. Refuses unless it belongs to the caller's own customer."""
+    from apps.accounts.models import AppInstall
+    from apps.payments.stripe_client import StripeError, card_belongs_to, detach_card
+
+    if request.user.is_authenticated:
+        customer_id = request.user.stripe_customer_id
+    else:
+        support_id = _support_id(request)
+        install = AppInstall.objects.filter(support_id=support_id).first() if support_id else None
+        customer_id = install.stripe_customer_id if install else ""
+
+    if not card_belongs_to(pm_id, customer_id):
+        return Response({"detail": "No such card."}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        detach_card(pm_id)
+    except StripeError as e:
+        return Response({"detail": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+    return Response({"ok": True})

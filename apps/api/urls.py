@@ -39,6 +39,10 @@ urlpatterns = [
     path("inbox/<int:pk>/read/", views.inbox_read, name="api_inbox_read"),
     path("wallet/topup-url/", views.wallet_topup_url, name="api_wallet_topup_url"),
     path("orders/pay-with-balance/", views.pay_with_balance, name="api_pay_with_balance"),
+    # in-app card payment
+    path("pay/sheet/", views.payment_sheet, name="api_payment_sheet"),
+    path("pay/cards/", views.saved_cards, name="api_saved_cards"),
+    path("pay/cards/<str:pm_id>/", views.delete_card, name="api_delete_card"),
     # legal
     path("legal/", views.legal_index, name="api_legal"),
     path("legal/accept/", views.legal_accept, name="api_legal_accept"),
