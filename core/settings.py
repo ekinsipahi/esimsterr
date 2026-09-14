@@ -99,6 +99,16 @@ WALLET_ENABLED = env_bool("WALLET_ENABLED", True)
 REFERRAL_BONUS_USD = env("REFERRAL_BONUS_USD", "3.00")
 REFERRAL_MIN_TOPUP_USD = env("REFERRAL_MIN_TOPUP_USD", "5.00")
 
+# ---- Play Integrity ----------------------------------------------------------
+# Proves a request is our app on a real device before its device id unlocks the
+# guest purchases made from it. Unconfigured is not an error: until the app is
+# in the Play Console there is nothing to verify against, so checks record that
+# none was possible. Set PLAY_INTEGRITY_REQUIRED once it works, and unattested
+# devices stop being able to read purchases back.
+ANDROID_PACKAGE_NAME = env("ANDROID_PACKAGE_NAME", "com.esimsterr.app")
+PLAY_INTEGRITY_SERVICE_ACCOUNT = env("PLAY_INTEGRITY_SERVICE_ACCOUNT", "")
+PLAY_INTEGRITY_REQUIRED = env_bool("PLAY_INTEGRITY_REQUIRED", False)
+
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", [])
 _PROD_HOSTS = [CANONICAL_HOST, f"www.{CANONICAL_HOST}", "esimsterr.onrender.com"]

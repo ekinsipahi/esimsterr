@@ -27,6 +27,8 @@ urlpatterns = [
     # guest purchases, identified by the device rather than an account
     path("device/esims/", views.device_esims, name="api_device_esims"),
     path("device/claim/", views.device_claim, name="api_device_claim"),
+    path("device/nonce/", views.device_nonce, name="api_device_nonce"),
+    path("device/attest/", views.device_attest, name="api_device_attest"),
     # wallet
     path("wallet/", views.wallet, name="api_wallet"),
     path("referral/", views.referral, name="api_referral"),

@@ -86,8 +86,17 @@ class AppInstall(models.Model):
                              on_delete=models.SET_NULL, related_name="installs")
     platform = models.CharField(max_length=12, default="android")
     app_version = models.CharField(max_length=20, blank=True)
+    # Play Integrity outcome, in words, so a support answer does not require
+    # decoding a verdict blob. Empty means never checked.
+    integrity_verdict = models.CharField(max_length=120, blank=True)
+    integrity_checked_at = models.DateTimeField(null=True, blank=True)
+
     first_seen = models.DateTimeField(auto_now_add=True)
     last_seen = models.DateTimeField(auto_now=True, db_index=True)
+
+    @property
+    def is_attested(self) -> bool:
+        return self.integrity_verdict == "verified"
 
     class Meta:
         verbose_name = "app install"

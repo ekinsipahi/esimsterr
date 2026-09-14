@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User
+from .models import AppInstall, User
 
 
 @admin.register(User)
@@ -22,3 +22,18 @@ class UserAdmin(BaseUserAdmin):
         (None, {"classes": ("wide",), "fields": ("email", "password1", "password2", "is_staff", "is_superuser")}),
     )
     filter_horizontal = ("groups", "user_permissions")
+
+
+@admin.register(AppInstall)
+class AppInstallAdmin(admin.ModelAdmin):
+    """Where support looks up a code a customer read down the phone."""
+    list_display = ("support_id", "user", "platform", "app_version",
+                    "integrity_verdict", "last_seen")
+    list_filter = ("platform", "integrity_verdict", "last_seen")
+    search_fields = ("support_id", "user__email")
+    readonly_fields = ("support_id", "first_seen", "last_seen",
+                       "integrity_verdict", "integrity_checked_at")
+    date_hierarchy = "last_seen"
+
+    def has_add_permission(self, request):
+        return False

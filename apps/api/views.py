@@ -630,6 +630,28 @@ def referral_apply(request):
 
 
 # ---- device-bound guest purchases --------------------------------------------
+def _attestation_gate(support_id: str):
+    """None to proceed, or a Response refusing an unattested device.
+
+    Only bites once Play Integrity is configured *and* switched to required.
+    Before that an unattested device is the only kind there is, and refusing
+    them all would mean nobody could see what they bought.
+    """
+    from apps.accounts.integrity import required
+    from apps.accounts.models import AppInstall
+
+    if not required():
+        return None
+    install = AppInstall.objects.filter(support_id=support_id).first()
+    if install is not None and install.is_attested:
+        return None
+    return Response(
+        {"detail": "This device has not been verified with Google Play.",
+         "code": "attestation_required"},
+        status=status.HTTP_403_FORBIDDEN,
+    )
+
+
 def _support_id(request) -> str:
     """The calling installation's code, or "" if it is missing or malformed."""
     from apps.accounts.install_middleware import SUPPORT_ID
@@ -657,6 +679,10 @@ def device_esims(request):
     support_id = _support_id(request)
     if not support_id:
         return Response({"detail": "No device id."}, status=status.HTTP_400_BAD_REQUEST)
+
+    gate = _attestation_gate(support_id)
+    if gate is not None:
+        return gate
 
     orders = Order.objects.filter(support_id=support_id, user__isnull=True)
     esims = (Esim.objects.filter(order__in=orders, is_deleted=False)
@@ -703,3 +729,50 @@ def resend_verification(request):
             send_verification(user, request)
     return Response({"ok": True,
                      "detail": "If that address needs confirming, the link is on its way."})
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+@throttle_classes([DeviceLookupThrottle])
+def device_nonce(request):
+    """A one-shot value the app binds its Play Integrity verdict to.
+
+    Without it a verdict captured once could be replayed for ever, which would
+    make attestation a slightly longer bearer secret rather than a proof.
+    """
+    from apps.accounts.integrity import configured, issue_nonce
+
+    support_id = _support_id(request)
+    if not support_id:
+        return Response({"detail": "No device id."}, status=status.HTTP_400_BAD_REQUEST)
+    if not configured():
+        return Response({"enabled": False, "nonce": ""})
+    return Response({"enabled": True, "nonce": issue_nonce(support_id)})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([DeviceLookupThrottle])
+def device_attest(request):
+    """Hand back a Play Integrity token; we ask Google what it says."""
+    from apps.accounts.integrity import attest, configured
+    from apps.accounts.models import AppInstall
+
+    support_id = _support_id(request)
+    if not support_id:
+        return Response({"detail": "No device id."}, status=status.HTTP_400_BAD_REQUEST)
+    if not configured():
+        return Response({"enabled": False, "verified": False,
+                         "detail": "Play Integrity is not configured on the server."})
+
+    token = (request.data.get("token") or "").strip()
+    if not token:
+        return Response({"detail": "No integrity token."}, status=status.HTTP_400_BAD_REQUEST)
+
+    install, _created = AppInstall.objects.get_or_create(
+        support_id=support_id,
+        defaults={"platform": (request.headers.get("X-Client-Platform") or "android")[:12]},
+    )
+    ok, reason = attest(install, token)
+    return Response({"enabled": True, "verified": ok, "detail": reason},
+                    status=status.HTTP_200_OK if ok else status.HTTP_403_FORBIDDEN)
