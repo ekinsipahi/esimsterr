@@ -20,3 +20,8 @@ python manage.py compilemessages 2>/dev/null || true
 # (a preview environment has no YESIM_API_TOKEN).
 python manage.py sync_plans || echo "sync_plans skipped or failed; the site still boots"
 python manage.py seed_country_seo || echo "seed_country_seo skipped"
+
+# Every subscribable plan needs a Stripe price before anyone tries to subscribe.
+# Creating them here makes a failure a build problem rather than a customer
+# seeing "something broke on our side" and leaving.
+python manage.py sync_stripe_prices || echo "sync_stripe_prices skipped or failed"

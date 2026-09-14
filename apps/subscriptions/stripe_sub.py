@@ -87,8 +87,11 @@ def ensure_price(plan) -> str:
         return cached
 
     try:
+        # stripe-python v15 returns a ListObject here, not a dict. Calling
+        # .get() on one raises, which is what turned every attempt to subscribe
+        # into a 500. The rows live on .data.
         found = stripe.Price.list(lookup_keys=[key], active=True, limit=1)
-        rows = found.get("data") or []
+        rows = list(found.data or [])
         if rows:
             _PRICE_CACHE[key] = rows[0]["id"]
             return rows[0]["id"]
@@ -106,7 +109,7 @@ def ensure_price(plan) -> str:
     except stripe.InvalidRequestError as e:
         # A parallel request may have claimed the lookup key between our list
         # and our create. Read it back rather than minting a duplicate Price.
-        rows = (stripe.Price.list(lookup_keys=[key], active=True, limit=1).get("data") or [])
+        rows = list(stripe.Price.list(lookup_keys=[key], active=True, limit=1).data or [])
         if rows:
             _PRICE_CACHE[key] = rows[0]["id"]
             return rows[0]["id"]
@@ -163,7 +166,8 @@ def billing_portal_url(customer_id: str, return_url: str) -> str:
                                                        return_url=return_url)
     except stripe.StripeError as e:
         raise SubscriptionError(str(e)) from e
-    url = session.get("url") or ""
+    # Also a StripeObject rather than a dict: attribute access, not .get().
+    url = getattr(session, "url", "") or ""
     if not url:
         raise SubscriptionError("Stripe did not return a billing portal URL.")
     return url

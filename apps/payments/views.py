@@ -170,7 +170,7 @@ def _apply_yesim_event(payload: dict):
 def cron(request, task):
     """HTTP-triggered maintenance (cron-job.org / Render cron).
 
-    /webhooks/cron/<task>/?token=CRON_SECRET  — tasks: sync-usage, retry-orders, sync-plans
+    /webhooks/cron/<task>/?token=CRON_SECRET  — tasks: sync-usage, retry-orders, sync-plans (also refreshes Stripe prices)
     """
     token = request.GET.get("token") or request.headers.get("X-Cron-Token", "")
     if not settings.CRON_SECRET or token != settings.CRON_SECRET:
@@ -189,6 +189,10 @@ def cron(request, task):
     if task == "sync-plans":
         from django.core.management import call_command
         call_command("sync_plans", "--no-devices")
+        # A new unlimited destination needs its Stripe price to exist before
+        # somebody tries to subscribe to it. Leaving that to the first customer
+        # is how a broken subscribe path went unnoticed for days.
+        call_command("sync_stripe_prices")
         return JsonResponse({"task": task, "status": "ok"})
 
     if task == "sentry-check":

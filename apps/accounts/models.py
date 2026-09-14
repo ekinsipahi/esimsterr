@@ -29,7 +29,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     yesim_user_id = models.CharField(max_length=32, blank=True, db_index=True)
     # Where saved cards live. Stripe holds the card; we hold this id and nothing
     # that could be used to charge anyone anywhere else.
-    stripe_customer_id = models.CharField(max_length=64, blank=True, db_index=True)
+    stripe_customer_id = models.CharField(max_length=64, blank=True, default="", db_index=True)
 
     signup_ip = models.GenericIPAddressField(null=True, blank=True)
     marketing_opt_in = models.BooleanField(default=True)
@@ -94,14 +94,18 @@ class AppInstall(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
                              on_delete=models.SET_NULL, related_name="installs")
     platform = models.CharField(max_length=12, default="android")
-    app_version = models.CharField(max_length=20, blank=True)
+    app_version = models.CharField(max_length=20, blank=True, default="")
     # Play Integrity outcome, in words, so a support answer does not require
     # decoding a verdict blob. Empty means never checked.
     # A device that buys without an account still gets its card back next time,
     # which is the only reason saving one is worth anything to a guest.
-    stripe_customer_id = models.CharField(max_length=64, blank=True, db_index=True)
+    stripe_customer_id = models.CharField(max_length=64, blank=True, default="", db_index=True)
 
-    integrity_verdict = models.CharField(max_length=120, blank=True)
+    # An explicit default, not just blank=True. Without one the column is NOT
+    # NULL with nothing to fall back on, so a deploy that lands the migration
+    # before the code -- which is the normal ordering, and what happened here --
+    # makes every insert from the older code fail.
+    integrity_verdict = models.CharField(max_length=120, blank=True, default="")
     integrity_checked_at = models.DateTimeField(null=True, blank=True)
 
     first_seen = models.DateTimeField(auto_now_add=True)
