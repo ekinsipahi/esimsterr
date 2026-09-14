@@ -72,6 +72,7 @@ def site(request):
         "GA_MEASUREMENT_ID": settings.GA_MEASUREMENT_ID,
         "GOOGLE_CLIENT_ID": settings.GOOGLE_CLIENT_ID,
         "wallet_enabled": getattr(settings, "WALLET_ENABLED", True),
+        "seo_noindex": getattr(settings, "SEO_NOINDEX", False),
         "app_store_url": settings.APP_STORE_URL,
         "play_store_url": settings.PLAY_STORE_URL,
         "stripe_enabled": bool(settings.STRIPE_SECRET_KEY),

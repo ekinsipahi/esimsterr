@@ -137,6 +137,73 @@ services:
         sync: false
 
   # Refresh eSIM usage + retry any order stuck after a provider hiccup.
+  # ---------------------------------------------------------------------------
+  # Staging. A whole separate world, and the point of it is the Stripe keys:
+  # testing a payment flow against live keys means either real money or a
+  # half-tested flow, and neither is acceptable before a store release.
+  #
+  # No DB_* variables on purpose -- with none set the app falls back to SQLite on
+  # the instance disk, which Render wipes on every deploy. For a test
+  # environment that is a feature: each deploy starts from a clean catalogue and
+  # no accounts, so a test never inherits yesterday's mess.
+  - type: web
+    name: esimsterr-staging
+    runtime: python
+    plan: free
+    buildCommand: "bash build.sh"
+    startCommand: "gunicorn core.wsgi:application --timeout 120 --workers 2 --bind 0.0.0.0:$PORT"
+    healthCheckPath: /health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.3"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+
+      - key: SITE_URL
+        value: "https://esimsterr-staging.onrender.com"
+      - key: CANONICAL_HOST
+        value: "esimsterr-staging.onrender.com"
+      - key: ALLOWED_HOSTS
+        value: "esimsterr-staging.onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://esimsterr-staging.onrender.com"
+      # Never let a test environment into a search index.
+      - key: SEO_NOINDEX
+        value: "True"
+
+      # --- Stripe TEST keys. sk_test_... / pk_test_... ---
+      # Card 4242 4242 4242 4242, any future expiry, any CVC.
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISH_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+      # --- The provider. Real catalogue, real eSIMs, real cost. ---
+      # Yesim has no sandbox, so this is the same token and the same money.
+      # Buy the cheapest plan you can when testing provisioning.
+      - key: YESIM_API_TOKEN
+        sync: false
+
+      # --- The admin test tool. Set it here, never on production. ---
+      - key: ADMIN_TEST_TOKEN
+        sync: false
+
+      # Off in staging: nobody needs a sale alert from a test purchase, and a
+      # staging deploy that emails customers is a staging deploy that has
+      # escaped.
+      - key: ADMIN_NOTIFY_EMAILS
+        value: ""
+      - key: RESEND_API_KEY
+        sync: false
+      - key: GA_MEASUREMENT_ID
+        value: ""
+      - key: SENTRY_DSN
+        value: ""
+
   - type: cron
     name: esimsterr-usage-sync
     runtime: python

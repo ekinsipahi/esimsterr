@@ -383,6 +383,17 @@ NOWPAYMENTS_API_BASE = env("NOWPAYMENTS_API_BASE", "https://api.nowpayments.io/v
 # opening web checkout, so a misconfigured deploy degrades rather than breaks.
 IN_APP_PAYMENTS = env_bool("IN_APP_PAYMENTS", True)
 
+# ---- Admin test tool ---------------------------------------------------------
+# Lets an operator walk the whole purchase flow on a real phone without paying.
+# Empty disables it completely -- there is no default token, because a payment
+# bypass that ships enabled is a bypass somebody else finds. Set a long random
+# value, use it, and clear it when you are done.
+ADMIN_TEST_TOKEN = env("ADMIN_TEST_TOKEN", "")
+
+# Staging must never be indexed. A test environment in a search result competes
+# with the real site for its own keywords and shows customers test prices.
+SEO_NOINDEX = env_bool("SEO_NOINDEX", False)
+
 STRIPE_FEE_PCT = env("STRIPE_FEE_PCT", "2.9")
 STRIPE_FEE_FIXED_USD = env("STRIPE_FEE_FIXED_USD", "0.30")
 NOWPAYMENTS_FEE_PCT = env("NOWPAYMENTS_FEE_PCT", "0.5")

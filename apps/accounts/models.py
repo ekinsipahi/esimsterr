@@ -39,6 +39,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="referrals"
     )
     email_verified_at = models.DateTimeField(null=True, blank=True)
+    # A QA account. Everything it buys is flagged as a test order, so no amount
+    # of testing can put money that nobody paid into a revenue figure or fire a
+    # sale alert with an invented profit line. Set automatically the moment the
+    # admin tool grants unpaid credit -- an account holding money nobody paid
+    # for is a test account by definition.
+    is_test = models.BooleanField(default=False, db_index=True)
 
     date_joined = models.DateTimeField(default=timezone.now)
 

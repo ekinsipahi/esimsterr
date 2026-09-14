@@ -128,7 +128,14 @@ def fulfill_order(order_id) -> Order:
 
     def _after_commit():
         send_esim_ready(order, esim)
-        sale_alert(order, esim)
+        # A test order still delivers a real eSIM, but it is not a sale. Letting
+        # it into the alerts would put fictional money in the daily total, and
+        # an operator who stops trusting those numbers stops reading them --
+        # and then misses a real failure.
+        if not order.is_test:
+            sale_alert(order, esim)
+        else:
+            log.warning("TEST ORDER %s provisioned; no sale alert sent", order.ref)
 
     transaction.on_commit(_after_commit)
     return order

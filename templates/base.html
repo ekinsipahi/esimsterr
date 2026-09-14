@@ -8,7 +8,7 @@
 
   <title>{% block title %}{{ seo_title|default:site_name }}{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}{{ seo_description|default:default_description }}{% endblock %}">
-  {% block robots %}<meta name="robots" content="{{ meta_robots|default:'index,follow' }}">{% endblock %}
+  {% block robots %}<meta name="robots" content="{% if seo_noindex %}noindex,nofollow{% else %}{{ meta_robots|default:'index,follow' }}{% endif %}">{% endblock %}
   {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
   {% for code, href in hreflangs %}<link rel="alternate" hreflang="{{ code }}" href="{{ href }}">
   {% endfor %}{% if hreflangs %}<link rel="alternate" hreflang="x-default" href="{{ canonical_url }}">{% endif %}

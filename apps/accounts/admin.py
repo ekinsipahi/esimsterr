@@ -8,7 +8,7 @@ from .models import AppInstall, User
 class UserAdmin(BaseUserAdmin):
     ordering = ("-date_joined",)
     list_display = ("email", "display_name", "yesim_user_id", "is_active", "is_staff", "date_joined")
-    list_filter = ("is_active", "is_staff", "marketing_opt_in")
+    list_filter = ("is_active", "is_staff", "marketing_opt_in", "is_test")
     search_fields = ("email", "display_name", "yesim_user_id", "referral_code")
     readonly_fields = ("id", "date_joined", "last_login", "referral_code", "unsubscribe_token", "signup_ip")
     fieldsets = (

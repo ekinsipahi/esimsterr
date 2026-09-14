@@ -84,6 +84,10 @@ class Order(models.Model):
     # The support id of the app installation that placed this order, so a
     # customer reading a code down the phone can be found in one query.
     support_id = models.CharField(max_length=24, blank=True, db_index=True)
+    # Settled by the admin test tool rather than by a payment. Excluded from
+    # sale alerts, profit figures and analytics: an operator who cannot trust
+    # the revenue number stops reading the alerts, and then misses a real one.
+    is_test = models.BooleanField(default=False, db_index=True)
 
     # --- gifting ---------------------------------------------------------
     # An eSIM bought for someone else. The QR goes to this address instead of

@@ -498,6 +498,7 @@ def pay_with_balance(request):
         cost_amount=plan.cost_amount, cost_currency=plan.cost_currency,
         target_esim=target_esim, withdrawal_waived_at=timezone.now(),
         source=legal_surface(request), paid_with_balance=True,
+        is_test=bool(request.user.is_test),
         support_id=(request.headers.get("X-Support-Id") or "")[:24],
         gift_email=(request.data.get("gift_email") or "").strip()[:254],
         gift_name=(request.data.get("gift_name") or "").strip()[:80],
@@ -839,6 +840,7 @@ def _build_order(request, *, plan, email: str, paid_with_balance: bool):
         target_esim=target_esim, withdrawal_waived_at=timezone.now(),
         source=legal_surface(request), paid_with_balance=paid_with_balance,
         support_id=_support_id(request),
+        is_test=bool(user is not None and user.is_test),
         gift_email=(request.data.get("gift_email") or "").strip()[:254],
         gift_name=(request.data.get("gift_name") or "").strip()[:80],
         gift_message=(request.data.get("gift_message") or "").strip()[:300],
@@ -982,3 +984,135 @@ def delete_card(request, pm_id):
     except StripeError as e:
         return Response({"detail": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
     return Response({"ok": True})
+
+
+# ---- admin test tool ---------------------------------------------------------
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def dev_grant_balance(request):
+    """Put credit in an account without anyone paying for it.
+
+    This is the whole bypass. Everything downstream -- buying, coupons,
+    provisioning -- then runs as it does for a real customer, which is the only
+    way a test tells you anything about the real thing.
+    """
+    from apps.accounts.models import User
+    from apps.api import devtools
+    from apps.wallet.models import Wallet, WalletTransaction
+
+    if not devtools.authorised(request):
+        return Response({"detail": "Not available."}, status=status.HTTP_404_NOT_FOUND)
+
+    email = (request.data.get("email") or "").strip().lower()
+    user = (request.user if request.user.is_authenticated
+            else User.objects.filter(email__iexact=email).first())
+    if user is None:
+        return Response({"detail": "No such account."}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        amount = Decimal(str(request.data.get("amount") or "25"))
+    except Exception:  # noqa: BLE001
+        return Response({"detail": "Bad amount."}, status=status.HTTP_400_BAD_REQUEST)
+    if amount <= 0 or amount > Decimal("1000"):
+        return Response({"detail": "Amount must be between 0 and 1000."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    Wallet.credit(user, amount, kind=WalletTransaction.Kind.ADJUST,
+                  description="Admin test credit — not paid for")
+    if not user.is_test:
+        # Holding money nobody paid for makes this a test account, and every
+        # order it places from here on is excluded from revenue and alerts.
+        user.is_test = True
+        user.save(update_fields=["is_test"])
+    devtools.note("granted balance", email=user.email, amount=amount,
+                  marked_test=True)
+    wallet = Wallet.for_user(user)
+    return Response({"ok": True, "email": user.email,
+                     "balance_usd": str(wallet.balance_usd)})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def dev_complete_order(request):
+    """Create an order and settle it without payment, then provision for real.
+
+    Takes the same fields the real purchase does -- plan, coupon, gift, device --
+    and runs them through the same order builder, so a coupon that would be
+    refused in production is refused here too.
+    """
+    from apps.api import devtools
+    from apps.accounts.models import AppInstall
+    from apps.legal.models import LegalAcceptance, record_acceptance
+
+    if not devtools.authorised(request):
+        return Response({"detail": "Not available."}, status=status.HTTP_404_NOT_FOUND)
+
+    plan = Plan.objects.live().select_related("country", "region").filter(
+        pk=request.data.get("plan_id")).first()
+    if plan is None:
+        return Response({"detail": "Plan not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    email = (request.data.get("email") or "").strip().lower()
+    if request.user.is_authenticated:
+        email = request.user.email
+    if not email or "@" not in email:
+        return Response({"detail": "An email is required, even for a test."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    support_id = _support_id(request)
+    if support_id and not request.user.is_authenticated:
+        AppInstall.objects.get_or_create(
+            support_id=support_id,
+            defaults={"platform": (request.headers.get("X-Client-Platform") or "android")[:12]},
+        )
+
+    order, error = _build_order(request, plan=plan, email=email, paid_with_balance=False)
+    if error is not None:
+        return error
+
+    order.is_test = True
+    order.save(update_fields=["is_test"])
+    order.mark_paid()
+    record_acceptance(request, user=request.user if request.user.is_authenticated else None,
+                      email=email, context=LegalAcceptance.Context.CHECKOUT,
+                      order_ref=order.ref, surface=legal_surface(request))
+    devtools.note("completed order without payment", ref=order.ref, email=email,
+                  plan=plan.title, amount=order.amount_usd, device=support_id or "-")
+
+    provisioned, detail = False, "skipped"
+    if request.data.get("provision", True):
+        from apps.orders.services import fulfill_order
+
+        try:
+            fulfill_order(order.pk)
+            order.refresh_from_db()
+            provisioned, detail = order.status == Order.Status.COMPLETED, order.fulfillment_error or "ok"
+        except Exception as e:  # noqa: BLE001
+            detail = str(e)[:300]
+
+    order.refresh_from_db()
+    esim = Esim.objects.filter(order=order).first()
+    return Response({
+        "ok": True,
+        "order": OrderSerializer(order).data,
+        "provisioned": provisioned,
+        "detail": detail,
+        "esim": EsimSerializer(esim).data if esim else None,
+    }, status=201)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def dev_status(request):
+    """Whether the tool is switched on, and what this caller looks like to it."""
+    from apps.api import devtools
+
+    if not devtools.authorised(request):
+        return Response({"enabled": False}, status=status.HTTP_404_NOT_FOUND)
+    return Response({
+        "enabled": True,
+        "signed_in": request.user.is_authenticated,
+        "email": request.user.email if request.user.is_authenticated else "",
+        "device_id": _support_id(request),
+        "surface": legal_surface(request),
+    })

@@ -39,8 +39,8 @@ class GuestFilter(admin.SimpleListFilter):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ("ref", "created_at", "buyer_col", "plan_title", "amount_col",
-                    "margin_col", "status", "kind", "ip", "attempts_col")
-    list_filter = ("status", "kind", GuestFilter, "created_at", "coupon")
+                    "margin_col", "status", "kind", "is_test", "ip", "attempts_col")
+    list_filter = ("status", "kind", "is_test", GuestFilter, "created_at", "coupon")
     search_fields = ("ref", "email", "plan_title", "user__email", "esims__iccid",
                      "ip", "coupon_code")
     readonly_fields = ("id", "ref", "created_at", "paid_at", "completed_at", "margin_col",

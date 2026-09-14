@@ -1,4 +1,9 @@
-User-agent: *
+{% if seo_noindex %}{% comment %}
+  Staging. A test environment in a search result competes with the real site for
+  its own keywords and shows customers prices that are not for sale.
+{% endcomment %}User-agent: *
+Disallow: /
+{% else %}User-agent: *
 Allow: /
 Disallow: /dashboard/
 Disallow: /checkout/
@@ -11,3 +16,4 @@ Disallow: /signup/
 Disallow: /password-reset/
 
 Sitemap: {{ site_url }}/sitemap.xml
+{% endif %}

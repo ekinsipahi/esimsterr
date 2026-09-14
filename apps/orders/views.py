@@ -208,6 +208,7 @@ def checkout(request, plan_id):
                 withdrawal_waived_at=timezone.now(),
                 source=_source(request),
                 support_id=_device_id(request),
+                is_test=bool(request.user.is_authenticated and request.user.is_test),
                 gift_email=gift_email[:254],
                 gift_name=gift_name[:80],
                 gift_message=gift_message[:300],
@@ -323,7 +324,10 @@ def order_detail(request, ref):
     _settle_on_return(request, order)
     esim = order.esims.first() or order.target_esim
     events = []
-    if order.status == Order.Status.COMPLETED and not order.analytics_sent:
+    # A test order is excluded for the same reason it is excluded from the sale
+    # alerts: revenue reporting that contains figures nobody paid is reporting
+    # you cannot act on.
+    if order.status == Order.Status.COMPLETED and not order.analytics_sent and not order.is_test:
         events.append(analytics.purchase(order))
         # Flip the flag in the same request that emits the event, so a refresh,
         # a shared link or a second tab never reports the sale again.

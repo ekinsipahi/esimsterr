@@ -41,6 +41,10 @@ urlpatterns = [
     path("orders/pay-with-balance/", views.pay_with_balance, name="api_pay_with_balance"),
     # in-app card payment
     path("pay/sheet/", views.payment_sheet, name="api_payment_sheet"),
+    # admin test tool — inert unless ADMIN_TEST_TOKEN is set
+    path("dev/status/", views.dev_status, name="api_dev_status"),
+    path("dev/balance/", views.dev_grant_balance, name="api_dev_balance"),
+    path("dev/complete/", views.dev_complete_order, name="api_dev_complete"),
     path("pay/cards/", views.saved_cards, name="api_saved_cards"),
     path("pay/cards/<str:pm_id>/", views.delete_card, name="api_delete_card"),
     # legal
