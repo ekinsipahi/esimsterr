@@ -250,6 +250,11 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", "")
+# Additional accepted audiences. The mobile apps use the web client id above --
+# the Android and iOS client ids never appear in code, they only let Google
+# match a package and signing certificate to this project -- so this stays empty
+# unless a genuinely separate client is ever introduced.
+GOOGLE_EXTRA_CLIENT_IDS = env_list("GOOGLE_EXTRA_CLIENT_IDS", [])
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", "")
 
 # Django defaults to three days, which is a long time for a link that grants
