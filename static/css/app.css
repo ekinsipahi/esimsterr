@@ -1314,8 +1314,15 @@ html[data-theme="dark"] .tx-out { background: rgba(26,143,209,.14); color: var(-
 }
 html[data-theme="dark"] .ref-field > summary { color: var(--b-300); }
 .ref-field > summary::-webkit-details-marker { display: none; }
-.ref-field > summary::before { content: "＋ "; font-weight: 700; }
-.ref-field[open] > summary::before { content: "－ "; }
+/* Drawn, not typed: the fullwidth +/- characters render as tofu in the system
+   stack on Android and Windows, which put a literal missing-glyph box in front
+   of "Buying this as a gift?". */
+.ref-field > summary::before {
+  content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 9px;
+  border-left: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg) translate(1px, -2px); transition: transform .15s;
+}
+.ref-field[open] > summary::before { transform: rotate(135deg) translate(-2px, 0); }
 
 /* Balance on the dashboard. Same treatment as the balance page's own hero, so
    the two read as one thing rather than two features that both mention money. */
