@@ -18,6 +18,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    # Proved to belong to whoever registered. Google sign-in sets it straight
+    # away -- Google has already done the proving, and asking someone to confirm
+    # an address they just authenticated with is friction that buys nothing.
+    # Email registration now sends a link and refuses sign-in until it is used;
+    # the field existed before that and was simply never enforced.
     email_verified = models.BooleanField(default=False)
 
     # Provider-side account (Yesim /new_user). Created lazily on first purchase.
@@ -30,6 +35,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     referred_by = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="referrals"
     )
+    email_verified_at = models.DateTimeField(null=True, blank=True)
+
     date_joined = models.DateTimeField(default=timezone.now)
 
     objects = UserManager()

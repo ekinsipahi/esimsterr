@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import logging
+import re
 
 from decimal import Decimal
 
@@ -87,6 +88,21 @@ def _balance_of(user) -> Decimal:
 
     wallet = Wallet.objects.filter(user=user).first()
     return wallet.balance_usd if wallet else Decimal("0.00")
+
+
+_DEVICE_ID = re.compile(r"^ESM-[A-Z2-9]{4}-[A-Z2-9]{4}$")
+
+
+def _device_id(request) -> str:
+    """The app installation this purchase came from, if any.
+
+    Carried in the URL because the customer is in their browser by this point,
+    not in the app -- it is the only thread back. It binds a guest order to the
+    installation that started it, which is what lets somebody buy with no
+    account and still see the eSIM in the app afterwards.
+    """
+    value = (request.GET.get("device") or request.POST.get("device") or "").strip().upper()
+    return value if _DEVICE_ID.match(value) else ""
 
 
 def _source(request) -> str:
@@ -190,6 +206,7 @@ def checkout(request, plan_id):
                 target_esim=topup_esim,
                 withdrawal_waived_at=timezone.now(),
                 source=_source(request),
+                support_id=_device_id(request),
                 gift_email=gift_email[:254],
                 gift_name=gift_name[:80],
                 gift_message=gift_message[:300],
@@ -270,6 +287,7 @@ def checkout(request, plan_id):
         "topup_esim": topup_esim,
         "digital_consent": request.method == "POST" and bool(request.POST.get("digital_consent")),
         "src": _source(request),
+        "device_id": _device_id(request),
         # A gift address arriving in the URL (from the app) pre-fills and opens
         # the panel, so the buyer sees where the QR is going before they pay.
         "gift_email": (request.POST.get("gift_email") or request.GET.get("gift") or "").strip(),

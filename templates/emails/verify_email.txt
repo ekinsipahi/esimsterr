@@ -1,0 +1,14 @@
+Confirm your email address.
+
+Somebody — we hope you — created a {{ site_name }} account with this address.
+Open this link to finish and you are done:
+
+{{ verify_url }}
+
+The link works for {{ hours }} hours. Until then the account cannot be signed
+into, which is the point: it stops anyone opening an account in your name.
+
+If this was not you, ignore this email. Nothing has been charged and the account
+will never be usable.
+
+-- {{ site_name }} · {{ support_email }}

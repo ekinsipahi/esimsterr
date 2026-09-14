@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block content %}
+<section class="section">
+  <div class="shell" style="max-width:560px">
+    <div class="card center" style="padding:34px 28px">
+      <span class="icon-tile v-cyan" style="margin:0 auto">{% icon "mail" size=24 %}</span>
+      <h1 class="mt-3" style="font-size:clamp(1.5rem,3vw,2rem)">{% trans "Check your inbox" %}</h1>
+      {% if email %}
+        <p class="muted mt-2">{% blocktrans %}We sent a confirmation link to <strong>{{ email }}</strong>. Open it and your account is ready.{% endblocktrans %}</p>
+      {% else %}
+        <p class="muted mt-2">{% trans "We sent you a confirmation link. Open it and your account is ready." %}</p>
+      {% endif %}
+      <p class="small muted-3 mt-3">{% blocktrans %}The link works for 48 hours. Until you use it the account cannot be signed into — which is the point: it stops anyone opening an account in your name.{% endblocktrans %}</p>
+
+      <form method="post" action="{% url 'verify_resend' %}" class="mt-4">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ email }}">
+        <button class="btn btn-ghost" type="submit">{% icon "refresh" size=16 %}{% trans "Send it again" %}</button>
+      </form>
+      <p class="xs muted-3 mt-3">{% blocktrans %}Nothing arrived? Check spam, and make sure the address is right — if it is not, just register again with the correct one.{% endblocktrans %}</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

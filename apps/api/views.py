@@ -22,6 +22,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.accounts.emails import send_welcome
 from apps.accounts.referrals import apply_referral_code
+from apps.accounts.verification import send_verification
 from apps.accounts.views import _client_ip
 from apps.accounts.google import GoogleAuthError, user_from_google_token
 from apps.accounts.models import User
@@ -35,7 +36,7 @@ from apps.providers.yesim import YesimError
 
 from .serializers import (CountrySerializer, EsimSerializer, OrderSerializer,
                           PlanSerializer, RegionSerializer)
-from .throttles import AuthAnonThrottle, CheckoutThrottle
+from .throttles import AuthAnonThrottle, CheckoutThrottle, DeviceLookupThrottle
 
 
 def _tokens(user):
@@ -74,8 +75,15 @@ def register(request):
     record_acceptance(request, user=user, email=user.email,
                       context=LegalAcceptance.Context.SIGNUP,
                       surface=legal_surface(request))
-    send_welcome(user)
-    return Response({"user": {"email": user.email}, **_tokens(user)}, status=201)
+    # No tokens yet. The address is unproven, and handing out a session for an
+    # account somebody may have opened in another person's name is exactly what
+    # verification exists to stop. The welcome email waits until they confirm.
+    send_verification(user, request)
+    return Response({
+        "user": {"email": user.email},
+        "verification_required": True,
+        "detail": "Check your inbox and open the link we sent to finish setting up.",
+    }, status=201)
 
 
 
@@ -89,6 +97,11 @@ def login(request):
     user = authenticate(request, username=email, password=request.data.get("password") or "")
     if user is None:
         return Response({"detail": "Incorrect email or password."}, status=400)
+    if not user.email_verified:
+        return Response({
+            "detail": "Confirm your email address first. Check your inbox for the link.",
+            "code": "email_unverified",
+        }, status=status.HTTP_403_FORBIDDEN)
     return Response({"user": {"email": user.email}, **_tokens(user)})
 
 
@@ -107,11 +120,27 @@ def google_login(request):
 
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 def me(request):
     u = request.user
-    return Response({"email": u.email, "display_name": u.display_name,
-                     "esim_count": u.esims.filter(is_deleted=False).count()})
+    if request.method == "PATCH":
+        # One switch governs offers in the inbox and offers by email, because a
+        # customer who turns notifications off means both and would rightly be
+        # annoyed to keep getting one of them.
+        if "notifications" in request.data:
+            u.marketing_opt_in = bool(request.data.get("notifications"))
+            u.save(update_fields=["marketing_opt_in"])
+        if "display_name" in request.data:
+            u.display_name = (request.data.get("display_name") or "")[:80]
+            u.save(update_fields=["display_name"])
+    return Response({
+        "email": u.email,
+        "display_name": u.display_name,
+        "esim_count": u.esims.filter(is_deleted=False).count(),
+        "notifications": u.marketing_opt_in,
+        "email_verified": u.email_verified,
+        "referral_code": u.referral_code or "",
+    })
 
 
 # ---- catalogue (public) ------------------------------------------------------
@@ -197,6 +226,7 @@ def my_orders(request):
 
 
 @api_view(["POST"])
+@permission_classes([AllowAny])
 @throttle_classes([CheckoutThrottle])
 def checkout_url(request):
     """Return the WEB checkout URL for a plan — the app opens it in the system
@@ -207,8 +237,14 @@ def checkout_url(request):
     path = reverse("checkout", kwargs={"plan_id": plan.pk})
     params = []
     esim_id = request.data.get("esim_id")
-    if esim_id and Esim.objects.filter(pk=esim_id, user=request.user).exists():
+    if esim_id and request.user.is_authenticated and \
+            Esim.objects.filter(pk=esim_id, user=request.user).exists():
         params.append(f"esim={esim_id}")
+    device_id = _support_id(request)
+    if device_id:
+        # Binds the resulting guest order to this installation, so the app can
+        # show it afterwards without anyone having to register.
+        params.append(f"device={device_id}")
     gift_email = (request.data.get("gift_email") or "").strip()
     if gift_email:
         # Carried through to the web checkout so the buyer sees, and confirms,
@@ -591,3 +627,79 @@ def referral_apply(request):
     except ReferralError as e:
         return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response({"ok": True, "referred_by": referrer.email})
+
+
+# ---- device-bound guest purchases --------------------------------------------
+def _support_id(request) -> str:
+    """The calling installation's code, or "" if it is missing or malformed."""
+    from apps.accounts.install_middleware import SUPPORT_ID
+
+    value = (request.headers.get("X-Support-Id") or "").strip().upper()
+    return value if SUPPORT_ID.match(value) else ""
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+@throttle_classes([DeviceLookupThrottle])
+def device_esims(request):
+    """The eSIMs bought from this device without an account.
+
+    Buying should not require registering. The support ID is the identity: the
+    order was placed from this installation, so this installation can see it.
+    Once an order belongs to a signed-up customer it is account-protected and
+    disappears from here, because an account is a stronger claim than a device.
+
+    The ID is 8 characters from a 32-letter alphabet -- about 10^12 -- and this
+    endpoint is throttled, so guessing one is not a route in. It is still only a
+    bearer secret, which is exactly why it buys nothing and changes nothing: it
+    only reads back what this device already paid for.
+    """
+    support_id = _support_id(request)
+    if not support_id:
+        return Response({"detail": "No device id."}, status=status.HTTP_400_BAD_REQUEST)
+
+    orders = Order.objects.filter(support_id=support_id, user__isnull=True)
+    esims = (Esim.objects.filter(order__in=orders, is_deleted=False)
+             .order_by("-created_at"))
+    return Response({
+        "device_id": support_id,
+        "esims": EsimSerializer(esims, many=True).data,
+        "orders": OrderSerializer(orders.order_by("-created_at")[:50], many=True).data,
+    })
+
+
+@api_view(["POST"])
+def device_claim(request):
+    """Attach this device's guest purchases to the account that just signed in.
+
+    Somebody who bought as a guest and later registers should not have to email
+    support to see what they already own. Only unclaimed orders move, and only
+    ones placed from the installation making the request."""
+    support_id = _support_id(request)
+    if not support_id:
+        return Response({"detail": "No device id."}, status=status.HTTP_400_BAD_REQUEST)
+
+    orders = Order.objects.filter(support_id=support_id, user__isnull=True)
+    esim_ids = list(Esim.objects.filter(order__in=orders, user__isnull=True)
+                    .values_list("pk", flat=True))
+    moved = orders.update(user=request.user)
+    Esim.objects.filter(pk__in=esim_ids).update(user=request.user)
+    return Response({"ok": True, "orders_claimed": moved, "esims_claimed": len(esim_ids)})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([AuthAnonThrottle])
+def resend_verification(request):
+    """Send the confirmation link again.
+
+    The answer never reveals whether the address has an account: otherwise this
+    becomes a way to test which emails are registered.
+    """
+    email = (request.data.get("email") or "").strip().lower()
+    if email:
+        user = User.objects.filter(email__iexact=email, email_verified=False).first()
+        if user is not None:
+            send_verification(user, request)
+    return Response({"ok": True,
+                     "detail": "If that address needs confirming, the link is on its way."})

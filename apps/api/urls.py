@@ -9,6 +9,7 @@ urlpatterns = [
     path("auth/register/", views.register, name="api_register"),
     path("auth/login/", views.login, name="api_login"),
     path("auth/google/", views.google_login, name="api_google"),
+    path("auth/resend-verification/", views.resend_verification, name="api_resend_verification"),
     path("auth/refresh/", TokenRefreshView.as_view(), name="api_refresh"),
     path("auth/me/", views.me, name="api_me"),
     # catalogue
@@ -23,6 +24,9 @@ urlpatterns = [
     path("orders/", views.my_orders, name="api_orders"),
     path("checkout-url/", views.checkout_url, name="api_checkout_url"),
     path("account/delete/", views.delete_account_api, name="api_account_delete"),
+    # guest purchases, identified by the device rather than an account
+    path("device/esims/", views.device_esims, name="api_device_esims"),
+    path("device/claim/", views.device_claim, name="api_device_claim"),
     # wallet
     path("wallet/", views.wallet, name="api_wallet"),
     path("referral/", views.referral, name="api_referral"),

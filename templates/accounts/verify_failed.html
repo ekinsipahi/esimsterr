@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block content %}
+<section class="section">
+  <div class="shell" style="max-width:560px">
+    <div class="card center" style="padding:34px 28px">
+      <h1 style="font-size:clamp(1.5rem,3vw,2rem)">{% trans "That link has expired" %}</h1>
+      <p class="muted mt-2">{% blocktrans %}Confirmation links last 48 hours. Ask for a new one and it will be in your inbox in a moment.{% endblocktrans %}</p>
+      <form method="post" action="{% url 'verify_resend' %}" class="stack mt-4" style="gap:10px">
+        {% csrf_token %}
+        <div class="field">
+          <label for="email">{% trans "Your email" %}</label>
+          <input class="input" type="email" id="email" name="email" required autocomplete="email">
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">{% trans "Send a new link" %}</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

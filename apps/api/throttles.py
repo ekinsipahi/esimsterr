@@ -17,3 +17,21 @@ class AuthAnonThrottle(AnonRateThrottle):
 class CheckoutThrottle(UserRateThrottle):
     """Checkout-URL requests from a signed-in app user."""
     scope = "checkout"
+
+
+class DeviceLookupThrottle(AnonRateThrottle):
+    """Guest purchases are read back by device id, which is a bearer secret.
+
+    Guessing one is already infeasible (10^12 of them), but a throttle turns
+    "infeasible" into "not worth attempting" and costs a legitimate app nothing:
+    it reads its own list a handful of times a session.
+    """
+    scope = "device_lookup"
+    rate = "60/hour"
+
+    def get_cache_key(self, request, view):
+        # Keyed on the device id rather than the IP, so one customer on a busy
+        # airport NAT cannot throttle everybody else on it.
+        support = (request.headers.get("X-Support-Id") or "").strip().upper()
+        ident = support or self.get_ident(request)
+        return self.cache_format % {"scope": self.scope, "ident": ident}

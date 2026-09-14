@@ -307,6 +307,7 @@ REST_FRAMEWORK = {
         "user": env("THROTTLE_USER", "300/min"),
         "auth": env("THROTTLE_AUTH", "10/min"),
         "checkout": env("THROTTLE_CHECKOUT", "20/hour"),
+        "device_lookup": env("THROTTLE_DEVICE", "60/hour"),
     },
 }
 SIMPLE_JWT = {

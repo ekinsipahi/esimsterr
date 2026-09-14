@@ -35,6 +35,7 @@ class LoginForm(forms.Form):
     def __init__(self, request=None, *args, **kwargs):
         self.request = request
         self.user = None
+        self.unverified = None
         super().__init__(*args, **kwargs)
 
     def clean(self):
@@ -52,6 +53,15 @@ class LoginForm(forms.Form):
                 raise forms.ValidationError("Incorrect email or password.")
             if not user.is_active:
                 raise forms.ValidationError("This account is disabled.")
+            if not user.email_verified:
+                # Correct credentials, unproven address. Saying so is safe --
+                # they already demonstrated they own the password -- and any
+                # vaguer message just generates a support ticket.
+                self.unverified = user
+                raise forms.ValidationError(
+                    "Confirm your email address first. We sent you a link when you "
+                    "registered — check your inbox, or ask for a new one."
+                )
             self.user = user
         return data
 

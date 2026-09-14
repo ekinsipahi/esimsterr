@@ -20,6 +20,7 @@ from core.ratelimit import rate_limit
 from .emails import send_email_bg, send_welcome
 from .forms import LoginForm, PasswordChangeForm, ProfileForm, SignupForm
 from .google import GoogleAuthError, user_from_google_token
+from .verification import mark_verified, send_verification, verify_token
 from .referrals import apply_referral_code
 from .models import User
 
@@ -58,12 +59,15 @@ def signup(request):
                or request.session.pop("ref_code", None)
                or request.COOKIES.get("ref"))
         apply_referral_code(user, ref)
-        auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         record_acceptance(request, user=user, email=user.email,
                           context=LegalAcceptance.Context.SIGNUP)
-        send_welcome(user)
+        # Deliberately not signed in. The address is unproven until they open
+        # the link, and an account somebody else opened in your name is worth
+        # more friction than one extra tap.
+        send_verification(user, request)
         request.session["pending_analytics"] = [analytics.sign_up("email")]
-        return redirect(_safe_next(request))
+        request.session["awaiting_verification"] = user.email
+        return redirect("verify_sent")
     return render(request, "accounts/signup.html", {
         "form": form, "next": request.GET.get("next", ""),
         # A code in the URL pre-fills the field rather than being applied
@@ -77,6 +81,47 @@ def signup(request):
 
 
 @rate_limit("login", limit=12, window=600)
+def verify_sent(request):
+    """"Check your inbox." Its own page so a refresh does not resubmit the form."""
+    email = request.session.get("awaiting_verification", "")
+    return render(request, "accounts/verify_sent.html", {
+        "email": email,
+        "seo_title": _("Confirm your email — %(site)s") % {"site": settings.SITE_NAME},
+        "meta_robots": "noindex,nofollow",
+    })
+
+
+def verify_email(request, token):
+    user = verify_token(token)
+    if user is None:
+        return render(request, "accounts/verify_failed.html", {
+            "seo_title": _("Link expired — %(site)s") % {"site": settings.SITE_NAME},
+            "meta_robots": "noindex,nofollow",
+        }, status=400)
+
+    already = user.email_verified
+    mark_verified(user)
+    request.session.pop("awaiting_verification", None)
+    auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    if not already:
+        send_welcome(user)
+    messages.success(request, _("Your email is confirmed. Welcome aboard."))
+    return redirect("dashboard")
+
+
+@rate_limit("verify_resend", limit=5, window=3600)
+def verify_resend(request):
+    """Send the link again. Rate limited, and it never says whether the address
+    exists -- otherwise it becomes a way to test which emails have accounts."""
+    email = (request.POST.get("email") or request.session.get("awaiting_verification") or "").strip().lower()
+    if email:
+        user = User.objects.filter(email__iexact=email, email_verified=False).first()
+        if user is not None:
+            send_verification(user, request)
+    messages.success(request, _("If that address needs confirming, the link is on its way."))
+    return redirect("verify_sent")
+
+
 def login_view(request):
     if request.user.is_authenticated:
         return redirect(_safe_next(request))
@@ -86,6 +131,9 @@ def login_view(request):
         request.session["pending_analytics"] = [analytics.login("email")]
         return redirect(_safe_next(request))
     return render(request, "accounts/login.html", {
+        # Lets the page offer "send it again" instead of leaving
+        # somebody staring at an error they cannot act on.
+        "unverified_email": getattr(form, "unverified", None) and form.unverified.email,
         "form": form, "next": request.GET.get("next", ""),
         "seo_title": "Sign in — eSIMsterr",
         "seo_description": "Sign in to manage your eSIMs, view QR codes and top up data.",
