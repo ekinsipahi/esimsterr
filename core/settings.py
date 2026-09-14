@@ -370,6 +370,10 @@ SUBSCRIPTIONS_ENABLED = env_bool("SUBSCRIPTIONS_ENABLED", True)
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY", "") or env("STRIPE_PUBLISH_KEY", "")
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", "")
+# Escape hatch for the guard that stops a development run touching the live
+# Stripe account. Leave it off; turning it on means you intend to move real
+# money from a machine whose database is not the live one.
+STRIPE_ALLOW_LIVE_IN_DEBUG = env_bool("STRIPE_ALLOW_LIVE_IN_DEBUG", False)
 
 NOWPAYMENTS_API_KEY = env("NOWPAYMENTS_API_KEY", "")
 NOWPAYMENTS_IPN_SECRET = env("NOWPAYMENTS_IPN_SECRET", "")

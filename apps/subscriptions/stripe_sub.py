@@ -14,6 +14,8 @@ import re
 from decimal import Decimal
 
 import stripe
+
+from apps.payments.stripe_client import guard_live_key
 from django.conf import settings
 
 log = logging.getLogger(__name__)
@@ -34,6 +36,7 @@ def configured() -> bool:
 def _api():
     if not configured():
         raise SubscriptionError("Card payments are not available right now.")
+    guard_live_key()
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
 

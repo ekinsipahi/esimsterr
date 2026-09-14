@@ -57,6 +57,24 @@ settled it. Flagged orders send no sale alert, report no `purchase` event, and
 are filtered in the admin. An operator who stops trusting the revenue figure
 stops reading the alerts, and then misses a real failure.
 
+## A live key cannot be used from a development run
+
+Testing the in-app payment endpoint against a throwaway SQLite database once put
+a real $4.99 PaymentIntent on the live Stripe account. No money moved and it was
+cancelled a minute later, but it sat in the dashboard with no matching order —
+the order was in the scratch database and Stripe was not.
+
+A live key now refuses to work when `DEBUG` is on or the database is SQLite:
+
+    Refusing to use a live Stripe key when the database is SQLite.
+    Use test keys (sk_test_…), or set STRIPE_ALLOW_LIVE_IN_DEBUG=True
+    if you really mean to charge the live account from here.
+
+Production is unaffected — it runs `DEBUG=False` against Postgres. If a
+PaymentIntent ever appears in Stripe with no order behind it, this is the shape
+of the cause: something pointed a live key at a database that is not the live
+one.
+
 ## Staging
 
 `render.yaml` defines `esimsterr-staging`. Create it from the Blueprint, then

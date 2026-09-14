@@ -15,6 +15,37 @@ def configured() -> bool:
     return bool(settings.STRIPE_SECRET_KEY)
 
 
+def guard_live_key() -> None:
+    """Refuse to touch the live Stripe account from a development run.
+
+    This is not hypothetical. Testing the in-app payment endpoint against a
+    throwaway SQLite database created a real $4.99 PaymentIntent on the live
+    account, because the keys come from .env and .env holds production keys. No
+    money moved and it was cancelled a minute later, but it appeared in the
+    dashboard with no matching order -- the order was in the scratch database
+    and Stripe was not.
+
+    A live key belongs to the environment that owns the live database. If the
+    database is SQLite, or DEBUG is on, this process is not that environment.
+    Set STRIPE_ALLOW_LIVE_IN_DEBUG to override, deliberately and briefly.
+    """
+    key = settings.STRIPE_SECRET_KEY
+    if not key.startswith("sk_live_"):
+        return
+    if getattr(settings, "STRIPE_ALLOW_LIVE_IN_DEBUG", False):
+        return
+
+    engine = settings.DATABASES["default"]["ENGINE"]
+    reason = ("the database is SQLite" if "sqlite" in engine
+              else "DEBUG is on" if settings.DEBUG else "")
+    if reason:
+        raise StripeError(
+            f"Refusing to use a live Stripe key when {reason}. Use test keys "
+            f"(sk_test_…), or set STRIPE_ALLOW_LIVE_IN_DEBUG=True if you really "
+            f"mean to charge the live account from here."
+        )
+
+
 def _api() -> None:
     """Set the key on every call rather than once at import.
 
@@ -25,6 +56,7 @@ def _api() -> None:
     """
     if not configured():
         raise StripeError("Card payments are not available right now.")
+    guard_live_key()
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
@@ -32,6 +64,7 @@ def create_checkout_session(*, amount_usd: Decimal, reference: str, description:
                             success_url: str, cancel_url: str, customer_email: str = ""):
     if not configured():
         raise StripeError("Card payments are not available right now. Please pay with crypto.")
+    guard_live_key()
     stripe.api_key = settings.STRIPE_SECRET_KEY
     unit_amount = int((Decimal(amount_usd) * 100).quantize(Decimal("1")))
     params = {
