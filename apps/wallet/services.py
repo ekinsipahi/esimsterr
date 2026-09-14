@@ -5,10 +5,11 @@ import logging
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.conf import settings
-from django.db import transaction
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 
-from .models import BalanceTopUp, InsufficientBalance, Wallet, WalletTransaction
+from .models import (BalanceTopUp, InsufficientBalance, ReferralPayout, Wallet,
+                     WalletTransaction)
 
 log = logging.getLogger(__name__)
 CENT = Decimal("0.01")
@@ -108,6 +109,7 @@ def credit_topup(topup: BalanceTopUp) -> BalanceTopUp:
 
     log.info("Credited %s: $%s + $%s bonus to %s",
              topup.ref, topup.amount_usd, topup.bonus_usd, topup.user.email)
+    pay_referral_if_due(topup.user)
     from .notifications import topup_alert
     topup_alert(topup)
     from apps.accounts.emails import send_balance_added
@@ -156,3 +158,73 @@ def refund_to_balance(order, amount=None, *, reason: str = "") -> WalletTransact
         return None
     return Wallet.credit(order.user, amount, kind=WalletTransaction.Kind.REFUND,
                          description=(reason or f"Refund for {order.ref}")[:200], order=order)
+
+
+def referral_settings() -> tuple[Decimal, Decimal]:
+    return (_money(getattr(settings, "REFERRAL_BONUS_USD", "3.00")),
+            _money(getattr(settings, "REFERRAL_MIN_TOPUP_USD", "5.00")))
+
+
+def referral_progress(user) -> dict:
+    """What this customer's invitations have earned, and what is still pending.
+
+    Counting "signed up" separately from "paid out" matters: an invite that has
+    not topped up yet is not a failure, it is a reminder worth sending.
+    """
+    bonus, threshold = referral_settings()
+    invited = user.referrals.count()
+    paid = user.referral_payouts.count()
+    earned = sum((p.amount_usd for p in user.referral_payouts.all()), Decimal("0.00"))
+    return {
+        "code": user.referral_code or "",
+        "invited": invited,
+        "rewarded": paid,
+        "pending": max(0, invited - paid),
+        "earned_usd": _money(earned),
+        "bonus_usd": bonus,
+        "min_topup_usd": threshold,
+    }
+
+
+def pay_referral_if_due(user) -> ReferralPayout | None:
+    """Reward the person who invited `user`, once they have topped up enough.
+
+    Deliberately triggered by a top-up rather than by signing up. A reward for
+    registering pays for empty accounts; a reward for money arriving pays for
+    customers. The threshold is the referred customer's own paid top-ups --
+    bonus credit excluded, or the bonus would help clear the bar it granted.
+    """
+    referrer = getattr(user, "referred_by", None)
+    if referrer is None or referrer.pk == user.pk:
+        return None
+    if ReferralPayout.objects.filter(referred=user).exists():
+        return None
+
+    bonus, threshold = referral_settings()
+    paid_in = BalanceTopUp.objects.filter(
+        user=user, status=BalanceTopUp.Status.CREDITED,
+    ).aggregate(total=models.Sum("amount_usd"))["total"] or Decimal("0.00")
+    paid_in = _money(paid_in)
+    if paid_in < threshold:
+        return None
+
+    with transaction.atomic():
+        # get_or_create under the unique constraint: two top-ups settling at
+        # once would otherwise both pass the check above and both pay.
+        payout, created = ReferralPayout.objects.get_or_create(
+            referred=user,
+            defaults={"referrer": referrer, "amount_usd": bonus,
+                      "qualifying_topup_usd": paid_in},
+        )
+        if not created:
+            return payout
+        Wallet.credit(referrer, bonus, kind=WalletTransaction.Kind.BONUS,
+                      description=f"Referral reward — {user.email}")
+
+    log.info("Referral payout $%s to %s for %s", bonus, referrer.email, user.email)
+    try:
+        from apps.accounts.emails import send_referral_reward
+        send_referral_reward(referrer, user, bonus)
+    except Exception:  # noqa: BLE001
+        log.exception("referral reward email failed")
+    return payout

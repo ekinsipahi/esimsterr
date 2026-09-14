@@ -200,3 +200,31 @@ class BalanceTopUp(models.Model):
         self.credited_usd = self.total_usd
         self.credited_at = timezone.now()
         self.save(update_fields=["status", "credited_usd", "credited_at"])
+
+
+class ReferralPayout(models.Model):
+    """One reward, paid once, for one referred customer.
+
+    The uniqueness constraint on `referred` is the whole safety mechanism: a
+    referral pays out exactly once no matter how many times the top-up hook runs,
+    and "how many times did that hook run" is not a question anyone should have
+    to answer about money.
+    """
+
+    referrer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                 related_name="referral_payouts")
+    referred = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                    related_name="referral_payout")
+    amount_usd = models.DecimalField(max_digits=10, decimal_places=2)
+    # What the referred customer had topped up when this triggered, so the rule
+    # that paid out is visible later even if the threshold changes.
+    qualifying_topup_usd = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        verbose_name = "referral payout"
+        verbose_name_plural = "referral payouts"
+
+    def __str__(self):
+        return f"{self.referrer_id} earned ${self.amount_usd} from {self.referred_id}"

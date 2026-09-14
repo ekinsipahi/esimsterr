@@ -25,6 +25,12 @@ urlpatterns = [
     path("account/delete/", views.delete_account_api, name="api_account_delete"),
     # wallet
     path("wallet/", views.wallet, name="api_wallet"),
+    path("referral/", views.referral, name="api_referral"),
+    path("referral/apply/", views.referral_apply, name="api_referral_apply"),
+    # inbox
+    path("inbox/", views.inbox, name="api_inbox"),
+    path("inbox/read-all/", views.inbox_read_all, name="api_inbox_read_all"),
+    path("inbox/<int:pk>/read/", views.inbox_read, name="api_inbox_read"),
     path("wallet/topup-url/", views.wallet_topup_url, name="api_wallet_topup_url"),
     path("orders/pay-with-balance/", views.pay_with_balance, name="api_pay_with_balance"),
     # legal

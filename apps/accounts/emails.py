@@ -44,10 +44,23 @@ def send_welcome(user):
 
 
 def send_esim_ready(order, esim):
+    """Deliver the profile to whoever is actually travelling.
+
+    For a gift that is the recipient, not the buyer -- sending the QR to the
+    person who paid and asking them to forward it defeats the point and leaks
+    the activation code through one more inbox than it needs to."""
     send_email_bg(
-        order.email, f"Your {order.plan_title} eSIM is ready — install it now",
-        "esim_ready", {"order": order, "esim": esim},
+        order.delivery_email,
+        f"Your {order.plan_title} eSIM is ready — install it now",
+        "esim_ready", {"order": order, "esim": esim, "is_gift": order.is_gift},
     )
+    if order.is_gift:
+        # The buyer gets a receipt, not the activation code.
+        send_email_bg(
+            order.email,
+            f"Your gift is on its way to {order.gift_email}",
+            "gift_sent", {"order": order},
+        )
 
 
 def send_balance_added(topup):
@@ -57,6 +70,18 @@ def send_balance_added(topup):
         topup.user.email,
         f"You added {topup.amount_usd:.2f} USD to your {settings.SITE_NAME} balance",
         "balance_added", {"topup": topup, "wallet": topup.user.wallet},
+    )
+
+
+def send_referral_reward(referrer, referred, amount):
+    """Tell somebody their invitation paid off. This is the email that makes the
+    next invitation happen, so it goes out the moment the credit lands."""
+    send_email_bg(
+        referrer.email,
+        f"You earned {amount} USD — {referred.email.split('@')[0]} joined {settings.SITE_NAME}",
+        "referral_reward",
+        {"referrer": referrer, "referred_email": referred.email, "amount": amount,
+         "code": referrer.referral_code or ""},
     )
 
 

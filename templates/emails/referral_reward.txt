@@ -1,0 +1,11 @@
+Your invitation paid off.
+
+{{ referred_email }} joined {{ site_name }} and topped up, so we have added
+{{ amount }} USD to your balance. It is there now and it never expires.
+
+Your code is still {{ code }} — every friend who joins and tops up earns you the
+same again.
+
+See your balance: {{ site_url }}/wallet/
+
+-- {{ site_name }} · {{ support_email }}

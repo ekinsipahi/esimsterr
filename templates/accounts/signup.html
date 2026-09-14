@@ -52,6 +52,22 @@
             <span class="hint">{% trans "At least 8 characters." %}</span>
             {% if form.password.errors %}<span class="err">{{ form.password.errors.0 }}</span>{% endif %}
           </div>
+          {% comment %}
+            Collapsed by default. Most people have no code, and a field they
+            have to skip past is friction on the one form that must not have
+            any; the ones who do have a code are looking for it.
+          {% endcomment %}
+          <details class="ref-field" {% if ref_prefill or form.referral_code.value %}open{% endif %}>
+            <summary>{% trans "Got a referral code?" %}</summary>
+            <div class="field mt-2">
+              <label for="referral_code">{% trans "Referral code" %}</label>
+              <input class="input" type="text" id="referral_code" name="referral_code"
+                     value="{{ form.referral_code.value|default:ref_prefill }}"
+                     placeholder="ABCD1234" autocapitalize="characters" autocomplete="off">
+              <span class="hint">{% blocktrans with amount=referral_bonus %}Whoever invited you gets ${{ amount }} in credit once you top up. Nothing changes for you.{% endblocktrans %}</span>
+            </div>
+          </details>
+
           <label class="checkbox">
             <input type="checkbox" name="marketing_opt_in" {% if form.marketing_opt_in.value|default_if_none:True %}checked{% endif %}>
             <span>{% trans "Send me occasional travel-data tips and discount codes." %}</span>

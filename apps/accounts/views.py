@@ -20,6 +20,7 @@ from core.ratelimit import rate_limit
 from .emails import send_email_bg, send_welcome
 from .forms import LoginForm, PasswordChangeForm, ProfileForm, SignupForm
 from .google import GoogleAuthError, user_from_google_token
+from .referrals import apply_referral_code
 from .models import User
 
 log = logging.getLogger(__name__)
@@ -49,12 +50,14 @@ def signup(request):
             marketing_opt_in=form.cleaned_data.get("marketing_opt_in", True),
             signup_ip=_client_ip(request),
         )
-        ref = request.session.pop("ref_code", None) or request.COOKIES.get("ref")
-        if ref:
-            referrer = User.objects.filter(referral_code=ref).first()
-            if referrer and referrer != user:
-                user.referred_by = referrer
-                user.save(update_fields=["referred_by"])
+        # Priority: what they typed, then a campaign link, then the cookie a
+        # previous visit left. The typed one wins because it is the only one
+        # they can see, and being overridden by an invisible cookie is the kind
+        # of thing that turns into a support ticket about a missing bonus.
+        ref = (form.cleaned_data.get("referral_code")
+               or request.session.pop("ref_code", None)
+               or request.COOKIES.get("ref"))
+        apply_referral_code(user, ref)
         auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         record_acceptance(request, user=user, email=user.email,
                           context=LegalAcceptance.Context.SIGNUP)
@@ -63,6 +66,10 @@ def signup(request):
         return redirect(_safe_next(request))
     return render(request, "accounts/signup.html", {
         "form": form, "next": request.GET.get("next", ""),
+        # A code in the URL pre-fills the field rather than being applied
+        # silently, so the new customer can see who invited them.
+        "ref_prefill": (request.GET.get("ref") or request.session.get("ref_code") or "").upper(),
+        "referral_bonus": settings.REFERRAL_BONUS_USD,
         "seo_title": "Create your account — eSIMsterr",
         "seo_description": "Create a free eSIMsterr account to buy, install and manage travel eSIMs.",
         "meta_robots": "noindex,follow",

@@ -1,0 +1,11 @@
+Your gift is on its way.
+
+{{ order.plan_title }} has been sent to {{ order.gift_email }}{% if order.gift_name %} ({{ order.gift_name }}){% endif %}.
+They have the QR code and the install instructions; you have this receipt.
+
+Order {{ order.ref }} · {{ order.amount_usd }} USD
+
+If they have trouble installing it, they can reply to the email we sent them,
+or you can forward them {{ site_url }}/how-it-works/.
+
+-- {{ site_name }} · {{ support_email }}

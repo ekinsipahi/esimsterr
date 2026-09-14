@@ -81,6 +81,26 @@ class Order(models.Model):
     # crypto invoice. Kept as its own flag because such an order has no Payment
     # row at all, and "paid but no payment" would otherwise look like a bug.
     paid_with_balance = models.BooleanField(default=False)
+    # The support id of the app installation that placed this order, so a
+    # customer reading a code down the phone can be found in one query.
+    support_id = models.CharField(max_length=24, blank=True, db_index=True)
+
+    # --- gifting ---------------------------------------------------------
+    # An eSIM bought for someone else. The QR goes to this address instead of
+    # the buyer's, and the buyer keeps the receipt: they paid, the recipient
+    # travels. Empty for an ordinary purchase.
+    gift_email = models.EmailField(blank=True)
+    gift_name = models.CharField(max_length=80, blank=True)
+    gift_message = models.CharField(max_length=300, blank=True)
+
+    @property
+    def is_gift(self) -> bool:
+        return bool(self.gift_email)
+
+    @property
+    def delivery_email(self) -> str:
+        """Where the eSIM actually goes."""
+        return self.gift_email or self.email
 
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)

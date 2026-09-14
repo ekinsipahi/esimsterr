@@ -10,6 +10,8 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db.models import Q
+from urllib.parse import quote
+
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -19,6 +21,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.accounts.emails import send_welcome
+from apps.accounts.referrals import apply_referral_code
 from apps.accounts.views import _client_ip
 from apps.accounts.google import GoogleAuthError, user_from_google_token
 from apps.accounts.models import User
@@ -67,6 +70,7 @@ def register(request):
         return Response({"detail": "An account with this email already exists."},
                         status=status.HTTP_400_BAD_REQUEST)
     user = User.objects.create_user(email=email, password=password)
+    apply_referral_code(user, request.data.get("referral_code"))
     record_acceptance(request, user=user, email=user.email,
                       context=LegalAcceptance.Context.SIGNUP,
                       surface=legal_surface(request))
@@ -201,9 +205,20 @@ def checkout_url(request):
     if plan is None:
         return Response({"detail": "Plan not found."}, status=404)
     path = reverse("checkout", kwargs={"plan_id": plan.pk})
+    params = []
     esim_id = request.data.get("esim_id")
     if esim_id and Esim.objects.filter(pk=esim_id, user=request.user).exists():
-        path = f"{path}?esim={esim_id}"
+        params.append(f"esim={esim_id}")
+    gift_email = (request.data.get("gift_email") or "").strip()
+    if gift_email:
+        # Carried through to the web checkout so the buyer sees, and confirms,
+        # that the QR is going somewhere other than their own inbox.
+        params.append(f"gift={quote(gift_email)}")
+        gift_name = (request.data.get("gift_name") or "").strip()
+        if gift_name:
+            params.append(f"gift_name={quote(gift_name)}")
+    if params:
+        path = f"{path}?{'&'.join(params)}"
     return Response({
         "url": f"{settings.SITE_URL}{path}",
         "plan": PlanSerializer(plan).data,
@@ -441,6 +456,10 @@ def pay_with_balance(request):
         cost_amount=plan.cost_amount, cost_currency=plan.cost_currency,
         target_esim=target_esim, withdrawal_waived_at=timezone.now(),
         source=legal_surface(request), paid_with_balance=True,
+        support_id=(request.headers.get("X-Support-Id") or "")[:24],
+        gift_email=(request.data.get("gift_email") or "").strip()[:254],
+        gift_name=(request.data.get("gift_name") or "").strip()[:80],
+        gift_message=(request.data.get("gift_message") or "").strip()[:300],
         ip=_client_ip(request),
         user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:400],
     )
@@ -478,3 +497,97 @@ def pay_with_balance(request):
         "order": OrderSerializer(order).data,
         "wallet": _wallet_payload(request, Wallet.for_user(request.user)),
     }, status=201)
+
+
+# ---- inbox -------------------------------------------------------------------
+def _message_json(message, read_ids: set) -> dict:
+    return {
+        "id": message.id,
+        "title": message.title,
+        "body": message.body,
+        "kind": message.kind,
+        "kind_label": message.get_kind_display(),
+        "cta_label": message.cta_label,
+        "cta_url": message.absolute_cta(),
+        "coupon_code": message.coupon_code,
+        "published_at": message.publish_at.isoformat(),
+        "expires_at": message.expires_at.isoformat() if message.expires_at else None,
+        "read": message.id in read_ids,
+    }
+
+
+@api_view(["GET"])
+def inbox(request):
+    """Messages this customer may see, newest first, with the unread count.
+
+    Marketing consent is applied inside `for_user`, so a campaign written by
+    somebody who forgot about opt-outs still cannot reach a customer who opted
+    out."""
+    from apps.inbox.models import InboxMessage, InboxRead
+
+    messages = list(InboxMessage.for_user(request.user)[:60])
+    read_ids = set(
+        InboxRead.objects.filter(user=request.user, message__in=messages)
+        .values_list("message_id", flat=True)
+    )
+    return Response({
+        "unread": sum(1 for m in messages if m.id not in read_ids),
+        "messages": [_message_json(m, read_ids) for m in messages],
+    })
+
+
+@api_view(["POST"])
+def inbox_read(request, pk):
+    from apps.inbox.models import InboxMessage, InboxRead
+
+    message = InboxMessage.for_user(request.user).filter(pk=pk).first()
+    if message is None:
+        return Response({"detail": "No such message."}, status=status.HTTP_404_NOT_FOUND)
+    InboxRead.objects.get_or_create(user=request.user, message=message)
+    return Response({"ok": True})
+
+
+@api_view(["POST"])
+def inbox_read_all(request):
+    from apps.inbox.models import InboxMessage, InboxRead
+
+    messages = InboxMessage.for_user(request.user)
+    InboxRead.objects.bulk_create(
+        [InboxRead(user=request.user, message=m) for m in messages],
+        ignore_conflicts=True,
+    )
+    return Response({"ok": True})
+
+
+# ---- referrals ---------------------------------------------------------------
+@api_view(["GET"])
+def referral(request):
+    from apps.wallet.services import referral_progress
+
+    progress = referral_progress(request.user)
+    code = progress["code"]
+    link = f"{settings.SITE_URL.rstrip('/')}/signup/?ref={code}" if code else ""
+    return Response({
+        **{k: (str(v) if hasattr(v, "quantize") else v) for k, v in progress.items()},
+        "link": link,
+        "share_text": (
+            f"I use {settings.SITE_NAME} for travel data — no roaming bills. "
+            f"Use my code {code} when you sign up: {link}" if code else ""
+        ),
+    })
+
+
+@api_view(["POST"])
+def referral_apply(request):
+    """Enter a code after the fact.
+
+    Allowed only while the account is new and has bought nothing: a code applied
+    after a customer is already established is not a referral, it is somebody
+    claiming credit for a customer they did not bring."""
+    from apps.accounts.referrals import ReferralError, apply_referral_code
+
+    try:
+        referrer = apply_referral_code(request.user, request.data.get("code"), strict=True)
+    except ReferralError as e:
+        return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    return Response({"ok": True, "referred_by": referrer.email})

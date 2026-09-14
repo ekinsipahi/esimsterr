@@ -1,4 +1,8 @@
-Your eSIM is ready.
+{% if is_gift %}{{ order.email }} bought you an eSIM.
+{% if order.gift_message %}
+"{{ order.gift_message }}"
+{% endif %}
+{% endif %}Your eSIM is ready.
 
 Order {{ order.ref }} — {{ order.plan_title }}
 

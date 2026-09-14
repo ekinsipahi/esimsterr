@@ -11,6 +11,28 @@ from django.utils.translation import gettext_noop as _
 # Newest first.
 HISTORY = (
     {
+        "date": date(2026, 9, 14),
+        "version": "2026.2",
+        "documents": ("privacy",),
+        "material": True,
+        "summary": _("The app gained three things that process data the previous policy did "
+                     "not describe: a support ID generated on your device, gifting an eSIM "
+                     "to someone else's email address, and referral codes."),
+        "detail": (
+            _("Added: the support ID — a random code generated on your device so you can "
+              "quote it instead of spelling out an email address. It identifies the "
+              "installation and not you, it is not an advertising identifier, and "
+              "uninstalling the app ends it."),
+            _("Added: what happens to a gift recipient's email address, which we process "
+              "only to deliver and support the plan you bought them, and never add to a "
+              "marketing list."),
+            _("Added: what a referral records, and what your referrer is and is not told "
+              "about you."),
+            _("Added: the in-app inbox. Offers there follow the same marketing switch as "
+              "email, so turning marketing off empties it of anything but service messages."),
+        ),
+    },
+    {
         "date": date(2026, 9, 13),
         "version": "2026.1",
         "documents": ("terms", "privacy", "refund", "acceptable-use", "cookies",

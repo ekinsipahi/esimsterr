@@ -1306,3 +1306,13 @@ html[data-theme="dark"] .tx-out { background: rgba(26,143,209,.14); color: var(-
    "Balance — $0.00, add balance" is how anyone learns the feature exists. */
 .radio-card-off { opacity: .62; }
 .radio-card-off:hover { opacity: .78; }
+
+/* Referral code, folded away. Open it and it behaves like any other field. */
+.ref-field > summary {
+  cursor: pointer; font-size: .9rem; color: var(--b-600); list-style: none;
+  padding: 4px 0; user-select: none;
+}
+html[data-theme="dark"] .ref-field > summary { color: var(--b-300); }
+.ref-field > summary::-webkit-details-marker { display: none; }
+.ref-field > summary::before { content: "＋ "; font-weight: 700; }
+.ref-field[open] > summary::before { content: "－ "; }

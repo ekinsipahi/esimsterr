@@ -127,6 +127,17 @@ def checkout(request, plan_id):
         code = (request.POST.get("coupon") or "").strip()
         method = request.POST.get("method") or "stripe"
         digital_consent = bool(request.POST.get("digital_consent"))
+        gift_email = (request.POST.get("gift_email") or "").strip().lower()
+        gift_name = (request.POST.get("gift_name") or "").strip()
+        gift_message = (request.POST.get("gift_message") or "").strip()
+        if gift_email:
+            try:
+                validate_email(gift_email)
+            except ValidationError:
+                if not apply_only:
+                    error = _("That does not look like a valid email address for the "
+                              "person you are gifting to.")
+                gift_email = ""
         try:
             validate_email(email)
         except ValidationError:
@@ -179,6 +190,9 @@ def checkout(request, plan_id):
                 target_esim=topup_esim,
                 withdrawal_waived_at=timezone.now(),
                 source=_source(request),
+                gift_email=gift_email[:254],
+                gift_name=gift_name[:80],
+                gift_message=gift_message[:300],
                 **_fingerprint(request),
             )
             _remember_order(request, order)
@@ -256,6 +270,11 @@ def checkout(request, plan_id):
         "topup_esim": topup_esim,
         "digital_consent": request.method == "POST" and bool(request.POST.get("digital_consent")),
         "src": _source(request),
+        # A gift address arriving in the URL (from the app) pre-fills and opens
+        # the panel, so the buyer sees where the QR is going before they pay.
+        "gift_email": (request.POST.get("gift_email") or request.GET.get("gift") or "").strip(),
+        "gift_name": (request.POST.get("gift_name") or request.GET.get("gift_name") or "").strip(),
+        "gift_message": (request.POST.get("gift_message") or "").strip(),
         "balance_usd": _balance_of(request.user),
         "balance_covers": _balance_of(request.user) >= (subtotal - discount),
         "email": email,

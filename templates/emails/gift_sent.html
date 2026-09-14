@@ -1,0 +1,16 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}{{ order.plan_title }} is on its way to {{ order.gift_email }}.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">Your gift is on its way</h1>
+<p style="margin:0 0 16px"><b>{{ order.plan_title }}</b> has been sent to
+  <b>{{ order.gift_email }}</b>{% if order.gift_name %} ({{ order.gift_name }}){% endif %}.
+  They have the QR code and the install instructions; you have this receipt.</p>
+<table style="width:100%;border-collapse:collapse;margin:0 0 20px">
+  <tr><td style="padding:8px 0;color:#575c86;font-size:13px">Order</td>
+      <td style="padding:8px 0;text-align:right;font-weight:700;color:#171a3c">{{ order.ref }}</td></tr>
+  <tr><td style="padding:8px 0;color:#575c86;font-size:13px">Paid</td>
+      <td style="padding:8px 0;text-align:right;font-weight:700;color:#171a3c">{{ order.amount_usd }} USD</td></tr>
+</table>
+<p style="margin:0;font-size:13px;color:#575c86">If they have trouble installing it they can reply to the
+email we sent them, or you can forward them <a href="{{ site_url }}/how-it-works/">{{ site_url }}/how-it-works/</a>.</p>
+{% endblock %}

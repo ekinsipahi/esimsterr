@@ -47,6 +47,13 @@ CLAUSES = {c.id: c for c in [
             _("**Acceptance records.** Which version of these documents you accepted, when, "
               "and from which address — so that both of us can tell later what you actually "
               "agreed to."),
+            _("**A support ID**, if you use the app. A random code generated on your device, "
+              "shaped like ESM-XXXX-XXXX, which you can read to us so we find your orders. "
+              "It is not derived from anything about you or your phone."),
+            _("**A recipient's email address**, if you buy an eSIM as a gift — we need "
+              "somewhere to send it — together with any message you write on it."),
+            _("**Referral records**, if you use or share a referral code: who invited whom, "
+              "and the credit that was paid."),
         ),
     )),
 
@@ -72,6 +79,12 @@ CLAUSES = {c.id: c for c in [
         UL(
             _("**Stored on your device only:** your sign-in token, so you stay signed in, "
               "and your theme and language choice. Signing out erases the token."),
+            _("**A support ID**, generated on the device the first time the app runs and "
+              "sent with each request. It identifies the installation, not you: it is "
+              "random, it is not an advertising identifier, it is not derived from any "
+              "hardware serial, and uninstalling the app ends it for good. Its purpose is "
+              "that you can quote one short code instead of spelling out an email address "
+              "down a bad line."),
             _("**Sent to us:** the same account, order and eSIM data described above, plus "
               "the app version and operating system version attached to error reports."),
             _("**Not collected:** your contacts, photos, calendar, microphone, precise "
@@ -104,6 +117,28 @@ CLAUSES = {c.id: c for c in [
         Callout(_("Deletion is automatic. A scheduled job clears the IP address, user agent, "
                   "language and referrer from every order older than 24 months, so this is a "
                   "promise the system keeps rather than one a person has to remember.")),
+    )),
+
+    Clause("gifts", _("Gifts and referrals"), (
+        P(_("If you buy an eSIM for someone else, we process their email address for one "
+            "purpose: delivering the plan you bought them, and supporting it if it does not "
+            "work. It is kept with the order, it is never added to a marketing list, and "
+            "they can ask us to delete it.")),
+        P(_("Please only enter an address of someone who is expecting it. You are the one "
+            "who knows whether they want a message from us; we have no way of telling.")),
+        P(_("If you use a referral code we record who invited whom and the credit that was "
+            "paid, because a reward has to be auditable. Your referrer is told that someone "
+            "joined and topped up — never who you are beyond the address you registered "
+            "with, and never what you bought.")),
+    )),
+
+    Clause("messages", _("Messages in the app"), (
+        P(_("The app has an inbox. Service messages about your own orders and lines always "
+            "appear there. Offers and news appear only if you have marketing turned on, and "
+            "turning it off removes them from the inbox as well as from your email — the "
+            "same switch governs both.")),
+        P(_("We record which messages you have read, so the unread badge is accurate. "
+            "Nothing else about how you use the app is recorded.")),
     )),
 
     Clause("coupons-data", _("Coupons and promotions"), (
@@ -214,6 +249,9 @@ CLAUSES = {c.id: c for c in [
                  _("While your account is open, or sooner on request")),
                 (_("Acceptance records for these documents"),
                  _("As long as the contract they relate to can be disputed")),
+                (_("Support ID and the app installation it belongs to"),
+                 _("Until the app is uninstalled, and 24 months after we last hear from it")),
+                (_("A gift recipient's email address"), _("With the order, as an order record")),
                 (_("Closed account"), _("Deactivated and the email unlinked immediately; "
                                         "accounting records remain and are used for nothing else")),
             ],

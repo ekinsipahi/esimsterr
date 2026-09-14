@@ -27,13 +27,13 @@
     "version": "2026.1"
   },
   "privacy": {
-    "effective": "2026-09-13",
+    "effective": "2026-09-14",
     "hashes": {
-      "android": "9b16f3b8bfd59433",
-      "ios": "eee022e368846a7d",
-      "web": "812dc5ca75b0a1be"
+      "android": "777b7e4c6fa1da42",
+      "ios": "d20edb60250441be",
+      "web": "613755f2298e1e8f"
     },
-    "version": "2026.1"
+    "version": "2026.2"
   },
   "refund": {
     "effective": "2026-09-13",

@@ -1,0 +1,18 @@
+{% extends "emails/_shell.html" %}
+{% block preheader %}{{ amount }} USD has been added to your balance.{% endblock %}
+{% block body %}
+<h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">Your invitation paid off</h1>
+<p style="margin:0 0 18px"><b>{{ referred_email }}</b> joined {{ site_name }} and topped up,
+so we have added credit to your balance.</p>
+<table style="width:100%;border-collapse:separate;margin:0 0 20px">
+  <tr><td style="background:linear-gradient(135deg,#b98b28,#e0b04a);border-radius:14px;padding:16px 18px">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#3b2a06">Referral reward</div>
+    <div style="margin-top:3px;font-size:28px;font-weight:800;color:#1f1503;line-height:1.1">+{{ amount }} USD</div>
+  </td></tr>
+</table>
+<p style="margin:0 0 20px">Your code is still <b>{{ code }}</b> — every friend who joins and tops up
+earns you the same again.</p>
+<a href="{{ site_url }}/wallet/"
+   style="display:inline-block;background:#0f74b4;background:linear-gradient(135deg,#0d5c91 0%,#1a8fd1 48%,#35bdea 120%);
+          color:#fff;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:15px">See your balance</a>
+{% endblock %}

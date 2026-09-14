@@ -91,6 +91,14 @@ WALLET_MIN_TOPUP_USD = env("WALLET_MIN_TOPUP_USD", "10.00")
 WALLET_MAX_TOPUP_USD = env("WALLET_MAX_TOPUP_USD", "500.00")
 WALLET_ENABLED = env_bool("WALLET_ENABLED", True)
 
+# ---- Referrals ---------------------------------------------------------------
+# Paid when the invited customer's own top-ups reach the threshold, not when
+# they register: rewarding a signup pays for empty accounts, rewarding money
+# arriving pays for customers. Bonus credit does not count towards the
+# threshold, or the bonus would help clear the bar that granted it.
+REFERRAL_BONUS_USD = env("REFERRAL_BONUS_USD", "3.00")
+REFERRAL_MIN_TOPUP_USD = env("REFERRAL_MIN_TOPUP_USD", "5.00")
+
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", [])
 _PROD_HOSTS = [CANONICAL_HOST, f"www.{CANONICAL_HOST}", "esimsterr.onrender.com"]
@@ -146,6 +154,7 @@ INSTALLED_APPS = [
     "apps.seo",
     "apps.legal",
     "apps.wallet",
+    "apps.inbox",
 ]
 
 MIDDLEWARE = [
@@ -161,6 +170,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.CoopAllowPopupsMiddleware",
+    "apps.accounts.install_middleware.AppInstallMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"

@@ -111,6 +111,34 @@
             profile straight away, and the confirmation email repeats it.
           {% endcomment %}
           <input type="hidden" name="src" value="{{ src }}">
+
+          {% comment %}
+            Gifting. Folded away unless it is being used, because the address
+            field here decides where the QR code goes -- and a buyer who fills
+            it by accident sends their own eSIM to somebody else.
+          {% endcomment %}
+          <details class="ref-field mb-3" {% if gift_email %}open{% endif %}>
+            <summary>{% trans "Buying this as a gift?" %}</summary>
+            <div class="stack mt-2" style="gap:10px">
+              <div class="field">
+                <label for="gift_email">{% trans "Their email" %}</label>
+                <input class="input" type="email" id="gift_email" name="gift_email"
+                       value="{{ gift_email }}" placeholder="friend@example.com" autocomplete="off">
+                <span class="hint">{% trans "The QR code goes here instead of to you. You still get the receipt." %}</span>
+              </div>
+              <div class="field">
+                <label for="gift_name">{% trans "Their name (optional)" %}</label>
+                <input class="input" type="text" id="gift_name" name="gift_name"
+                       value="{{ gift_name }}" maxlength="80" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="gift_message">{% trans "A short message (optional)" %}</label>
+                <input class="input" type="text" id="gift_message" name="gift_message"
+                       value="{{ gift_message }}" maxlength="300" placeholder="{% trans 'Safe travels!' %}">
+              </div>
+            </div>
+          </details>
+
           <label class="consent-check">
             <input type="checkbox" name="digital_consent" value="1" required
                    {% if digital_consent %}checked{% endif %}>

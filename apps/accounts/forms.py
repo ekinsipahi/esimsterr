@@ -8,6 +8,13 @@ class SignupForm(forms.Form):
     email = forms.EmailField()
     password = forms.CharField(min_length=8, widget=forms.PasswordInput)
     marketing_opt_in = forms.BooleanField(required=False, initial=True)
+    # Optional, and never a reason to reject a registration: a mistyped code
+    # must cost somebody a bonus, not an account. Validated after the user
+    # exists, where it can be reported without losing the form.
+    referral_code = forms.CharField(required=False, max_length=16)
+
+    def clean_referral_code(self):
+        return (self.cleaned_data.get("referral_code") or "").strip().upper()
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()

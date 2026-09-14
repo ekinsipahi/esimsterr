@@ -67,6 +67,15 @@ class Command(BaseCommand):
                     f"{slug}: version moved {was['version']} to {now['version']} without a new "
                     f"effective date."
                 )
+            elif was["hashes"] != now["hashes"]:
+                # A legitimate version bump still has to be recorded. Without
+                # this the lock quietly goes stale, and the next edit that
+                # forgets to bump slips through because the versions no longer
+                # match either -- which defeats the whole mechanism.
+                problems.append(
+                    f"{slug}: text changed and the lock file was not updated. Run "
+                    f"check_legal --write and commit apps/legal/versions.lock.json."
+                )
 
         for slug in locked.keys() - current.keys():
             problems.append(f"{slug}: was published and has been removed; keep it reachable or "

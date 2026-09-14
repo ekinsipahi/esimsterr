@@ -1,6 +1,12 @@
 {% extends "emails/_shell.html" %}
 {% block preheader %}Your eSIM QR code for {{ order.plan_title }} is ready to install.{% endblock %}
 {% block body %}
+{% if is_gift %}
+<div style="margin:0 0 18px;padding:14px 16px;border-radius:12px;background:#f4f7fd">
+  <b style="color:#171a3c">{{ order.email }} bought you an eSIM.</b>
+  {% if order.gift_message %}<div style="margin-top:6px;color:#575c86;font-style:italic">&ldquo;{{ order.gift_message }}&rdquo;</div>{% endif %}
+</div>
+{% endif %}
 <h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">Your eSIM is ready</h1>
 <p style="margin:0 0 18px">Order <b>{{ order.ref }}</b> &mdash; {{ order.plan_title }}.
 Install it at home on Wi-Fi; the plan only starts counting when it first connects at your destination.</p>
