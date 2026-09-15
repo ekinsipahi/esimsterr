@@ -12,6 +12,21 @@ from django.utils.translation import gettext_noop as _
 HISTORY = (
     {
         "date": date(2026, 9, 15),
+        "version": "2026.2",
+        "documents": ("terms",),
+        "material": False,
+        "summary": _("Says plainly that discount codes apply to one-off plans and not to "
+                     "subscriptions. This was already how it worked; it was not written "
+                     "down anywhere a customer could read it."),
+        "detail": (
+            _("A percentage off a recurring charge comes off every renewal for as long as "
+              "the subscription runs, which is not what a promotion is for. The "
+              "subscription page now says so too, rather than simply not offering a "
+              "field for a code."),
+        ),
+    },
+    {
+        "date": date(2026, 9, 15),
         "version": "2026.3",
         "documents": ("privacy",),
         "material": True,

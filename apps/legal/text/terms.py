@@ -56,6 +56,9 @@ CLAUSES = {c.id: c for c in [
             "use per customer. The discount is applied at checkout and shown on the "
             "order before you pay; if no discount appears, the code did not apply and "
             "the full price stands.")),
+        P(_("Discount codes apply to one-off plans only. They cannot be used on an "
+            "auto-renewing subscription: a percentage off a recurring charge would come "
+            "off every renewal indefinitely, which is not what a promotion is for.")),
         P(_("Codes have no cash value, cannot be exchanged for money, cannot be applied "
             "to an order that is already placed, and cannot normally be combined with "
             "another code. We may withdraw a code at any time, and we may cancel a "

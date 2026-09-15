@@ -49,9 +49,15 @@ def _identity_filter(user=None, email: str = "") -> Q:
 
 
 def validate_coupon(
-    code, *, amount_usd, plan=None, user=None, email="", preview=False
+    code, *, amount_usd, plan=None, user=None, email="", preview=False, recurring=False
 ) -> tuple[Coupon, Decimal]:
     """Return (coupon, discount) or raise CouponError with a customer-safe message.
+
+    `recurring=True` refuses outright. A percentage taken off a subscription is
+    taken off *every* renewal for as long as it runs, so a code written for a
+    one-off sale quietly becomes a permanent margin cut. Subscriptions do not
+    offer a coupon field today, but "true because nobody wired it up" is not a
+    rule -- this is, and it fails closed if somebody wires it up later.
 
     `preview=True` is for a page that has not asked for an email address yet -- a
     campaign link such as /checkout/12/?coupon=X landing on checkout. The rules
@@ -59,6 +65,9 @@ def validate_coupon(
     discount; every other rule still applies, and the full check runs again when
     the order is submitted.
     """
+    if recurring:
+        raise CouponError(_("Discount codes do not apply to subscriptions."))
+
     wanted = normalise_code(code)
     if not wanted:
         raise CouponError(_("Enter a coupon code."), reason="empty")

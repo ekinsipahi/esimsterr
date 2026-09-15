@@ -54,12 +54,12 @@
     "version": "2026.1"
   },
   "terms": {
-    "effective": "2026-09-13",
+    "effective": "2026-09-15",
     "hashes": {
-      "android": "f945721843425d66",
-      "ios": "59c873c12bb70f20",
-      "web": "8212bd220cd09a08"
+      "android": "205d1ecb3ec3d332",
+      "ios": "a11be63f52cb259c",
+      "web": "8fccece113d1fc41"
     },
-    "version": "2026.1"
+    "version": "2026.2"
   }
 }

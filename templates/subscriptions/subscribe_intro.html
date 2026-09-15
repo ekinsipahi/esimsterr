@@ -88,6 +88,14 @@
 
         <form method="post" class="mt-3">
           {% csrf_token %}
+          {% comment %}
+            Stated, not merely absent. A customer holding a code will otherwise
+            look for the field, not find it, and email support about it.
+          {% endcomment %}
+          <p class="xs muted-3 mt-2">
+            {% trans "Discount codes apply to one-off plans, not to subscriptions — a code here would come off every renewal." %}
+          </p>
+
           <label class="consent-check">
             <input type="checkbox" name="digital_consent" value="1" required>
             <span>{% blocktrans %}I ask for the first period to be delivered immediately, and I understand that I lose my 14-day right of withdrawal on it once the data is on my line. Future renewals can be cancelled any time before they are charged.{% endblocktrans %}</span>
