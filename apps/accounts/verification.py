@@ -60,6 +60,14 @@ def mark_verified(user) -> None:
     user.email_verified_at = timezone.now()
     user.save(update_fields=["email_verified", "email_verified_at"])
     logger.info("Email verified for %s", user.email)
+    # Now, and not before: an eSIM bought for this address -- as a gift, or as a
+    # guest -- is theirs to manage from here.
+    try:
+        from apps.orders.gifting import claim_for
+
+        claim_for(user)
+    except Exception:  # noqa: BLE001 - never fail a verification over this
+        logger.warning("claiming eSIMs for %s failed", user.email, exc_info=True)
 
 
 def send_verification(user, request=None) -> None:

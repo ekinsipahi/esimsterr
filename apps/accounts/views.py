@@ -73,6 +73,10 @@ def signup(request):
         # A code in the URL pre-fills the field rather than being applied
         # silently, so the new customer can see who invited them.
         "ref_prefill": (request.GET.get("ref") or request.session.get("ref_code") or "").upper(),
+        # A gifted eSIM's email invites the recipient here with the address it
+        # was delivered to already filled in. Registering with a different one
+        # would leave the eSIM waiting for an account that never arrives.
+        "email_prefill": (request.GET.get("email") or "").strip()[:254],
         "referral_bonus": settings.REFERRAL_BONUS_USD,
         "seo_title": "Create your account — eSIMsterr",
         "seo_description": "Create a free eSIMsterr account to buy, install and manage travel eSIMs.",

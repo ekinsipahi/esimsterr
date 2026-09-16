@@ -43,7 +43,7 @@
           <div class="field">
             <label for="email">{% trans "Email" %}</label>
             <input class="input" type="email" id="email" name="email" required autocomplete="email"
-                   value="{{ form.email.value|default:'' }}">
+                   value="{{ form.email.value|default:email_prefill|default:'' }}">
             {% if form.email.errors %}<span class="err">{{ form.email.errors.0 }}</span>{% endif %}
           </div>
           <div class="field">

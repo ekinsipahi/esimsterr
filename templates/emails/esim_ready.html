@@ -3,14 +3,27 @@
 {% block body %}
 {% if is_gift %}
 <div style="margin:0 0 18px;padding:14px 16px;border-radius:12px;background:#f4f7fd">
-  <b style="color:#171a3c">{{ order.email }} bought you an eSIM.</b>
+  <b style="color:#171a3c">{% if order.gift_name %}{{ order.gift_name }}, {% endif %}{{ order.email }} bought you an eSIM.</b>
   {% if order.gift_message %}<div style="margin-top:6px;color:#575c86;font-style:italic">&ldquo;{{ order.gift_message }}&rdquo;</div>{% endif %}
+  <div style="margin-top:8px;color:#575c86">It is yours — nothing to pay, and they cannot see your data or where you use it.</div>
 </div>
 {% endif %}
 <h1 style="margin:0 0 14px;font-size:22px;font-weight:800;color:#171a3c">Your eSIM is ready</h1>
 <p style="margin:0 0 18px">Order <b>{{ order.ref }}</b> &mdash; {{ order.plan_title }}.
 Install it at home on Wi-Fi; the plan only starts counting when it first connects at your destination.</p>
 
+{% if is_gift %}
+<table role="presentation" width="100%" style="background:#fffaf0;border:1px solid #f0e0bd;border-radius:14px;margin:0 0 18px">
+  <tr><td style="padding:18px">
+    <div style="font-weight:800;color:#171a3c;margin-bottom:6px">Keep track of it with a free account</div>
+    <p style="margin:0 0 12px;color:#575c86">You do not need one to use the eSIM — the code above is enough. But an
+    account on <b>{{ order.gift_email }}</b> shows you how much data is left, lets you re-open the QR code if you
+    change phone, and lets you add more data to the same eSIM instead of buying another one.</p>
+    <a href="{{ site_url }}/signup/?email={{ order.gift_email|urlencode }}"
+       style="display:inline-block;padding:11px 20px;border-radius:10px;background:#1a8fd1;color:#fff;font-weight:700;text-decoration:none">Create your free account</a>
+  </td></tr>
+</table>
+{% endif %}
 <table role="presentation" width="100%" style="background:#f7f8fc;border:1px solid #e6e8f4;border-radius:14px;margin:0 0 18px">
   <tr><td style="padding:18px">
     <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8a8fb4;text-transform:uppercase">Activation code (LPA)</div>

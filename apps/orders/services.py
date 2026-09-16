@@ -149,10 +149,16 @@ def _provision_new(c, order: Order) -> Esim:
     if not iccid:
         raise YesimError(f"Provider returned no ICCID: {str(info)[:200]}")
 
+    # A gift belongs to the person travelling with it. Filing it under the buyer
+    # would put somebody else's QR code, usage and remaining data on the buyer's
+    # dashboard, and leave the recipient with an email and no way to manage what
+    # they were given. It stays unowned until they verify the address.
     esim, created = Esim.objects.get_or_create(
         iccid=iccid,
         defaults={
-            "user": order.user, "email": order.email, "order": order,
+            "user": (None if order.is_gift else order.user),
+            "email": order.delivery_email,
+            "order": order,
             "apn": (order.plan.apn if order.plan else ""),
         },
     )
@@ -164,8 +170,9 @@ def _provision_new(c, order: Order) -> Esim:
             f"Provider returned ICCID {iccid}, already assigned to order "
             f"{esim.order.ref}. Order {order.ref} was NOT provisioned."
         )
-    esim.user = esim.user or order.user
-    esim.email = esim.email or order.email
+    if not order.is_gift:
+        esim.user = esim.user or order.user
+    esim.email = esim.email or order.delivery_email
     esim.order = esim.order or order
     esim.plan_title = order.plan_title
     esim.is_unlimited = bool(order.plan and order.plan.is_unlimited)

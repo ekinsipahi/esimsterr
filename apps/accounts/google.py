@@ -6,6 +6,7 @@ from google.auth.transport import requests as g_requests
 from google.oauth2 import id_token
 
 from .models import User
+from .verification import mark_verified
 
 
 class GoogleAuthError(Exception):
@@ -51,6 +52,11 @@ def user_from_google_token(token: str, signup_ip=None):
         )
         created = True
     elif not user.email_verified and info.get("email_verified"):
-        user.email_verified = True
-        user.save(update_fields=["email_verified"])
+        mark_verified(user)
+    if user.email_verified:
+        # Google has done the proving, so anything waiting on this address --
+        # a gift, an earlier guest purchase -- is claimable right now.
+        from apps.orders.gifting import claim_for
+
+        claim_for(user)
     return user, created

@@ -1,4 +1,5 @@
-{% if is_gift %}{{ order.email }} bought you an eSIM.
+{% if is_gift %}{% if order.gift_name %}{{ order.gift_name }}, {% endif %}{{ order.email }} bought you an eSIM.
+It is yours -- nothing to pay, and they cannot see your data or where you use it.
 {% if order.gift_message %}
 "{{ order.gift_message }}"
 {% endif %}
@@ -23,6 +24,16 @@ Three things that matter:
 
 Install at home on Wi-Fi. The plan only starts counting when the eSIM first
 connects at your destination.
+{% if is_gift %}
+Keep track of it with a free account
+-----------------------------------
+You do not need one to use the eSIM -- the code above is enough. But an account
+on {{ order.gift_email }} shows you how much data is left, lets you re-open the
+QR code if you change phone, and lets you add more data to the same eSIM instead
+of buying another one.
+
+{{ site_url }}/signup/?email={{ order.gift_email|urlencode }}
+{% endif %}
 
 {% if order.withdrawal_waived_at %}
 Your order confirmation: at checkout on {{ order.withdrawal_waived_at|date:"j F Y" }} you

@@ -713,8 +713,12 @@ def device_claim(request):
         return Response({"detail": "No device id."}, status=status.HTTP_400_BAD_REQUEST)
 
     orders = Order.objects.filter(support_id=support_id, user__isnull=True)
-    esim_ids = list(Esim.objects.filter(order__in=orders, user__isnull=True)
-                    .values_list("pk", flat=True))
+    # Orders yes, gifted eSIMs no: the buyer keeps the receipt for what they paid
+    # for, but the profile itself belongs to the address they sent it to.
+    esim_ids = list(
+        Esim.objects.filter(order__in=orders, user__isnull=True, order__gift_email="")
+        .values_list("pk", flat=True)
+    )
     moved = orders.update(user=request.user)
     Esim.objects.filter(pk__in=esim_ids).update(user=request.user)
 
