@@ -237,11 +237,15 @@ def checkout(request, plan_id):
             if not error and method == "balance":
                 # Credit already bought: nothing leaves for a payment provider,
                 # the order settles here and goes straight to provisioning.
-                from apps.wallet.models import InsufficientBalance
+                from apps.wallet.models import AlreadyPaid, InsufficientBalance
                 from apps.wallet.services import pay_order_with_balance
 
                 try:
                     pay_order_with_balance(request.user, order)
+                except AlreadyPaid:
+                    # A double submit. The order is settled either way, so show
+                    # it rather than an error about something that worked.
+                    return redirect("order_detail", ref=order.ref)
                 except InsufficientBalance as e:
                     release(order)
                     order.status = Order.Status.FAILED

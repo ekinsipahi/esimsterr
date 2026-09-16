@@ -8,8 +8,8 @@ from django.conf import settings
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 
-from .models import (BalanceTopUp, InsufficientBalance, ReferralPayout, Wallet,
-                     WalletTransaction)
+from .models import (AlreadyPaid, BalanceTopUp, InsufficientBalance, ReferralPayout,
+                     Wallet, WalletTransaction)
 
 log = logging.getLogger(__name__)
 CENT = Decimal("0.01")
@@ -148,12 +148,24 @@ def pay_order_with_balance(user, order) -> WalletTransaction:
     order's PAID transition happen in one database transaction so a crash
     between them cannot take the money without delivering the plan.
     """
+    from apps.orders.models import Order
     from apps.orders.services import fulfill_order
 
     with transaction.atomic():
-        tx = Wallet.debit(user, order.amount_usd,
-                          description=f"{order.plan_title} ({order.ref})", order=order)
-        order.mark_paid()
+        # Re-read under a lock and check it is still unpaid. Both callers build
+        # a fresh order and pay it once, so today this changes nothing -- which
+        # is exactly when it is worth writing, because the next caller to reach
+        # for this function will be paying an order that already exists, and
+        # paying one twice takes the money twice.
+        locked = Order.objects.select_for_update().get(pk=order.pk)
+        if locked.user_id != getattr(user, "pk", None):
+            raise InsufficientBalance("That order belongs to a different account.")
+        if locked.status != Order.Status.PENDING:
+            raise AlreadyPaid(f"Order {locked.ref} is already {locked.status}.")
+        tx = Wallet.debit(user, locked.amount_usd,
+                          description=f"{locked.plan_title} ({locked.ref})", order=locked)
+        locked.mark_paid()
+        order.status = locked.status
 
     def _provision():
         try:

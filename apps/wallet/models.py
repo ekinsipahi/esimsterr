@@ -37,6 +37,10 @@ class InsufficientBalance(Exception):
     """Raised instead of allowing a wallet to go negative."""
 
 
+class AlreadyPaid(Exception):
+    """Raised instead of charging a second time for the same order."""
+
+
 class Wallet(models.Model):
     """One per customer. Created on demand, never deleted while orders exist."""
 

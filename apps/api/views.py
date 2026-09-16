@@ -441,7 +441,7 @@ def pay_with_balance(request):
     a discount whichever pocket the money comes from.
     """
     from apps.legal.models import LegalAcceptance, record_acceptance
-    from apps.wallet.models import InsufficientBalance, Wallet
+    from apps.wallet.models import AlreadyPaid, InsufficientBalance, Wallet
     from apps.wallet.services import pay_order_with_balance
 
     if not request.data.get("consent"):
@@ -519,6 +519,8 @@ def pay_with_balance(request):
 
     try:
         pay_order_with_balance(request.user, order)
+    except AlreadyPaid:
+        pass  # a retried request; the order is settled and will be returned below
     except InsufficientBalance as e:
         # Someone spent the balance between the check above and here. Releasing
         # the coupon seat matters: a capped code must not be burned by an order

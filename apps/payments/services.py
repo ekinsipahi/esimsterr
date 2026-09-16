@@ -308,14 +308,25 @@ def process_nowpayments_ipn(payload: dict) -> None:
     payment.pay_currency = payload.get("pay_currency") or payment.pay_currency
     payment.raw = payload
     if status in NOWPAY_DEAD:
-        payment.status = Payment.Status.EXPIRED if status == "expired" else Payment.Status.FAILED
-        if payment.order.status == Order.Status.PENDING:
+        expired = status == "expired"
+        payment.status = Payment.Status.EXPIRED if expired else Payment.Status.FAILED
+        # A payment is for an order OR for store credit, never both, and the
+        # top-up case used to be unreachable here: `payment.order` is None for
+        # one of those and the attribute access raised, so the IPN view answered
+        # 500 and NOWPayments retried the same dead invoice for days while the
+        # top-up sat "pending" for ever.
+        if payment.order_id and payment.order.status == Order.Status.PENDING:
             payment.order.status = Order.Status.CANCELLED
             payment.order.save(update_fields=["status"])
             # An invoice that expired unpaid must hand its coupon seat back,
             # otherwise a capped code drains through abandoned checkouts.
             from apps.coupons.services import release
             release(payment.order)
+        elif payment.balance_topup_id:
+            topup = payment.balance_topup
+            if topup.status in (topup.Status.PENDING, topup.Status.PAID):
+                topup.status = topup.Status.EXPIRED if expired else topup.Status.FAILED
+                topup.save(update_fields=["status"])
     elif status == "confirming":
         payment.status = Payment.Status.CONFIRMING
     elif status == "partially_paid":
