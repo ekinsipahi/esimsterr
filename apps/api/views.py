@@ -1116,3 +1116,43 @@ def dev_status(request):
         "device_id": _support_id(request),
         "surface": legal_surface(request),
     })
+
+
+@api_view(["POST"])
+@throttle_classes([CheckoutThrottle])
+def wallet_topup_sheet(request):
+    """Add balance with a card, in the app.
+
+    Replaces the old hand-off to the website. Being sent to a browser to buy the
+    credit that buys a plan -- while buying the plan itself stayed in the app --
+    was an inconsistency people abandoned halfway through.
+    """
+    from apps.payments.inapp import InAppError, customer_for, enabled, topup_payment_sheet
+    from apps.payments.stripe_client import StripeError
+    from apps.wallet.models import BalanceTopUp
+    from apps.wallet.services import create_topup, validate_amount
+
+    if not enabled():
+        return Response({"detail": "In-app payments are unavailable.",
+                         "code": "in_app_unavailable"},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    try:
+        amount = validate_amount(request.data.get("amount"))
+    except ValueError as e:
+        return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    topup = create_topup(request.user, amount,
+                         source=legal_surface(request), ip=_client_ip(request))
+    try:
+        customer_id, _owner = customer_for(user=request.user, email=request.user.email)
+        sheet = topup_payment_sheet(
+            topup,
+            customer_id=customer_id,
+            api_version=(request.data.get("stripe_version") or "2024-06-20"),
+            save_card=bool(request.data.get("save_card", True)),
+        )
+    except (InAppError, StripeError) as e:
+        topup.status = BalanceTopUp.Status.FAILED
+        topup.save(update_fields=["status"])
+        return Response({"detail": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+    return Response(sheet, status=201)

@@ -38,6 +38,7 @@ urlpatterns = [
     path("inbox/read-all/", views.inbox_read_all, name="api_inbox_read_all"),
     path("inbox/<int:pk>/read/", views.inbox_read, name="api_inbox_read"),
     path("wallet/topup-url/", views.wallet_topup_url, name="api_wallet_topup_url"),
+    path("wallet/topup-sheet/", views.wallet_topup_sheet, name="api_wallet_topup_sheet"),
     path("orders/pay-with-balance/", views.pay_with_balance, name="api_pay_with_balance"),
     # in-app card payment
     path("pay/sheet/", views.payment_sheet, name="api_payment_sheet"),

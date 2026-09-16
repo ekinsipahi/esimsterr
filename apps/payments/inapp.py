@@ -93,3 +93,48 @@ def payment_sheet(order, *, customer_id: str, api_version: str, save_card: bool)
         "amount_usd": str(order.amount_usd),
         "payment_id": str(payment.id),
     }
+
+
+def topup_payment_sheet(topup, *, customer_id: str, api_version: str,
+                        save_card: bool) -> dict:
+    """PaymentSheet for adding balance, so topping up never leaves the app.
+
+    Buying a plan in the app and being sent to a browser to add the credit that
+    buys it was the kind of inconsistency that makes people abandon halfway. The
+    same rules apply: card details go to Stripe directly, and the webhook credits
+    the wallet from the amount Stripe reports actually arriving.
+    """
+    if not enabled():
+        raise InAppError("In-app payments are not available.")
+
+    payment = Payment.objects.create(
+        balance_topup=topup, user=topup.user, provider=Payment.Provider.STRIPE,
+        amount_usd=topup.amount_usd,
+    )
+    bonus = f" (+${topup.bonus_usd} bonus)" if topup.bonus_usd else ""
+    intent = stripe_client.create_payment_intent(
+        amount_usd=topup.amount_usd,
+        customer_id=customer_id,
+        reference=str(payment.id),
+        description=f"{settings.SITE_NAME} — ${topup.amount_usd} balance{bonus}",
+        save_card=save_card,
+        email=topup.user.email,
+    )
+    payment.provider_payment_id = intent["id"]
+    payment.status = Payment.Status.WAITING
+    payment.raw = {"payment_intent": intent["id"]}
+    payment.save(update_fields=["provider_payment_id", "status", "raw"])
+
+    key = stripe_client.ephemeral_key(customer_id, api_version)
+    return {
+        "payment_intent_client_secret": intent["client_secret"],
+        "ephemeral_key": key["secret"],
+        "customer_id": customer_id,
+        "publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
+        "merchant_name": settings.SITE_NAME,
+        "order_ref": topup.ref,
+        "amount_usd": str(topup.amount_usd),
+        "bonus_usd": str(topup.bonus_usd),
+        "total_usd": str(topup.total_usd),
+        "payment_id": str(payment.id),
+    }
