@@ -15,7 +15,7 @@ from decimal import Decimal
 
 import stripe
 
-from apps.payments.stripe_client import guard_live_key
+from apps.payments.stripe_client import StripeError as StripeClientError, guard_live_key
 from django.conf import settings
 
 log = logging.getLogger(__name__)
@@ -36,7 +36,14 @@ def configured() -> bool:
 def _api():
     if not configured():
         raise SubscriptionError("Card payments are not available right now.")
-    guard_live_key()
+    try:
+        guard_live_key()
+    except StripeClientError as e:
+        # Re-raised as this module's own error type. Callers here catch
+        # SubscriptionError and carry on; a foreign exception class would sail
+        # straight past them and turn a guarded call into a 500 webhook that
+        # Stripe then retries for ever.
+        raise SubscriptionError(str(e)) from e
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
 

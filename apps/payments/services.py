@@ -261,11 +261,17 @@ def settle_stripe_intent(intent: dict, reference: str, *, failed: bool = False) 
         return None
 
     if failed:
+        # Imported here rather than at module scope: apps.coupons imports
+        # apps.orders, which imports this module back.
+        from apps.coupons.services import release
+
         error = (intent.get("last_payment_error") or {}).get("message", "")
         payment.status = Payment.Status.FAILED
         payment.raw = {**(payment.raw or {}), "error": error[:300]}
         payment.save(update_fields=["status", "raw"])
         if payment.order_id:
+            # Give the coupon seat back. A declined card must not burn a capped
+            # code, or the next customer is told it is used up.
             release(payment.order)
         log.info("In-app payment %s failed: %s", payment.id, error[:120])
         return payment
