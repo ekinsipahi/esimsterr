@@ -201,6 +201,20 @@ def cron(request, task):
         # nobody can fill the error budget from outside, and it is worth keeping:
         # a monitoring pipeline that is never exercised is a monitoring pipeline
         # that is quietly broken.
+        #
+        # ?new=1 gives the message a unique suffix, which puts it in a brand new
+        # issue group. That distinction is the whole point when what you are
+        # testing is the alert rather than the capture: Sentry's default rule
+        # fires on a *new* high-priority issue, so a repeat of one it has already
+        # seen is captured silently and sends no email. Checking delivery with
+        # the plain URL twice therefore proves nothing.
+        if request.GET.get("new"):
+            from django.utils.crypto import get_random_string
+            raise RuntimeError(
+                f"Sentry alert-delivery check {get_random_string(8)} from "
+                f"/webhooks/cron/sentry-check/?new=1. Raised on purpose to open a "
+                f"new issue and see whether the notification arrives. Resolve it."
+            )
         raise RuntimeError(
             "Sentry reachability check from /webhooks/cron/sentry-check/. "
             "This exception is raised on purpose and can be resolved."
