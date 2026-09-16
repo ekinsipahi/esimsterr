@@ -177,6 +177,12 @@ class AssistantConversation(models.Model):
     ip = models.GenericIPAddressField(_("IP address"), null=True, blank=True)
     user_agent = models.CharField(_("user agent"), max_length=300, blank=True)
     escalated_at = models.DateTimeField(_("escalated"), null=True, blank=True)
+    # Whether the customer has already been told that nobody is on the other
+    # end. Once said, it must not be said again -- repeating it every poll would
+    # read as the chat breaking down. Also set when an operator releases the
+    # thread back to the AI, because a human did answer and the apology would be
+    # a lie.
+    timeout_notified = models.BooleanField(_("waiting notice sent"), default=False)
     created_at = models.DateTimeField(_("started"), auto_now_add=True)
     updated_at = models.DateTimeField(_("last activity"), auto_now=True, db_index=True)
 

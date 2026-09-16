@@ -491,3 +491,55 @@ def generate_reply(history, user_ctx=None) -> str:
         build_system_prompt(user_ctx, destination=destination_context(latest)),
         history,
     )
+
+
+# --- Flow-level classification ------------------------------------------------
+# Keywords catch what somebody says; they miss what somebody means. "Third time
+# this week" carries no keyword and is the most important message in the queue.
+# These labels are the ones the keyword table cannot produce, plus the shared
+# ones so the model can confirm rather than contradict it.
+FLOW_FLAGS = frozenset(INTENT_FLAGS) | {"bug", "purchase", "churn", "praise"}
+
+# What the flow pass is allowed to pull a human in for. Wider than the keyword
+# set on purpose: this pass only runs when the keywords found nothing, so these
+# are the cases that would otherwise be answered by a robot and left in the
+# queue -- somebody about to buy, somebody about to leave, something broken.
+FLOW_ESCALATE_FLAGS = ESCALATE_FLAGS | {"bug", "churn", "purchase"}
+
+_FLOW_INSTRUCTION = (
+    "You are labelling one customer's conversation with an eSIM shop's support chat. "
+    "Judge the whole exchange, not single words. Labels: "
+    + ", ".join(sorted(FLOW_FLAGS)) +
+    ". Use 'churn' when the customer sounds fed up or about to leave, 'purchase' when "
+    "they intend to buy or top up, 'bug' when something on our side is broken, "
+    "'feature' when they want something we may not offer, 'praise' when they are happy. "
+    'Several may apply. Reply with JSON only: {"intents": ["..."]}'
+)
+
+
+def classify_flow(history) -> set:
+    """Intent labels for the conversation as a whole. Empty set on any failure.
+
+    Costs one small call, so the caller only spends it where the cheap keyword
+    pass found nothing worth escalating -- the obvious cases are already handled
+    for free, and this is only worth paying for on the subtle ones.
+    """
+    if not history:
+        return set()
+    transcript = "\n".join(
+        f"{m.get('role', '')}: {m.get('content', '')}" for m in history[-8:]
+    )
+    raw = _call_anthropic(_FLOW_INSTRUCTION,
+                          [{"role": "user", "content": transcript}], max_tokens=60)
+    if not raw:
+        return set()
+    # Models wrap JSON in prose and fences often enough that parsing the whole
+    # string is the unreliable choice; take the object out of the middle.
+    start, end = raw.find("{"), raw.rfind("}")
+    if start < 0 or end <= start:
+        return set()
+    try:
+        data = json.loads(raw[start:end + 1])
+    except ValueError:
+        return set()
+    return {str(i) for i in (data.get("intents") or []) if i in FLOW_FLAGS}

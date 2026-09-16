@@ -1,0 +1,426 @@
+{% load i18n %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>{{ title }}</title>
+{% comment %}
+  The operator console. It deliberately does NOT extend admin/base.html: this is
+  a full-height, two-pane working tool, and the admin's header, breadcrumbs and
+  sidebar would only take space away from the thread.
+
+  Polling is the whole engineering problem here. This page sits open all day, so
+  it is written to make the quiet case free:
+
+  * every request carries the cursor it last saw, and the server answers
+    "unchanged" without reading a single message when nothing has moved;
+  * the thread asks only for messages newer than the last one on screen;
+  * requests chain with setTimeout instead of repeating on setInterval, so a
+    slow response delays the next poll rather than stacking another on top;
+  * a hidden tab polls not at all, and catches up the moment it comes back;
+  * errors back off to a minute rather than hammering a server that is already
+    having a bad time.
+
+  The chime is synthesised with WebAudio rather than shipped as an audio file:
+  no static asset to serve, and no missing-file silence. Browsers refuse to play
+  anything before a gesture, so it unlocks on the operator's first click, and it
+  only ever rings for a customer who has newly started waiting -- never for the
+  operator's own replies, and never on first load.
+{% endcomment %}
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#071a2e; --bg-2:#0b2a4a; --panel:#0a2339; --line:#16405f;
+    --text:#e7f1fa; --dim:#8fb0c9; --faint:#5a7f9c;
+    --blue:#35bdea; --gold:#dba93f; --rose:#f43f5e; --mint:#10b981; --violet:#a78bfa;
+  }
+  body{background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;
+       font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--blue)}
+  header{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid var(--line);flex-shrink:0;background:var(--bg-2)}
+  header h1{font-size:.95rem;font-weight:800;letter-spacing:.2px;white-space:nowrap}
+  header h1 span{color:var(--blue)}
+  .wait{font:700 .7rem/1 ui-monospace,monospace;background:rgba(244,63,94,.16);color:#fda4af;
+        border:1px solid rgba(244,63,94,.38);padding:5px 10px;border-radius:999px;animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  .spacer{margin-left:auto}
+  .note{font:.62rem/1 ui-monospace,monospace;color:var(--faint);white-space:nowrap}
+  .wrap{flex:1;display:flex;min-height:0}
+
+  /* ---- left: the queue ---- */
+  .list{width:326px;border-right:1px solid var(--line);overflow-y:auto;flex-shrink:0;background:var(--panel)}
+  .conv{padding:11px 14px;border-bottom:1px solid rgba(22,64,95,.55);cursor:pointer;border-left:3px solid transparent}
+  .conv:hover{background:rgba(53,189,234,.06)}
+  .conv.active{background:rgba(53,189,234,.11);border-left-color:var(--blue)}
+  .conv .u{display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;
+           overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .conv .l{font-size:.69rem;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
+  .conv .meta{display:flex;gap:4px;align-items:center;margin-top:6px;flex-wrap:wrap}
+  .conv .ago{margin-left:auto;font:.58rem/1 ui-monospace,monospace;color:var(--faint)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--rose);flex-shrink:0;box-shadow:0 0 9px var(--rose)}
+  .flag{font:700 .56rem/1.45 ui-monospace,monospace;padding:2px 6px;border-radius:5px;color:#04121f;text-transform:uppercase}
+
+  /* ---- right: the thread ---- */
+  .thread{flex:1;display:flex;flex-direction:column;min-width:0}
+  .thead{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);flex-shrink:0;background:var(--bg-2)}
+  .thead .who{flex:1;min-width:0;font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:transparent;color:var(--dim);border-radius:8px;
+       padding:6px 11px;font:700 .7rem/1.2 inherit;cursor:pointer;white-space:nowrap}
+  .btn:hover{border-color:var(--blue);color:var(--blue)}
+  .btn.warn:hover{border-color:var(--rose);color:#fda4af}
+  .btn.go{border-color:var(--gold);color:var(--gold)}
+  .btn.go:hover{background:var(--gold);color:#241a02}
+  .msgs{flex:1;overflow-y:auto;padding:18px 16px;display:flex;flex-direction:column;gap:10px}
+  .m{max-width:76%;padding:9px 13px;border-radius:13px;font-size:.83rem;line-height:1.55;
+     white-space:pre-wrap;overflow-wrap:anywhere}
+  .m.user{align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+  .m.assistant{align-self:flex-end;background:rgba(53,189,234,.10);border:1px solid rgba(53,189,234,.3)}
+  .m.owner{align-self:flex-end;background:rgba(219,169,63,.13);border:1px solid rgba(219,169,63,.38)}
+  .m .r{font:700 .53rem/1 ui-monospace,monospace;opacity:.65;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+  .m a{color:var(--blue);text-decoration:underline;overflow-wrap:anywhere}
+  .composer{display:flex;gap:9px;padding:12px 16px;border-top:1px solid var(--line);flex-shrink:0;align-items:flex-end;background:var(--bg-2)}
+  .composer textarea{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:11px;color:var(--text);
+        font:.85rem/1.45 inherit;padding:10px 13px;outline:none;resize:none;max-height:170px;overflow-y:auto}
+  .composer textarea:focus{border-color:var(--blue)}
+  .composer button{border:none;background:var(--blue);color:#04121f;border-radius:11px;padding:0 20px;height:42px;
+        font-weight:800;font-size:.95rem;cursor:pointer;flex-shrink:0}
+  .empty{margin:auto;color:var(--faint);font-size:.85rem;text-align:center;padding:30px}
+  .ai-on{font:700 .62rem/1 ui-monospace,monospace;color:var(--blue)}
+  .ai-off{font:700 .62rem/1 ui-monospace,monospace;color:var(--gold)}
+  .mob-back{display:none;border:none;background:transparent;color:var(--blue);font-size:1.2rem;line-height:1;padding:4px 6px;cursor:pointer;flex-shrink:0}
+
+  @media (max-width:760px){
+    header{padding:9px 12px;gap:8px}
+    header h1{font-size:.85rem}
+    .note{display:none}
+    .list{width:100%;border-right:none}
+    body.on-thread .list{display:none}
+    .thread{display:none}
+    body.on-thread .thread{display:flex}
+    .mob-back{display:inline-flex}
+    .thead{padding:8px 11px}
+    .msgs{padding:13px 12px}
+    .m{max-width:88%;font-size:.86rem}
+    .composer{padding:10px 12px}
+  }
+</style>
+</head>
+<body>
+{% csrf_token %}
+<header>
+  <h1>💬 eSIM<span>sterr</span> · {{ title }}</h1>
+  <span class="wait" id="waitBadge" hidden></span>
+  <span class="spacer"></span>
+  <button class="btn" id="muteBtn" onclick="toggleMute()" title="New-message sound">🔔</button>
+  <span class="note" id="pollNote">live</span>
+</header>
+
+<div class="wrap">
+  <div class="list" id="list"><div class="empty">Loading…</div></div>
+  <div class="thread" id="thread">
+    <div class="empty" id="threadEmpty">Pick a conversation on the left.</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+var CSRF = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+/* Intent colours. The first group is what the keyword pass produces, the second
+   what the LLM flow-classifier can add. Anything unrecognised still renders, in
+   grey, rather than disappearing -- a flag nobody styled is still information. */
+var FLAG_COLOR = {
+  connection:"#f87171", install:"#fb923c", speed:"#f59e0b",
+  billing:"#34d399", purchase:"#22c55e", pricing:"#38bdf8",
+  refund:"#fb7185", urgent:"#ef4444", churn:"#e879f9",
+  human:"#a78bfa", feature:"#c4b5fd", bug:"#f87171", praise:"#facc15"
+};
+
+var POLL_LIST_MS = 5000, POLL_THREAD_MS = 4000, POLL_MAX_MS = 60000;
+var currentId = null, listCursor = "", threadCursor = "", lastMsgAt = "";
+var listTimer = null, threadTimer = null;
+var listBackoff = POLL_LIST_MS, threadBackoff = POLL_THREAD_MS;
+var threadAbort = null, waiting = 0;
+
+/* ---------- chime ---------- */
+var audioCtx = null;
+function ctx(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+  }catch(e){}
+  return audioCtx;
+}
+function muted(){ try{ return localStorage.getItem("inboxMute") === "1"; }catch(e){ return false; } }
+function chime(){
+  if(muted()) return;
+  var c = ctx();
+  if(!c || c.state !== "running") return;      /* no gesture yet: stay silent */
+  var t = c.currentTime, base = 783.99;        /* G5, a warm bell rather than an alarm */
+  var out = c.createGain(); out.gain.value = 0.55;
+  var lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 8000;
+  out.connect(lp); lp.connect(c.destination);
+  function bell(freq, dur, gain){
+    var o = c.createOscillator(), g = c.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + 0.05);
+  }
+  bell(base, 0.95, 0.32); bell(base * 2, 0.7, 0.10); bell(base * 3, 0.45, 0.045);
+}
+["click","keydown","touchstart"].forEach(function(ev){
+  window.addEventListener(ev, function(){ ctx(); }, {once:true});
+});
+function paintMute(){ document.getElementById("muteBtn").textContent = muted() ? "🔕" : "🔔"; }
+function toggleMute(){
+  try{ localStorage.setItem("inboxMute", muted() ? "0" : "1"); }catch(e){}
+  paintMute();
+  if(!muted()){ ctx(); chime(); }
+}
+
+/* Ring only when a conversation that was NOT waiting starts waiting. The first
+   poll just records the baseline, or every reload would sound like an alarm. */
+var waitingIds = null;
+function maybeChime(convs){
+  var ids = {}, fresh = false, i;
+  for(i = 0; i < convs.length; i++) if(convs[i].waiting) ids[convs[i].id] = 1;
+  if(waitingIds){
+    for(var id in ids) if(!waitingIds[id]){ fresh = true; break; }
+  }
+  waitingIds = ids;
+  if(fresh) chime();
+}
+
+/* ---------- rendering ---------- */
+function esc(s){ var d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+
+/* Escape first, then decorate. Doing it the other way round is how a customer
+   message becomes script on the operator's screen -- and the operator's screen
+   is a logged-in staff session. Trailing punctuation is trimmed off the href so
+   "see https://esimsterr.com/faq." does not link the full stop. */
+function fmt(s){
+  return esc(s)
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(https?:\/\/[^\s<]+)/g, function(m){
+      var url = m, tail = "", trail = url.match(/[.,!?;:)\]]+$/);
+      if(trail){ tail = trail[0]; url = url.slice(0, -tail.length); }
+      return '<a href="' + url + '" target="_blank" rel="noopener noreferrer nofollow">' + url + "</a>" + tail;
+    });
+}
+function flagsHtml(flags){
+  return (flags || []).map(function(f){
+    return '<span class="flag" style="background:' + (FLAG_COLOR[f] || "#7f97ad") + '">' + esc(f) + "</span>";
+  }).join("");
+}
+function ago(iso){
+  try{
+    var s = (Date.now() - new Date(iso)) / 1000;
+    if(s < 60) return "now";
+    if(s < 3600) return Math.floor(s / 60) + "m";
+    if(s < 86400) return Math.floor(s / 3600) + "h";
+    return Math.floor(s / 86400) + "d";
+  }catch(e){ return ""; }
+}
+function roleIcon(role){ return role === "user" ? "👤" : (role === "owner" ? "🧑‍💼" : "🤖"); }
+
+function paintWaiting(n){
+  waiting = n;
+  var badge = document.getElementById("waitBadge");
+  badge.hidden = !n;
+  badge.textContent = n + (n === 1 ? " waiting" : " waiting");
+  document.title = (n ? "(" + n + ") " : "") + "{{ title }}";
+}
+
+function paintList(convs){
+  document.getElementById("list").innerHTML = convs.length ? convs.map(function(c){
+    return '<div class="conv' + (c.id === currentId ? " active" : "") + '" data-id="' + c.id + '">' +
+             '<div class="u">' + (c.waiting ? '<span class="dot"></span>' : "") + esc(c.user) + "</div>" +
+             '<div class="l">' + roleIcon(c.last_role) + " " + esc(c.last) + "</div>" +
+             '<div class="meta">' + flagsHtml(c.flags) +
+               (c.owner_joined ? '<span class="flag" style="background:#dba93f">you</span>' : "") +
+               '<span class="ago">' + ago(c.updated_at) + "</span></div>" +
+           "</div>";
+  }).join("") : '<div class="empty">No open conversations.</div>';
+}
+document.getElementById("list").addEventListener("click", function(e){
+  var row = e.target.closest(".conv");
+  if(row) openConv(row.dataset.id);
+});
+
+function aiState(t){
+  return t.owner_joined
+    ? '<span class="ai-off">You are answering — the AI is silent</span>'
+    : '<span class="ai-on">The AI is answering</span>';
+}
+function controls(t){
+  return (t.owner_joined
+            ? '<button class="btn" onclick="act(\'release\')">Hand back to AI</button>'
+            : '<button class="btn go" onclick="act(\'take\')">Take over</button>') +
+         '<button class="btn warn" onclick="act(\'close\')">Close</button>';
+}
+
+/* The shell is built once per conversation. A poll must never rebuild it, or it
+   would wipe whatever the operator is halfway through typing. */
+function paintShell(t){
+  document.getElementById("thread").innerHTML =
+    '<div class="thead">' +
+      '<button class="mob-back" onclick="backToList()" aria-label="Back">←</button>' +
+      '<div class="who">' + esc(t.user) + flagsHtml(t.flags) + "</div>" +
+      '<div id="aiState" data-oj="' + t.owner_joined + '">' + aiState(t) + "</div>" +
+      '<div id="ctrls" style="display:flex;gap:7px">' + controls(t) + "</div>" +
+    "</div>" +
+    '<div class="msgs" id="msgs"></div>' +
+    '<div class="composer">' +
+      '<textarea id="reply" rows="1" placeholder="Write a reply…  (Enter sends, Shift+Enter is a new line)" ' +
+        'onkeydown="onKey(event)" oninput="grow(this)"></textarea>' +
+      '<button onclick="send()">➤</button>' +
+    "</div>";
+  var box = document.getElementById("reply");
+  if(box) box.focus();
+}
+function paintHead(t){
+  var el = document.getElementById("aiState");
+  if(el && el.dataset.oj !== String(t.owner_joined)){
+    el.dataset.oj = String(t.owner_joined);
+    el.innerHTML = aiState(t);
+    document.getElementById("ctrls").innerHTML = controls(t);
+  }
+}
+function appendMsgs(list){
+  var box = document.getElementById("msgs");
+  if(!box || !list.length) return;
+  var stuck = box.scrollHeight - box.scrollTop - box.clientHeight < 70;
+  box.insertAdjacentHTML("beforeend", list.map(function(m){
+    var who = m.role === "user" ? "customer" : (m.role === "owner" ? "you" : "ai");
+    return '<div class="m ' + m.role + '"><div class="r">' + who + "</div>" + fmt(m.content) + "</div>";
+  }).join(""));
+  lastMsgAt = list[list.length - 1].created_at;
+  /* Only follow the conversation down if the operator was already at the
+     bottom. Yanking the view while they are reading history is maddening. */
+  if(stuck) box.scrollTop = box.scrollHeight;
+}
+
+/* ---------- polling ---------- */
+function hidden(){ return document.visibilityState === "hidden"; }
+
+function pollList(){
+  clearTimeout(listTimer);
+  if(hidden()){ listTimer = setTimeout(pollList, POLL_LIST_MS); return; }
+  fetch("data/" + (listCursor ? "?v=" + encodeURIComponent(listCursor) : ""), {credentials:"same-origin"})
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(j){
+      listBackoff = POLL_LIST_MS;
+      document.getElementById("pollNote").textContent = "live";
+      if(!j.unchanged){
+        listCursor = j.v;
+        maybeChime(j.conversations);
+        paintList(j.conversations);
+        paintWaiting(j.waiting);
+      }
+    })
+    .catch(function(){
+      listBackoff = Math.min(listBackoff * 2, POLL_MAX_MS);
+      document.getElementById("pollNote").textContent = "reconnecting…";
+    })
+    .then(function(){ listTimer = setTimeout(pollList, listBackoff); });
+}
+
+function pollThread(){
+  clearTimeout(threadTimer);
+  if(!currentId) return;
+  if(hidden()){ threadTimer = setTimeout(pollThread, POLL_THREAD_MS); return; }
+  var id = currentId;
+  var url = "data/?conv=" + encodeURIComponent(id) +
+            (threadCursor ? "&v=" + encodeURIComponent(threadCursor) : "") +
+            (lastMsgAt ? "&after=" + encodeURIComponent(lastMsgAt) : "");
+  if(threadAbort) threadAbort.abort();
+  threadAbort = new AbortController();
+  fetch(url, {credentials:"same-origin", signal:threadAbort.signal})
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(j){
+      threadBackoff = POLL_THREAD_MS;
+      if(id !== currentId) return;           /* operator moved on mid-flight */
+      if(j.unchanged) return;
+      threadCursor = j.v;
+      if(!j.incremental){ paintShell(j); lastMsgAt = ""; }
+      else paintHead(j);
+      appendMsgs(j.messages || []);
+    })
+    .catch(function(e){
+      if(e && e.name === "AbortError") return;
+      threadBackoff = Math.min(threadBackoff * 2, POLL_MAX_MS);
+    })
+    .then(function(){
+      if(id === currentId) threadTimer = setTimeout(pollThread, threadBackoff);
+    });
+}
+
+document.addEventListener("visibilitychange", function(){
+  /* Coming back from another tab: catch up immediately rather than waiting out
+     the interval that was running while nobody was looking. */
+  if(!hidden()){ pollList(); if(currentId) pollThread(); }
+});
+
+/* ---------- actions ---------- */
+function openConv(id){
+  document.body.classList.add("on-thread");
+  if(id === currentId) return;               /* keep any half-typed reply */
+  currentId = id; threadCursor = ""; lastMsgAt = ""; threadBackoff = POLL_THREAD_MS;
+  markActive(id);
+  document.getElementById("thread").innerHTML = '<div class="empty">Loading…</div>';
+  pollThread();
+}
+/* Move the selection highlight in place. Re-rendering the whole queue just to
+   change one border would throw away the operator's scroll position in it. */
+function markActive(id){
+  Array.prototype.forEach.call(document.querySelectorAll(".conv"), function(el){
+    el.classList.toggle("active", el.dataset.id === id);
+  });
+}
+function backToList(){ document.body.classList.remove("on-thread"); }
+
+function post(body){
+  return fetch("reply/", {
+    method:"POST", credentials:"same-origin",
+    headers:{"Content-Type":"application/json", "X-CSRFToken":CSRF},
+    body:JSON.stringify(body)
+  }).then(function(r){ return r.json(); });
+}
+function onKey(e){ if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); } }
+function grow(el){ el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 170) + "px"; }
+
+function send(){
+  var box = document.getElementById("reply");
+  if(!box || !currentId) return;
+  var text = (box.value || "").trim();
+  if(!text) return;
+  box.value = ""; box.style.height = "auto";
+  post({conv:currentId, message:text}).then(function(j){
+    /* Show it straight away rather than waiting for the next poll to bring it
+       back -- the delay reads as "did that send?". */
+    if(j && j.message){ appendMsgs([j.message]); threadCursor = ""; }
+    listCursor = "";
+    pollList(); pollThread();
+  }).catch(function(){
+    box.value = text; grow(box);            /* never silently eat a typed reply */
+  });
+}
+function act(action){
+  if(!currentId) return;
+  if(action === "close" && !confirm("Close this conversation? The customer's next message starts a new one.")) return;
+  post({conv:currentId, action:action}).then(function(){
+    threadCursor = ""; listCursor = "";
+    if(action === "close"){ currentId = null; backToList();
+      document.getElementById("thread").innerHTML = '<div class="empty">Pick a conversation on the left.</div>'; }
+    pollList(); pollThread();
+  });
+}
+
+paintMute();
+pollList();
+</script>
+</body>
+</html>

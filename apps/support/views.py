@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 
 from django.conf import settings
 from django.contrib import messages as flash
@@ -241,6 +242,90 @@ FALLBACK_REPLY = _lazy(
     "open a ticket on the support page and we will answer by email."
 )
 
+# How long a customer who asked for a person waits before we admit that nobody
+# has picked it up. Long enough for an operator to finish the reply they were
+# already writing; short enough that the silence does not read as being ignored.
+HANDOFF_GRACE_SECONDS = 300
+
+HANDOFF_REPLY = _lazy(
+    "I am putting you through to a person now. If nobody picks this up within a few "
+    "minutes I will say so here, and the team will follow up by email — keep typing in "
+    "the meantime and they will see everything when they arrive."
+)
+WAITING_REPLY = _lazy(
+    "Nobody is free in the chat right now, but your messages are with the team and they "
+    "will reply by email. If it is about an eSIM that is not working, the support page "
+    "has the fastest checks to try while you wait."
+)
+
+
+def _classify_flow_bg(conv_id, who: str, history: list) -> None:
+    """Second-opinion intent pass, off the request path.
+
+    The customer is waiting on their reply, so this cannot run before it: the
+    label is for the operator's queue, not for the answer. Running it after the
+    response has gone out costs the customer nothing and still colours the row
+    within a second or two.
+    """
+    def _run():
+        from django.db import connections
+        try:
+            found = brain.classify_flow(history)
+            if not found:
+                return
+            conv = AssistantConversation.objects.filter(pk=conv_id).first()
+            if conv is None:
+                return
+            before = set(conv.flag_list)
+            conv.add_flags(found)
+            fresh = (found & brain.FLOW_ESCALATE_FLAGS) - before
+            fields = ["intent_flags", "updated_at"]
+            if fresh and conv.status == AssistantConversation.Status.OPEN:
+                conv.status = AssistantConversation.Status.ESCALATED
+                conv.escalated_at = timezone.now()
+                fields += ["status", "escalated_at"]
+            conv.save(update_fields=fields)
+            if fresh:
+                _notify_escalation(conv, who, (history[-1] or {}).get("content", ""),
+                                   sorted(fresh))
+        except Exception:  # noqa: BLE001 - a label is never worth breaking a chat
+            log.warning("[ASSISTANT] flow classification failed", exc_info=True)
+        finally:
+            connections.close_all()
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
+def _notify_escalation(conv, who: str, text: str, flags: list) -> None:
+    for to in settings.ADMIN_NOTIFY_EMAILS:
+        send_email_bg(
+            to, f"[{settings.SITE_NAME}] Chat escalated: {', '.join(flags)}",
+            "assistant_escalation",
+            {"conversation": conv, "who": who, "message": text, "flags": flags,
+             "admin_url": f"{settings.SITE_URL}/admin/assistant/"},
+        )
+
+
+def _maybe_waiting_notice(conv) -> None:
+    """Tell a customer, once, that their request for a human is still unanswered.
+
+    It fires from the widget's own poll rather than from a scheduled job: the
+    only person who needs to hear it is the one sitting there with the chat
+    open, and they are the one making the request.
+    """
+    if conv is None or conv.owner_joined or conv.timeout_notified:
+        return
+    if conv.status != AssistantConversation.Status.ESCALATED or not conv.escalated_at:
+        return
+    if (timezone.now() - conv.escalated_at).total_seconds() < HANDOFF_GRACE_SECONDS:
+        return
+    AssistantMessage.objects.create(
+        conversation=conv, role=AssistantMessage.Role.ASSISTANT, content=str(WAITING_REPLY),
+    )
+    conv.timeout_notified = True
+    conv.user_unread = (conv.user_unread or 0) + 1
+    conv.save(update_fields=["timeout_notified", "user_unread", "updated_at"])
+
 
 def _active_conversation(request, create=False):
     conv = (AssistantConversation.objects
@@ -330,6 +415,7 @@ def assistant_api(request):
 
     if request.method == "GET":
         conv = _active_conversation(request)
+        _maybe_waiting_notice(conv)
         return JsonResponse(_serialize(conv, mark_seen=request.GET.get("seen") == "1"))
     if request.method != "POST":
         return JsonResponse({"error": "method_not_allowed"}, status=405)
@@ -374,18 +460,22 @@ def assistant_api(request):
                              "escalated_at", "updated_at"])
 
     if newly_escalated:
-        hit = sorted(flags & brain.ESCALATE_FLAGS)
-        for to in settings.ADMIN_NOTIFY_EMAILS:
-            send_email_bg(
-                to, f"[{settings.SITE_NAME}] Chat escalated: {', '.join(hit)}",
-                "assistant_escalation",
-                {"conversation": conv, "who": request.user.email, "message": text,
-                 "flags": hit,
-                 "admin_url": f"{settings.SITE_URL}/admin/support/assistantconversation/{conv.id}/change/"},
-            )
+        _notify_escalation(conv, request.user.email, text,
+                           sorted(flags & brain.ESCALATE_FLAGS))
 
     # Operator takeover: the AI goes quiet and a human writes the next reply.
     if conv.owner_joined:
+        return JsonResponse(_serialize(conv, mark_seen=True))
+
+    # Somebody asking for a human does not need a language model to be told they
+    # are being put through -- the escalation above has already done the part
+    # that matters. Answering from a constant is faster, cheaper, and cannot
+    # wander off into promising a callback time nobody agreed to.
+    if "human" in flags:
+        AssistantMessage.objects.create(
+            conversation=conv, role=AssistantMessage.Role.ASSISTANT, content=str(HANDOFF_REPLY),
+        )
+        conv.save(update_fields=["updated_at"])
         return JsonResponse(_serialize(conv, mark_seen=True))
 
     history = [
@@ -399,4 +489,9 @@ def assistant_api(request):
     )
     # Only the timestamp, so the admin list sorts by real activity; see above.
     conv.save(update_fields=["updated_at"])
+    # Only when the keywords found nothing urgent. Paying for a second opinion
+    # on a message that already said "refund" would buy the same answer twice.
+    if not (flags & brain.ESCALATE_FLAGS):
+        _classify_flow_bg(conv.pk, request.user.email,
+                          history + [{"role": "assistant", "content": reply}])
     return JsonResponse(_serialize(conv, mark_seen=True))

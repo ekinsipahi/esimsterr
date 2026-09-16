@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.urls import include, path
 from django.views.generic import TemplateView
 
+from apps.support import admin_views as support_admin
 from core.sitemaps import SITEMAPS
 
 
@@ -18,6 +19,13 @@ def health(_request):
 # /webhooks/stripe/ must never be redirected to /tr/webhooks/stripe/, and the
 # mobile app's API paths must be stable regardless of the caller's Accept-Language.
 urlpatterns = [
+    # Before admin.site.urls on purpose: the admin ends its URLconf with a
+    # catch-all, so anything mounted under admin/ after it is never reached.
+    path("admin/assistant/", support_admin.assistant_inbox, name="assistant_inbox"),
+    path("admin/assistant/data/", support_admin.assistant_inbox_data,
+         name="assistant_inbox_data"),
+    path("admin/assistant/reply/", support_admin.assistant_reply,
+         name="assistant_inbox_reply"),
     path("admin/", admin.site.urls),
     path("health/", health, name="health"),
     path("sitemap.xml", sitemap_view, {"sitemaps": SITEMAPS},
