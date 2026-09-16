@@ -125,15 +125,39 @@ if env("RENDER_EXTERNAL_HOSTNAME"):
 
 # ---- Sentry ------------------------------------------------------------------
 SENTRY_DSN = env("SENTRY_DSN", "")
+SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", "development" if DEBUG else "production")
 if SENTRY_DSN:
-    import sentry_sdk
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+        from sentry_sdk.integrations.logging import LoggingIntegration
 
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        environment="development" if DEBUG else "production",
-        send_default_pii=True,
-        traces_sample_rate=float(env("SENTRY_TRACES_SAMPLE_RATE", "0.2")),
-    )
+        from core.sentry_scrub import scrub as _sentry_scrub
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            environment=SENTRY_ENVIRONMENT,
+            integrations=[
+                DjangoIntegration(),
+                # A swallowed failure is the kind that goes unnoticed for days,
+                # so anything logged at ERROR becomes an event. WARNING stays a
+                # breadcrumb: this codebase logs warnings for ordinary
+                # conditions and they would drown the real ones.
+                LoggingIntegration(level=None, event_level="ERROR"),
+            ],
+            traces_sample_rate=float(env("SENTRY_TRACES_SAMPLE_RATE", "0.2")),
+            # The sub-processor page tells customers Sentry gets technical error
+            # data "with user identifiers stripped". send_default_pii=True sent
+            # their email and IP, which made that sentence untrue.
+            send_default_pii=False,
+            max_request_body_size="never",
+            # Sentry's own filter clears Authorization and Cookie and leaves the
+            # URL alone; our cron token and verification links live there.
+            before_send=_sentry_scrub,
+            before_send_transaction=_sentry_scrub,
+        )
+    except Exception:  # noqa: BLE001 — monitoring must never break the app
+        pass
 
 # ---- Applications ------------------------------------------------------------
 INSTALLED_APPS = [
