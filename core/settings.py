@@ -191,7 +191,15 @@ INSTALLED_APPS = [
     "apps.inbox",
 ]
 
+# Which header carries the caller's address. Cloudflare sits in front of this
+# site and overwrites CF-Connecting-IP, so it cannot be forged from outside;
+# X-Forwarded-For can be, and used to be what every per-IP limit keyed on.
+REAL_IP_HEADER = "HTTP_" + env("REAL_IP_HEADER", "CF-Connecting-IP").upper().replace("-", "_")
+
 MIDDLEWARE = [
+    # First: everything after this point -- rate limits, the audit trail on an
+    # order, Django's own logging -- reads REMOTE_ADDR and must read the real one.
+    "core.middleware.RealClientIPMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "core.middleware.DomainRedirectMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -349,6 +357,24 @@ REST_FRAMEWORK = {
         "device_lookup": env("THROTTLE_DEVICE", "60/hour"),
     },
 }
+# Shared across processes, because gunicorn runs more than one of them.
+# The default local-memory cache is per-worker, which quietly broke two things:
+# a Play Integrity nonce issued by one worker could not be found by the other,
+# and every rate limit was really "N times the limit" spread over N workers,
+# reset on each deploy. Postgres is already here and the volume is tiny; a
+# round-trip per limited request is a fair price for limits that hold.
+if "sqlite" in DATABASES["default"]["ENGINE"]:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+            "LOCATION": "django_cache",
+            "TIMEOUT": 300,
+            "OPTIONS": {"MAX_ENTRIES": 20000, "CULL_FREQUENCY": 4},
+        }
+    }
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(env("JWT_ACCESS_MIN", "60"))),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=int(env("JWT_REFRESH_DAYS", "60"))),

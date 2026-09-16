@@ -6,6 +6,10 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 python manage.py migrate
 
+# The cache lives in Postgres so the two gunicorn workers share it. Creating
+# the table is idempotent and has to happen before anything rate-limits.
+python manage.py createcachetable
+
 # Fail the build if a legal document's text changed without its version being
 # bumped. The acceptance ledger records version + content hash together; if the
 # two can drift, every record already written becomes a claim about text the
