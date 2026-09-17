@@ -46,7 +46,7 @@
       <div class="chips">
         {% for r in regions %}
         <a class="chip" href="{{ r.get_absolute_url }}">
-          {% icon "layers" size=15 %}{{ r.name }}
+          {% region_map r.slug size=16 %}{{ r.name }}
           {% if r.min_price_usd %}&middot; {% blocktrans with p=r.min_price_usd|usd %}from {{ p }}{% endblocktrans %}{% endif %}
         </a>
         {% endfor %}

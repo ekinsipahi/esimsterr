@@ -9,7 +9,7 @@
     <div class="grid g2" style="gap:44px;align-items:start">
       <div>
         <div class="row" style="gap:14px">
-          <span class="icon-tile v-cyan">{% icon "layers" size=26 %}</span>
+          <span class="icon-tile v-cyan">{% region_map region.slug size=30 %}</span>
           <div>
             <h1 style="font-size:clamp(1.9rem,4vw,2.8rem)">{% blocktrans with name=region.name %}{{ name }} eSIM{% endblocktrans %}</h1>
             <div class="row small muted mt-1" style="gap:14px">
@@ -93,7 +93,7 @@
   <div class="shell">
     <h3 class="mb-2">{% trans "Other regions" %}</h3>
     <div class="chips">
-      {% for r in other_regions %}<a class="chip" href="{{ r.get_absolute_url }}">{% icon "layers" size=15 %}{{ r.name }}</a>{% endfor %}
+      {% for r in other_regions %}<a class="chip" href="{{ r.get_absolute_url }}">{% region_map r.slug size=16 %}{{ r.name }}</a>{% endfor %}
     </div>
   </div>
 </section>

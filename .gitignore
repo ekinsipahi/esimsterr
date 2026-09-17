@@ -19,3 +19,6 @@ docs/email-dns.md
 
 # Generated for pasting into Render. Same secrets as .env.
 .env.render
+
+# Map geometry fetched by tools/build_region_maps.py; regenerated on demand.
+.cache/
