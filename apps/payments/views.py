@@ -202,19 +202,36 @@ def cron(request, task):
         # a monitoring pipeline that is never exercised is a monitoring pipeline
         # that is quietly broken.
         #
-        # ?new=1 gives the message a unique suffix, which puts it in a brand new
-        # issue group. That distinction is the whole point when what you are
-        # testing is the alert rather than the capture: Sentry's default rule
-        # fires on a *new* high-priority issue, so a repeat of one it has already
-        # seen is captured silently and sends no email. Checking delivery with
-        # the plain URL twice therefore proves nothing.
+        # ?new=1 opens a genuinely NEW issue, which is the only way to test the
+        # alert rather than the capture: the default rule fires on a *new*
+        # high-priority issue, so another occurrence of one Sentry has already
+        # seen is recorded in silence and mails nobody.
+        #
+        # A unique message is not enough, and believing it was cost an
+        # afternoon: Sentry groups by stack trace, so three runs of this view
+        # with three different messages landed in one issue first seen days
+        # earlier, and the rule was right not to fire. The fingerprint is what
+        # decides the group, so set it explicitly.
         if request.GET.get("new"):
+            import sentry_sdk
             from django.utils.crypto import get_random_string
-            raise RuntimeError(
-                f"Sentry alert-delivery check {get_random_string(8)} from "
-                f"/webhooks/cron/sentry-check/?new=1. Raised on purpose to open a "
-                f"new issue and see whether the notification arrives. Resolve it."
-            )
+
+            nonce = get_random_string(8)
+            with sentry_sdk.new_scope() as scope:
+                scope.fingerprint = ["sentry-alert-delivery-check", nonce]
+                try:
+                    raise RuntimeError(
+                        f"Sentry alert-delivery check {nonce}. Raised on purpose to "
+                        f"open a new issue and see whether the notification arrives. "
+                        f"Safe to resolve."
+                    )
+                except RuntimeError:
+                    event_id = sentry_sdk.capture_exception()
+            # Captured rather than raised: a 200 carrying the nonce tells the
+            # caller which issue to go and look for.
+            return JsonResponse({"task": task, "sent": True,
+                                 "nonce": nonce, "event_id": event_id})
+
         raise RuntimeError(
             "Sentry reachability check from /webhooks/cron/sentry-check/. "
             "This exception is raised on purpose and can be resolved."
