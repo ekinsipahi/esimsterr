@@ -32,7 +32,7 @@
           <span><b>{{ plan.per_day_usd|usd }}</b> {% trans "/ day" %}</span>
         </div>
         <a class="btn btn-ghost btn-block" href="{% url 'checkout' plan.pk %}">{% trans "Buy now" %}</a>
-        {% if subscriptions_enabled and plan.is_unlimited %}
+        {% if plan.pk in subscription_ids %}
         <a class="small link center" href="{% url 'subscribe' plan.pk %}" style="display:block">{% trans "Subscribe and save" %}</a>
         {% endif %}
       </div>

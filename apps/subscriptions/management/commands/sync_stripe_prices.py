@@ -20,7 +20,7 @@ import time
 
 from django.core.management.base import BaseCommand
 
-from apps.catalog.models import Plan
+from apps.subscriptions.catalogue import subscribable
 from apps.subscriptions import stripe_sub
 
 
@@ -37,12 +37,14 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("Stripe is not configured; nothing to do."))
             return
 
-        plans = Plan.objects.live().filter(is_unlimited=True).select_related("country", "region")
-        plans = plans.order_by("country__name", "region__name", "days")
+        # The menu, not every unlimited plan. It used to be the latter, which
+        # meant 264 Stripe prices for a product nobody would subscribe to in
+        # 245 of those cases.
+        plans = subscribable()
         if opts["limit"]:
             plans = plans[:opts["limit"]]
 
-        total = plans.count() if hasattr(plans, "count") else len(plans)
+        total = len(plans)
         self.stdout.write(f"{total} subscribable plan(s).")
         if opts["dry_run"]:
             for plan in plans[:20]:

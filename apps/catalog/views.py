@@ -182,10 +182,18 @@ def unlimited(request):
         Country.objects.filter(is_active=True, has_unlimited=True)
         .order_by("-is_popular", "name")
     )
+    # The subscription menu is a handful of plans, not every unlimited one; see
+    # apps.subscriptions.catalogue. Passing the ids rather than a flag keeps the
+    # "Subscribe and save" link off the 250 plans that would 404 on it.
+    from apps.subscriptions.catalogue import subscribable
+
+    menu = subscribable() if settings.SUBSCRIPTIONS_ENABLED else []
     ctx = {
         "plans": plans[:60],
         "countries": countries,
         "regions": Region.objects.filter(is_active=True, has_unlimited=True),
+        "subscription_menu": menu,
+        "subscription_ids": {p.pk for p in menu},
         "seo_title": f"Unlimited data eSIM — truly unlimited travel plans | {settings.SITE_NAME}",
         "seo_description": (
             "Unlimited data eSIMs for 7, 15 or 30 days in 100+ countries. No throttling games, "

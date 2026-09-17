@@ -22,6 +22,7 @@ from core.ratelimit import rate_limit
 
 from . import stripe_sub
 from .models import Subscription
+from apps.subscriptions.catalogue import is_subscribable
 from .services import resolve_esim, saving_pct, subscription_price
 
 log = logging.getLogger(__name__)
@@ -79,9 +80,12 @@ def subscribe(request, plan_id):
     if not _enabled():
         raise Http404
     plan = get_object_or_404(
-        Plan.objects.live().select_related("country", "region"),
-        pk=plan_id, is_unlimited=True,
+        Plan.objects.live().select_related("country", "region"), pk=plan_id,
     )
+    # One definition of what may be subscribed to, checked here as well as in
+    # the listing: a plan id in a URL is not a menu.
+    if not is_subscribable(plan):
+        raise Http404
 
     price = subscription_price(plan)
     error = ""

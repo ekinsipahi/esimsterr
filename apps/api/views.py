@@ -318,6 +318,58 @@ def config(request):
     })
 
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def subscription_plans(request):
+    """The subscription menu.
+
+    Short on purpose: see apps.subscriptions.catalogue. The app shows these and
+    nothing else, so a customer is never offered a weekly renewal for a country
+    they will have left by the second charge.
+
+    `price_per_month` is here rather than computed on the device because it is
+    the number the two kinds of plan are compared on -- $29.99 a month against
+    $4.93 a month -- and a rounding difference between the app and the checkout
+    it opens would be the kind of discrepancy nobody forgives in a price.
+    """
+    from apps.subscriptions.catalogue import subscribable
+    from apps.subscriptions.services import saving_pct, stripe_interval, subscription_price
+
+    if not settings.SUBSCRIPTIONS_ENABLED:
+        return Response([])
+
+    rows = []
+    for plan in subscribable():
+        price = subscription_price(plan)
+        interval = stripe_interval(plan.days)
+        months = Decimal(str(plan.days or 30)) / Decimal("30")
+        target = plan.region or plan.country
+        rows.append({
+            "plan_id": plan.pk,
+            "title": plan.title,
+            "target_name": getattr(target, "name", ""),
+            "region_slug": getattr(plan.region, "slug", ""),
+            "data_label": plan.data_label,
+            "is_unlimited": plan.is_unlimited,
+            "days": plan.days,
+            # "month" or "year" -- what the customer is agreeing to, in the word
+            # Stripe will also print on their statement.
+            "interval": interval["interval"],
+            "price": f"{price:.2f}",
+            "price_per_month": f"{(price / months).quantize(Decimal('0.01')):.2f}",
+            "one_off_price": f"{Decimal(str(plan.price)):.2f}",
+            "saving_pct": saving_pct(plan),
+            "country_count": getattr(target, "country_count", None) or 0,
+            # Subscriptions are set up on the website, in the system browser,
+            # exactly as buying credit is: the app never collects a recurring
+            # mandate itself.
+            "subscribe_url": request.build_absolute_uri(
+                reverse("subscribe", kwargs={"plan_id": plan.pk})),
+            "open_in": "external_browser",
+        })
+    return Response(rows)
+
+
 # ---- legal ------------------------------------------------------------------
 @api_view(["GET"])
 @permission_classes([AllowAny])

@@ -74,7 +74,17 @@ def _charm_down(price: Decimal) -> Decimal:
 
 
 def subscription_price(plan) -> Decimal:
-    """Per-cycle price: the one-off price less the subscription discount.
+    """Per-cycle price.
+
+    A plan on the subscription menu has a price we chose and wrote down; see
+    apps.subscriptions.catalogue for why these are chosen rather than computed.
+    Anything else falls back to the one-off price less the discount, which is
+    what every plan used before the menu existed and what a plan reaching this
+    function by another route should still get.
+
+    Original docstring follows.
+
+    Per-cycle price: the one-off price less the subscription discount.
 
     The discount is the whole reason to subscribe, so it is never merely
     cosmetic — it is the number Stripe charges. Two rails on the rounding: the
@@ -82,6 +92,12 @@ def subscription_price(plan) -> Decimal:
     it must stay above wholesale plus the minimum margin (otherwise every
     renewal loses money, forever, unattended).
     """
+    from apps.subscriptions.catalogue import fixed_price
+
+    agreed = fixed_price(plan)
+    if agreed is not None:
+        return agreed
+
     one_off = Decimal(str(plan.price))
     factor = (Decimal("100") - discount_pct()) / Decimal("100")
     target = (one_off * factor).quantize(CENT, rounding=ROUND_HALF_UP)
@@ -118,6 +134,12 @@ def stripe_interval(days: int) -> dict:
         return {"interval": "week", "interval_count": 1}
     if days == 30:
         return {"interval": "month", "interval_count": 1}
+    if days == 365:
+        # A year, not three hundred and sixty-five days. Stripe treats them the
+        # same for billing and differently for everything a human reads: the
+        # customer's card statement, the invoice, and the word the Stripe
+        # dashboard shows the operator.
+        return {"interval": "year", "interval_count": 1}
     return {"interval": "day", "interval_count": max(1, min(days, 365))}
 
 

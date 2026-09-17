@@ -49,6 +49,7 @@ urlpatterns = [
     path("pay/cards/", views.saved_cards, name="api_saved_cards"),
     path("pay/cards/<str:pm_id>/", views.delete_card, name="api_delete_card"),
     # legal
+    path("subscriptions/plans/", views.subscription_plans, name="api_subscription_plans"),
     path("legal/", views.legal_index, name="api_legal"),
     path("legal/accept/", views.legal_accept, name="api_legal_accept"),
     path("legal/<slug:slug>/", views.legal_document, name="api_legal_document"),
