@@ -30,6 +30,22 @@ def site(request):
             "availableLanguage": ["en"],
         },
     }
+    identifiers = []
+    if settings.COMPANY_REGISTRATION:
+        identifiers.append({"@type": "PropertyValue", "name": "Registry code",
+                            "value": settings.COMPANY_REGISTRATION})
+    if settings.COMPANY_DUNS:
+        identifiers.append({"@type": "PropertyValue", "name": "DUNS",
+                            "value": settings.COMPANY_DUNS})
+    if settings.COMPANY_VAT:
+        identifiers.append({"@type": "PropertyValue", "name": "VAT",
+                            "value": settings.COMPANY_VAT})
+    if identifiers:
+        org["identifier"] = identifiers
+    if settings.COMPANY_ADDRESS:
+        org["address"] = {"@type": "PostalAddress",
+                          "streetAddress": settings.COMPANY_ADDRESS,
+                          "addressCountry": "EE"}
     if settings.SITE_SAMEAS:
         org["sameAs"] = settings.SITE_SAMEAS
 
@@ -55,6 +71,22 @@ def site(request):
         "site_name": settings.SITE_NAME,
         "site_tagline": "Connect without borders.",
         "company_legal_name": settings.COMPANY_LEGAL_NAME,
+        # One dict rather than nine loose names: the footer's imprint and the
+        # legal documents have to agree, and they agree by reading the same
+        # thing rather than by somebody remembering to update both.
+        "company": {
+            "legal_name": settings.COMPANY_LEGAL_NAME,
+            "legal_form": settings.COMPANY_LEGAL_FORM,
+            "reg_code": settings.COMPANY_REGISTRATION,
+            "registry_name": settings.COMPANY_REGISTRY_NAME,
+            "registry_url": settings.COMPANY_REGISTRY_URL,
+            "registered_on": settings.COMPANY_REGISTERED_ON,
+            "duns": settings.COMPANY_DUNS,
+            "vat": settings.COMPANY_VAT,
+            "address": settings.COMPANY_ADDRESS,
+            "director": settings.COMPANY_DIRECTOR,
+            "support_email": settings.SUPPORT_EMAIL,
+        },
         # Legal documents must show the date they were last revised, not today's
         # date. Bump LEGAL_UPDATED in settings when a policy actually changes.
         "legal_updated": settings.LEGAL_UPDATED,

@@ -76,6 +76,30 @@ LEGAL_COURTS = env("LEGAL_COURTS", "Harju County Court, Tallinn")
 COMPANY_ADDRESS = env("COMPANY_ADDRESS", "Tornimäe tn 5, Kesklinna linnaosa, 10145 Tallinn, Estonia")
 COMPANY_REGISTRATION = env("COMPANY_REGISTRATION", "17591465")
 COMPANY_VAT = env("COMPANY_VAT", "")
+
+# The rest of the registry entry, so the footer can say who is selling and the
+# visitor can go and check rather than take our word for it.
+#
+# This is not decoration on a travel eSIM. The buyer is a stranger handing money
+# to a website for something they cannot hold, usually days before a flight,
+# and the two questions they are actually asking are "is this a real company"
+# and "who do I chase if it does not work". A named entity with a registry code
+# that resolves in a public register answers both in one glance; the big eSIM
+# apps mostly do not bother, which makes it a differentiator as well as a duty.
+#
+# Deliberately absent: the director's personal identification code and any
+# private address. Both appear in the Estonian register and neither belongs on
+# a website -- they add nothing a customer needs and a great deal an identity
+# thief does.
+COMPANY_LEGAL_FORM = env("COMPANY_LEGAL_FORM", "Private limited company (osaühing)")
+COMPANY_REGISTRY_NAME = env("COMPANY_REGISTRY_NAME", "Estonian Business Register")
+COMPANY_REGISTRY_URL = env(
+    "COMPANY_REGISTRY_URL",
+    f"https://ariregister.rik.ee/eng/company/{COMPANY_REGISTRATION}" if COMPANY_REGISTRATION else "",
+)
+COMPANY_REGISTERED_ON = env("COMPANY_REGISTERED_ON", "4 September 2026")
+COMPANY_DUNS = env("COMPANY_DUNS", "988022933")
+COMPANY_DIRECTOR = env("COMPANY_DIRECTOR", "Ekin Ahmed Sipahi")
 PRIVACY_CONTACT_EMAIL = env("PRIVACY_CONTACT_EMAIL", "") or SUPPORT_EMAIL
 
 APP_STORE_URL = env("APP_STORE_URL", "")

@@ -1344,3 +1344,41 @@ html[data-theme="dark"] .ref-field > summary { color: var(--b-300); }
 .dash-balance-sub { font-size: .9rem; color: rgba(255,255,255,.72); max-width: 46ch; }
 .btn-on-dark { color: #fff; border-color: rgba(255,255,255,.28); }
 .btn-on-dark:hover { background: rgba(255,255,255,.1); }
+
+/* ---------- Footer imprint ------------------------------------------------ */
+/* The registered-company block. Set apart from the link columns rather than
+   dropped among them: it is not navigation, it is the answer to "who am I
+   buying from", and a visitor looking for that is scanning the very bottom. */
+.footer-imprint {
+  margin-top: 34px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--card-solid) 55%, transparent);
+  display: grid;
+  gap: 18px 36px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: start;
+}
+.footer-imprint h4 { margin-bottom: 10px; }
+.footer-imprint address { font-style: normal; line-height: 1.6; margin-top: 4px; }
+.imprint-name { font-weight: 750; font-size: .98rem; color: var(--text); }
+.imprint-facts { display: grid; gap: 7px; font-size: .88rem; }
+.imprint-facts > div { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.imprint-facts dt { color: var(--text-3); }
+.imprint-facts dd { font-weight: 650; color: var(--text); font-variant-numeric: tabular-nums; }
+.imprint-facts a { display: inline; padding: 0; }
+.imprint-note {
+  grid-column: 1 / -1;
+  margin: 0; padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--text-3); line-height: 1.7;
+}
+.imprint-note a { display: inline; padding: 0; color: var(--b-600); text-decoration: underline;
+                  text-underline-offset: 3px; }
+html[data-theme="dark"] .footer-imprint { background: rgba(255, 255, 255, .03); }
+html[data-theme="dark"] .imprint-note a { color: var(--b-300); }
+@media (max-width: 760px) {
+  .footer-imprint { grid-template-columns: 1fr; padding: 18px; }
+  .imprint-facts > div { justify-content: flex-start; }
+}

@@ -115,6 +115,53 @@
       {% if app_store_url or play_store_url %}<a href="{% url 'eula' %}">{% trans "App licence" %}</a>{% endif %}
     </div>
 
+    {% comment %}
+      Who is actually selling this, and where to go and check.
+
+      A traveller is handing money to a website for something they cannot hold,
+      usually a few days before a flight. The two questions behind that are "is
+      this a real company" and "who do I chase if it does not work", and a named
+      entity with a registry code that resolves in a public register answers
+      both without asking anyone to take our word for it. It is also required of
+      an EU seller at a distance, so the only choice here was whether to put it
+      somewhere anybody would read.
+
+      Every value comes from settings through the `company` context, which is
+      the same source the legal documents print from. Two copies of an address
+      drift, and the copy that drifts is always the one nobody is looking at.
+    {% endcomment %}
+    {% if company.legal_name %}
+    <div class="footer-imprint">
+      <div>
+        <h4>{% trans "Registered company" %}</h4>
+        <div class="imprint-name">{{ company.legal_name }}</div>
+        {% if company.address %}<address class="small muted">{{ company.address }}</address>{% endif %}
+        {% if company.director %}
+        <div class="xs muted mt-1">{% trans "Board member" %}: {{ company.director }}</div>
+        {% endif %}
+      </div>
+      <dl class="imprint-facts">
+        {% if company.reg_code %}
+        <div><dt>{% trans "Registry code" %}</dt><dd>{{ company.reg_code }}</dd></div>
+        {% endif %}
+        {% if company.duns %}<div><dt>D&#8209;U&#8209;N&#8209;S</dt><dd>{{ company.duns }}</dd></div>{% endif %}
+        {% if company.vat %}<div><dt>{% trans "VAT" %}</dt><dd>{{ company.vat }}</dd></div>{% endif %}
+        <div><dt>{% trans "Contact" %}</dt>
+             <dd><a href="mailto:{{ company.support_email }}">{{ company.support_email }}</a></dd></div>
+      </dl>
+      {% if company.registry_name %}
+      <p class="imprint-note xs">
+        {% blocktrans trimmed with form=company.legal_form registry=company.registry_name on=company.registered_on %}
+          {{ form }} entered in the {{ registry }} on {{ on }}.
+        {% endblocktrans %}
+        {% if company.registry_url %}
+        <a href="{{ company.registry_url }}" target="_blank" rel="noopener">{% trans "Verify in the public register" %} &#8599;</a>
+        {% endif %}
+      </p>
+      {% endif %}
+    </div>
+    {% endif %}
+
     <div class="footer-bottom">
       <div>&copy; {% now "Y" %} {{ site_name }}. {% trans "All rights reserved." %}</div>
       <div class="pay-icons">
