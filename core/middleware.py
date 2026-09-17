@@ -1,7 +1,11 @@
+import logging
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_ipv46_address
 from django.http import HttpResponsePermanentRedirect
+
+log = logging.getLogger(__name__)
 
 
 class RealClientIPMiddleware:
@@ -50,7 +54,24 @@ class RealClientIPMiddleware:
 
     def __call__(self, request):
         meta = request.META
-        ip = self._valid(meta.get(self.header, "")) or self._valid(meta.get("REMOTE_ADDR", ""))
+        ip = self._valid(meta.get(self.header, ""))
+        if not ip:
+            # Everything on the canonical host arrives through Cloudflare, so
+            # this header is always there. If it ever is not, every visitor
+            # collapses onto the edge's address and shares one rate-limit
+            # bucket -- which presents as "nobody can sign in" and looks
+            # nothing like a header problem. Say so, rarely enough not to be
+            # its own flood.
+            if meta.get("HTTP_HOST", "").split(":")[0] == getattr(settings, "CANONICAL_HOST", ""):
+                from django.core.cache import cache
+                try:
+                    if cache.add("real-ip-header-missing", 1, 600):
+                        log.warning(
+                            "%s missing on %s -- every caller is sharing one rate-limit "
+                            "bucket", self.header, request.path)
+                except Exception:  # noqa: BLE001 - never break a request to log
+                    pass
+            ip = self._valid(meta.get("REMOTE_ADDR", ""))
         if ip:
             meta["REMOTE_ADDR"] = ip
             meta["HTTP_X_FORWARDED_FOR"] = ip
