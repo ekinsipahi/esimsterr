@@ -26,6 +26,9 @@ app.css; nothing here adds a stylesheet.
       <div class="bold">{% trans "eSIMsterr assistant" %}</div>
       <div class="xs" id="asst-status" style="opacity:.85">{% trans "Answers from your own eSIM and order data" %}</div>
     </div>
+    <button id="asst-mute" aria-label="{% trans 'Notification sound' %}"
+            title="{% trans 'Notification sound' %}"
+            style="background:none;border:0;color:inherit;cursor:pointer;padding:4px;font-size:1rem;line-height:1">🔔</button>
     <button id="asst-close" aria-label="{% trans 'Close chat' %}"
             style="background:none;border:0;color:inherit;cursor:pointer;padding:4px;display:flex">
       {% icon "x" size=20 %}
@@ -80,6 +83,65 @@ app.css; nothing here adds a stylesheet.
 
   var msgs = [], open = false, sending = false, hasConv = false, typing = false;
   var openTimer = null, idleTimer = null;
+
+  /* ---- the sound a reply makes -------------------------------------------
+     Without it, an answer arriving in a tab somebody has switched away from is
+     silent, and a live chat where the other side cannot get your attention is
+     a slow email. Synthesised rather than a file: no asset to serve, nothing to
+     404, and it inherits no volume from a page nobody else controls.
+
+     Browsers refuse to play anything until the visitor has interacted with the
+     page, so the context is unlocked on their first click or key anywhere --
+     opening the chat is itself one, but a reply can also arrive to a widget
+     that was never opened this page load. */
+  var audio = null, muted = false;
+  try { muted = localStorage.getItem("asstMute") === "1"; } catch (e) {}
+
+  function unlock() {
+    try {
+      if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+    } catch (e) { audio = null; }
+    return audio;
+  }
+  ["click", "keydown", "touchstart"].forEach(function (ev) {
+    window.addEventListener(ev, unlock, { once: true, passive: true });
+  });
+
+  function chime() {
+    if (muted) return;
+    var c = unlock();
+    if (!c || c.state !== "running") return;   /* no gesture yet: stay silent */
+    var t = c.currentTime, out = c.createGain();
+    out.gain.value = 0.35;                     /* somebody else's website: quiet */
+    var soft = c.createBiquadFilter();
+    soft.type = "lowpass"; soft.frequency.value = 7000;
+    out.connect(soft); soft.connect(c.destination);
+    function bell(hz, dur, gain, at) {
+      var o = c.createOscillator(), g = c.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(hz, t + at);
+      g.gain.setValueAtTime(0.0001, t + at);
+      g.gain.exponentialRampToValueAtTime(gain, t + at + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + at + dur);
+      o.connect(g); g.connect(out); o.start(t + at); o.stop(t + at + dur + 0.05);
+    }
+    /* Two notes rising: a single tone reads as an error, two as an arrival. */
+    bell(587.33, 0.42, 0.30, 0);        /* D5 */
+    bell(880.00, 0.55, 0.26, 0.085);    /* A5 */
+    bell(1174.66, 0.30, 0.06, 0.085);   /* harmonic, for body */
+  }
+
+  var muteBtn = $("asst-mute");
+  function paintMute() { if (muteBtn) muteBtn.textContent = muted ? "🔕" : "🔔"; }
+  if (muteBtn) {
+    muteBtn.addEventListener("click", function () {
+      muted = !muted;
+      try { localStorage.setItem("asstMute", muted ? "1" : "0"); } catch (e) {}
+      paintMute();
+      if (!muted) chime();   /* so they hear what they just switched on */
+    });
+    paintMute();
+  }
 
   function csrf() {
     var m = document.cookie.match(/csrftoken=([^;]+)/);
@@ -143,33 +205,57 @@ app.css; nothing here adds a stylesheet.
       opts.headers["X-CSRFToken"] = csrf();
       opts.body = JSON.stringify(payload);
     }
-    var url = API + (method === "GET" && open ? "?seen=1" : "");
+    // `seen=1` clears the unread counter on the server, so it may only be sent
+    // when the panel is genuinely in front of somebody. A hidden tab still
+    // polls, and marking those replies as seen would leave no badge waiting
+    // when the visitor comes back -- the reply would have been read by nobody
+    // and counted as read anyway.
+    var looking = open && document.visibilityState === "visible";
+    var url = API + (method === "GET" && looking ? "?seen=1" : "");
     return fetch(url, opts).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     });
   }
 
-  function absorb(conv) {
+  function theirs(list) {
+    var n = 0;
+    for (var i = 0; i < list.length; i++) if (list[i].role !== "user") n++;
+    return n;
+  }
+
+  /* `expected` marks the reply to a message the visitor just sent themselves.
+     They are looking straight at it, so it needs no sound -- a chat that pings
+     at you for the answer you are already reading is the kind of detail people
+     turn off, and then they miss the one that mattered. */
+  function absorb(conv, expected) {
     if (!conv) return;
     hasConv = !!conv.id;
     status.textContent = conv.owner_joined ? TXT_HUMAN : TXT_AI;
-    setBadge(open ? 0 : (conv.unread || 0));
+    setBadge(open && document.visibilityState === "visible" ? 0 : (conv.unread || 0));
     if (conv.messages) {
       var grew = conv.messages.length !== msgs.length;
+      var arrived = theirs(conv.messages) - theirs(msgs);
       msgs = conv.messages;
       // Only repaint when something actually arrived: re-rendering on every
       // poll throws the reader back down the thread.
       if (grew) { render(); toBottom(); }
+      if (arrived > 0 && !expected) chime();
     }
   }
 
   function pollOpen() {
     if (openTimer) clearTimeout(openTimer);
-    if (!open || document.visibilityState !== "visible") return;
+    if (!open) return;
+    // Keep listening on a hidden tab, just less often. Stopping there was the
+    // one case the sound exists for: you are mid-conversation, you switch tabs
+    // to look something up, and the answer arrives to a page that has stopped
+    // asking. The chime is what brings you back, and it cannot fire for a reply
+    // nobody fetched.
+    var hidden = document.visibilityState !== "visible";
     openTimer = setTimeout(function () {
       api("GET").then(absorb).catch(function () {}).then(pollOpen);
-    }, 6000);
+    }, hidden ? 20000 : 6000);
   }
   function pollIdle() {
     if (idleTimer) clearTimeout(idleTimer);
@@ -185,7 +271,7 @@ app.css; nothing here adds a stylesheet.
     launcher.style.display = "none";
     launcher.setAttribute("aria-expanded", "true");
     if (idleTimer) clearTimeout(idleTimer);
-    api("GET").then(function (c) { absorb(c); toBottom(); }).catch(function () {});
+    api("GET").then(function (c) { absorb(c, true); toBottom(); }).catch(function () {});
     pollOpen();
     setTimeout(function () { input.focus(); }, 60);
   }
@@ -213,7 +299,7 @@ app.css; nothing here adds a stylesheet.
     render(); toBottom();
     api("POST", { message: text }).then(function (conv) {
       typing = false;
-      absorb(conv);
+      absorb(conv, true);
     }).catch(function (err) {
       typing = false;
       msgs.push({ role: "assistant",
@@ -233,12 +319,18 @@ app.css; nothing here adds a stylesheet.
     input.style.height = Math.min(input.scrollHeight, 110) + "px";
   });
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible" && open) pollOpen();
+    // Coming back to the tab: ask straight away rather than waiting out the
+    // slower interval the hidden tab was using.
+    if (document.visibilityState === "visible" && open) {
+      api("GET").then(absorb).catch(function () {});
+      pollOpen();
+    }
   });
 
-  // First load is silent: learn whether a thread exists, then idle-poll for the
-  // badge only if it does.
-  api("GET").then(absorb).catch(function () {}).then(pollIdle);
+  // First load is silent in both senses: it learns whether a thread exists
+  // without announcing anything. Every message is new to a page that has just
+  // loaded, so ringing here would mean a chime on every navigation.
+  api("GET").then(function (c) { absorb(c, true); }).catch(function () {}).then(pollIdle);
 })();
 </script>
 
