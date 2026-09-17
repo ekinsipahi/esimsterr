@@ -16,6 +16,11 @@ python manage.py createcachetable
 # customer may never have seen.
 python manage.py check_legal
 
+# Say in the deploy log whether the bot check is actually protecting anything.
+# Not strict: missing keys must not block a deploy, but they must not be silent
+# either -- "off" and "working" look identical from outside.
+python manage.py check_turnstile || true
+
 # Compile any translated locales. No .po files yet means a no-op.
 python manage.py compilemessages 2>/dev/null || true
 

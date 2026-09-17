@@ -157,6 +157,13 @@ def create_checkout_session(user, plan, success_url: str, cancel_url: str, *,
     }
     if getattr(user, "email", ""):
         params["customer_email"] = user.email
+    # Authenticate the first charge. A subscription is the more attractive of
+    # the two things to set up with a stolen card, because it keeps paying.
+    from apps.payments.stripe_client import card_options
+
+    options = card_options()
+    if options:
+        params["payment_method_options"] = options
     try:
         return stripe.checkout.Session.create(**params).to_dict()
     except stripe.StripeError as e:

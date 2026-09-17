@@ -425,6 +425,24 @@ STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", "")
 # money from a machine whose database is not the live one.
 STRIPE_ALLOW_LIVE_IN_DEBUG = env_bool("STRIPE_ALLOW_LIVE_IN_DEBUG", False)
 
+# How hard to push for 3-D Secure on card payments.
+#   "challenge"  ask the issuer to authenticate every payment it can
+#   "automatic"  leave it to Stripe's own risk rules
+# Forced authentication is the strongest thing we have against somebody testing
+# stolen card numbers: a challenge cannot be answered without the cardholder,
+# and on a payment that does pass, liability for fraud moves to the issuer. It
+# also adds a step for honest buyers, so it is a setting -- if conversion drops
+# noticeably, "automatic" is one environment variable away with no deploy.
+STRIPE_3DS_MODE = env("STRIPE_3DS_MODE", "challenge").strip().lower()
+if STRIPE_3DS_MODE not in ("automatic", "challenge", "any"):
+    STRIPE_3DS_MODE = "challenge"
+
+# ---- Cloudflare Turnstile ----------------------------------------------------
+# Bot check on registration, sign-in and password reset. Both keys or neither:
+# see core/turnstile.py for why the check is off rather than broken when unset.
+TURNSTILE_SITE_KEY = env("TURNSTILE_SITE_KEY", "").strip()
+TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY", "").strip()
+
 NOWPAYMENTS_API_KEY = env("NOWPAYMENTS_API_KEY", "")
 NOWPAYMENTS_IPN_SECRET = env("NOWPAYMENTS_IPN_SECRET", "")
 NOWPAYMENTS_API_BASE = env("NOWPAYMENTS_API_BASE", "https://api.nowpayments.io/v1")

@@ -46,6 +46,23 @@ def guard_live_key() -> None:
         )
 
 
+def card_options() -> dict:
+    """`payment_method_options` asking the issuer to authenticate the cardholder.
+
+    Someone working through a list of stolen card numbers can submit them; they
+    cannot answer the bank's challenge for any of them. And on a payment that
+    does go through, passing 3-D Secure moves liability for fraud from us to the
+    issuer, so a later chargeback is not ours to eat.
+
+    The cost is a step for honest buyers, which is why the strength is a setting
+    rather than a constant -- see STRIPE_3DS_MODE.
+    """
+    mode = getattr(settings, "STRIPE_3DS_MODE", "challenge")
+    if mode == "automatic":
+        return {}
+    return {"card": {"request_three_d_secure": mode}}
+
+
 def _api() -> None:
     """Set the key on every call rather than once at import.
 
@@ -83,6 +100,9 @@ def create_checkout_session(*, amount_usd: Decimal, reference: str, description:
         "metadata": {"reference": reference},
         "payment_intent_data": {"metadata": {"reference": reference}},
     }
+    options = card_options()
+    if options:
+        params["payment_method_options"] = options
     if customer_email:
         params["customer_email"] = customer_email
         params["payment_intent_data"]["receipt_email"] = customer_email
@@ -173,6 +193,11 @@ def create_payment_intent(*, amount_usd, customer_id: str, reference: str,
         "metadata": {"reference": reference},
         "automatic_payment_methods": {"enabled": True},
     }
+    options = card_options()
+    if options:
+        # PaymentSheet shows the challenge inside the app, so this costs the
+        # customer a tap rather than a trip to a browser.
+        params["payment_method_options"] = options
     if email:
         params["receipt_email"] = email
     if save_card:

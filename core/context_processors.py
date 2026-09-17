@@ -76,5 +76,10 @@ def site(request):
         "app_store_url": settings.APP_STORE_URL,
         "play_store_url": settings.PLAY_STORE_URL,
         "stripe_enabled": bool(settings.STRIPE_SECRET_KEY),
+        # Empty means the widget is not rendered and the server-side check is
+        # off. One key drives both, so a half-configured deploy cannot end up
+        # asking for a token it will never be able to verify.
+        "turnstile_site_key": (settings.TURNSTILE_SITE_KEY
+                               if settings.TURNSTILE_SECRET_KEY else ""),
         "crypto_enabled": bool(settings.NOWPAYMENTS_API_KEY),
     }

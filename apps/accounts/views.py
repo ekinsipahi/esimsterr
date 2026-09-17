@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 
 from apps.common import analytics
 from apps.legal.models import LegalAcceptance, record_acceptance
+from core import turnstile
 from core.ratelimit import rate_limit
 
 from .emails import send_email_bg, send_welcome
@@ -25,6 +26,14 @@ from .referrals import apply_referral_code
 from .models import User
 
 log = logging.getLogger(__name__)
+
+
+# Shown when the Turnstile token is missing, stale or refused. It says what to
+# do rather than what went wrong: almost everybody who sees this is a real
+# person whose token expired while they were filling the form in.
+BOT_CHECK_FAILED = _(
+    "That verification expired. Tick the box again and resubmit."
+)
 
 
 def _client_ip(request):
@@ -44,6 +53,11 @@ def signup(request):
     if request.user.is_authenticated:
         return redirect(_safe_next(request))
     form = SignupForm(request.POST or None)
+    if request.method == "POST" and not turnstile.check(request):
+        # Added to the form rather than shown as a banner: it belongs next to
+        # the widget that failed, and a non-field error keeps everything the
+        # visitor already typed on the page.
+        form.add_error(None, BOT_CHECK_FAILED)
     if request.method == "POST" and form.is_valid():
         user = User.objects.create_user(
             email=form.cleaned_data["email"],
@@ -130,6 +144,8 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect(_safe_next(request))
     form = LoginForm(request, request.POST or None)
+    if request.method == "POST" and not turnstile.check(request):
+        form.add_error(None, BOT_CHECK_FAILED)
     if request.method == "POST" and form.is_valid():
         auth_login(request, form.user, backend="django.contrib.auth.backends.ModelBackend")
         request.session["pending_analytics"] = [analytics.login("email")]
@@ -295,6 +311,21 @@ def unsubscribe(request):
 
 class PasswordResetView(auth_views.PasswordResetView):
     template_name = "accounts/password_reset_form.html"
+
+    def post(self, request, *args, **kwargs):
+        """Bot check before anything is sent.
+
+        This form mails any address typed into it, from our sending domain. A
+        script pointing it at other people's inboxes spends our deliverability
+        reputation, and the recipients experience it as us.
+        """
+        if not turnstile.check(request):
+            form = self.get_form()
+            form.is_valid()
+            form.add_error(None, BOT_CHECK_FAILED)
+            return self.form_invalid(form)
+        return super().post(request, *args, **kwargs)
+
     # Django's own form builds the email context, so the shared email shell's
     # variables (site_name / site_url / support_email) have to be injected here.
     extra_email_context = {

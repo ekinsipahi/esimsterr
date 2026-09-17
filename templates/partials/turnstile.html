@@ -1,0 +1,13 @@
+{% comment %}
+  The Turnstile widget. Rendered only when a site key is configured, which is
+  the same condition that switches the server-side check on -- so the form can
+  never ask for a token nobody will verify, or verify one the page never drew.
+
+  data-theme="auto" follows the visitor's own light/dark setting; a white box
+  burning a hole in a dark page is the kind of detail that makes a sign-in form
+  look untrustworthy, which is the opposite of what a bot check is for.
+{% endcomment %}
+{% if turnstile_site_key %}
+  <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"
+       data-theme="auto" data-size="flexible" data-action="{{ turnstile_action|default:'form' }}"></div>
+{% endif %}

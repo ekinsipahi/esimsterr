@@ -72,6 +72,7 @@
             <input type="checkbox" name="marketing_opt_in" {% if form.marketing_opt_in.value|default_if_none:True %}checked{% endif %}>
             <span>{% trans "Send me occasional travel-data tips and discount codes." %}</span>
           </label>
+          {% include "partials/turnstile.html" with turnstile_action="signup" %}
           <button class="btn btn-primary btn-block" type="submit">{% trans "Create account" %}</button>
           {% url 'terms' as terms_url %}{% url 'privacy' as privacy_url %}
           <p class="xs muted-3 center">
@@ -101,4 +102,4 @@
 </section>
 {% endblock %}
 
-{% block scripts %}{% if GOOGLE_CLIENT_ID %}<script src="https://accounts.google.com/gsi/client" async defer></script>{% endif %}{% endblock %}
+{% block scripts %}{% if GOOGLE_CLIENT_ID %}<script src="https://accounts.google.com/gsi/client" async defer></script>{% endif %}{% include "partials/turnstile_script.html" %}{% endblock %}

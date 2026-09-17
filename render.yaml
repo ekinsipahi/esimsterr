@@ -103,6 +103,20 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
+
+      # --- Cloudflare Turnstile (bot check on signup / sign-in / reset) ---
+      # Cloudflare dashboard > Turnstile > add a widget for esimsterr.com.
+      # Both keys or neither: with either missing the check is off, and the
+      # build log says so.
+      - key: TURNSTILE_SITE_KEY
+        sync: false
+      - key: TURNSTILE_SECRET_KEY
+        sync: false
+
+      # Force 3-D Secure on card payments. "automatic" hands the decision back
+      # to Stripe if the extra step ever costs more than the fraud does.
+      - key: STRIPE_3DS_MODE
+        value: "challenge"
       - key: GA_MEASUREMENT_ID
         sync: false
       - key: SENTRY_DSN
@@ -191,6 +205,13 @@ services:
       # --- The admin test tool. Set it here, never on production. ---
       - key: ADMIN_TEST_TOKEN
         sync: false
+
+      # Cloudflare's always-passes test pair, so a scripted test run is not
+      # fighting a captcha. Never these values on production.
+      - key: TURNSTILE_SITE_KEY
+        value: "1x00000000000000000000AA"
+      - key: TURNSTILE_SECRET_KEY
+        value: "1x0000000000000000000000000000000AA"
 
       # Off in staging: nobody needs a sale alert from a test purchase, and a
       # staging deploy that emails customers is a staging deploy that has

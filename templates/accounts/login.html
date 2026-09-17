@@ -52,6 +52,7 @@
             {% if form.password.errors %}<span class="err">{{ form.password.errors.0 }}</span>{% endif %}
             <a class="hint link" href="{% url 'password_reset' %}">{% trans "Forgotten your password?" %}</a>
           </div>
+          {% include "partials/turnstile.html" with turnstile_action="login" %}
           <button class="btn btn-primary btn-block" type="submit">{% trans "Sign in" %}</button>
         </form>
       </div>
@@ -76,4 +77,4 @@
 </section>
 {% endblock %}
 
-{% block scripts %}{% if GOOGLE_CLIENT_ID %}<script src="https://accounts.google.com/gsi/client" async defer></script>{% endif %}{% endblock %}
+{% block scripts %}{% if GOOGLE_CLIENT_ID %}<script src="https://accounts.google.com/gsi/client" async defer></script>{% endif %}{% include "partials/turnstile_script.html" %}{% endblock %}
