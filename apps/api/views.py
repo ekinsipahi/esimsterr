@@ -281,15 +281,25 @@ def checkout_url(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def config(request):
+    """Bootstrap payload so the app can render without hardcoding anything.
+
+    Also where the app is told what it is allowed to do today. A bug in a shipped
+    app is otherwise fixed only after a store review and then only on the phones
+    that update, so the switches live here and the app asks on every start --
+    see apps.common.models.RemoteConfig.
+    """
+    from apps.common.models import RemoteConfig
     from apps.payments.inapp import enabled as in_app_enabled
 
-    """Bootstrap payload so the app can render without hardcoding anything."""
+    remote = RemoteConfig.current()
+    features = remote.features()
+    payload = remote.payload()
     return Response({
+        **payload,
         "site_name": settings.SITE_NAME,
         "site_url": settings.SITE_URL,
         "support_email": settings.SUPPORT_EMAIL,
         "currency": "USD",
-        "min_supported_version": "1.0.0",
         "country_count": Country.objects.filter(is_active=True).count(),
         # The app compares these against what the customer last accepted and
         # shows the changed document. Cheaper than a push, and it cannot be
@@ -297,8 +307,14 @@ def config(request):
         "legal": contract_stamps(legal_surface(request)),
         # The app reads the publishable key from here rather than baking it in:
         # rotating a Stripe key should not need a store release.
-        "in_app_payments": in_app_enabled(),
-        "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY if in_app_enabled() else "",
+        #
+        # The remote switch is ANDed with the server's own readiness rather than
+        # replacing it: a switch left on cannot turn payments on when Stripe is
+        # not configured, and a switch turned off during an incident cannot be
+        # overridden by the server thinking it is fine.
+        "in_app_payments": in_app_enabled() and features["card_payments"],
+        "stripe_publishable_key": (settings.STRIPE_PUBLISHABLE_KEY
+                                   if in_app_enabled() and features["card_payments"] else ""),
     })
 
 
