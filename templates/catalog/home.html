@@ -84,7 +84,7 @@
     <div class="grid g3">
       {% for r in regions %}
       <a class="region-card reveal" href="{{ r.get_absolute_url }}">
-        <span class="icon-tile v-cyan">{% region_map r.slug size=30 %}</span>
+        {% region_flag r.slug size=44 cls="flag-lg" %}
         <h3>{{ r.name }}</h3>
         <p>{% if r.description %}{{ r.description|truncatechars:110 }}{% else %}{% blocktrans count n=r.country_count %}{{ n }} country on one profile{% plural %}{{ n }} countries on one profile{% endblocktrans %}{% endif %}</p>
         <div class="foot">

@@ -94,7 +94,7 @@
     <div class="grid g3">
       {% for r in regions %}
       <a class="region-card" href="{{ r.get_absolute_url }}">
-        <span class="icon-tile v-cyan">{% region_map r.slug size=30 %}</span>
+        {% region_flag r.slug size=44 cls="flag-lg" %}
         <h3>{{ r.name }}</h3>
         <p>{% blocktrans count n=r.country_count %}{{ n }} country on a single eSIM{% plural %}{{ n }} countries on a single eSIM{% endblocktrans %}</p>
         <div class="foot">
