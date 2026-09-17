@@ -166,3 +166,49 @@ class ThreeDSecureTests(TestCase):
         from django.conf import settings
 
         self.assertIn(settings.STRIPE_3DS_MODE, ("automatic", "challenge", "any"))
+
+
+@override_settings(**KEYS)
+class ApiRegistrationTests(TestCase):
+    """The mobile API creates accounts too, and cannot draw a captcha.
+
+    So it is protected differently: a much tighter rate than signing in, a token
+    verified whenever one is sent, and a switch to start demanding one on the day
+    the app learns to produce it.
+    """
+
+    URL = "/api/v1/auth/register/"
+    BODY = {"email": "api@example.com", "password": "Str0ng!passw0rd"}
+
+    def post(self, **extra):
+        return self.client.post(self.URL, {**self.BODY, **extra},
+                                content_type="application/json")
+
+    def test_a_registration_without_a_token_still_works_by_default(self):
+        """The app does not send one yet; demanding it would lock out the only
+        client there is."""
+        self.assertEqual(self.post().status_code, 201)
+
+    @override_settings(API_REQUIRE_TURNSTILE=True)
+    def test_it_can_be_made_compulsory_for_the_app_release(self):
+        response = self.post()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "bot_check_failed")
+        self.assertFalse(User.objects.filter(email=self.BODY["email"]).exists())
+
+    def test_a_token_that_is_sent_is_actually_checked(self):
+        """Opt-in protection is worthless if the server ignores what it is given."""
+        with mock.patch("core.turnstile.verify", return_value=False) as verify:
+            response = self.post(turnstile_token="a-token")
+        verify.assert_called_once()
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(User.objects.filter(email=self.BODY["email"]).exists())
+
+    def test_registration_is_rated_far_below_signing_in(self):
+        from django.conf import settings
+
+        rates = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
+        self.assertNotEqual(rates["register"], rates["auth"])
+        count, _, period = rates["register"].partition("/")
+        self.assertIn(period, ("hour", "day"))
+        self.assertLessEqual(int(count), 20)

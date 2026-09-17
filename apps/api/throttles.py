@@ -14,6 +14,17 @@ class AuthAnonThrottle(AnonRateThrottle):
     scope = "auth"
 
 
+class RegisterThrottle(AnonRateThrottle):
+    """Account creation, which is rarer and more valuable than signing in.
+
+    It shared the sign-in limit, and the two are nothing alike: a person signs
+    in repeatedly and registers once. Ten a minute from one address is 14,000
+    accounts a day, each one a fresh coupon eligibility, a referral code and a
+    verification email sent from our domain.
+    """
+    scope = "register"
+
+
 class CheckoutThrottle(UserRateThrottle):
     """Checkout-URL requests from a signed-in app user."""
     scope = "checkout"

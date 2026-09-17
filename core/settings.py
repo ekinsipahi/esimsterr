@@ -353,6 +353,7 @@ REST_FRAMEWORK = {
         "anon": env("THROTTLE_ANON", "120/min"),
         "user": env("THROTTLE_USER", "300/min"),
         "auth": env("THROTTLE_AUTH", "10/min"),
+        "register": env("THROTTLE_REGISTER", "10/hour"),
         "checkout": env("THROTTLE_CHECKOUT", "20/hour"),
         "device_lookup": env("THROTTLE_DEVICE", "60/hour"),
     },
@@ -442,6 +443,11 @@ if STRIPE_3DS_MODE not in ("automatic", "challenge", "any"):
 # see core/turnstile.py for why the check is off rather than broken when unset.
 TURNSTILE_SITE_KEY = env("TURNSTILE_SITE_KEY", "").strip()
 TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY", "").strip()
+# Whether the JSON API refuses a registration that carries no Turnstile token.
+# Off by default because the Android app does not send one yet, and switching it
+# on before the app does would lock out the only client there is. Turn it on
+# together with the app release that starts sending it.
+API_REQUIRE_TURNSTILE = env_bool("API_REQUIRE_TURNSTILE", False)
 
 NOWPAYMENTS_API_KEY = env("NOWPAYMENTS_API_KEY", "")
 NOWPAYMENTS_IPN_SECRET = env("NOWPAYMENTS_IPN_SECRET", "")

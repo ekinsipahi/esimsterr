@@ -37,7 +37,8 @@ from apps.providers.yesim import YesimError
 
 from .serializers import (CountrySerializer, EsimSerializer, OrderSerializer,
                           PlanSerializer, RegionSerializer)
-from .throttles import AuthAnonThrottle, CheckoutThrottle, DeviceLookupThrottle
+from .throttles import (AuthAnonThrottle, CheckoutThrottle, DeviceLookupThrottle,
+                        RegisterThrottle)
 
 
 def _tokens(user):
@@ -61,8 +62,21 @@ def legal_surface(request) -> str:
 # ---- auth -------------------------------------------------------------------
 @api_view(["POST"])
 @permission_classes([AllowAny])
-@throttle_classes([AuthAnonThrottle])
+@throttle_classes([RegisterThrottle])
 def register(request):
+    from core import turnstile
+
+    token = (request.data.get("turnstile_token") or "").strip()
+    # A token is checked whenever one is sent, so a client that starts sending
+    # them is protected from that day without a server change. It is only
+    # *demanded* when API_REQUIRE_TURNSTILE says so, because demanding it before
+    # the app can produce one would lock out the only client there is.
+    if token or (settings.API_REQUIRE_TURNSTILE and turnstile.enabled()):
+        if not turnstile.verify(token, _client_ip(request) or ""):
+            return Response({"detail": "That verification expired. Try again.",
+                             "code": "bot_check_failed"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
     email = (request.data.get("email") or "").strip().lower()
     password = request.data.get("password") or ""
     if not email or len(password) < 8:
