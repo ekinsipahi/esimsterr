@@ -24,6 +24,8 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
+from apps.common import schema
+
 from apps.catalog.data import POPULAR_ISO2
 from apps.catalog.models import Country, Plan, Region
 
@@ -116,46 +118,12 @@ def _countries_by_iso(iso_list):
 
 
 def _faq_jsonld(items):
-    return json.dumps({
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-            {"@type": "Question", "name": str(q),
-             "acceptedAnswer": {"@type": "Answer", "text": str(a)}}
-            for q, a in items
-        ],
-    }, ensure_ascii=False)
-
-
-def _absolute(request, path):
-    """Absolute URL built the way core.context_processors.site builds the canonical
-    one, so a page served on an allowed alias host does not publish itself under
-    two different addresses in its markup."""
-    if settings.CANONICAL_HOST and not settings.DEBUG:
-        return f"https://{settings.CANONICAL_HOST}{path}"
-    return request.build_absolute_uri(path)
+    return schema.dumps(schema.faq(items))
 
 
 def _breadcrumb_jsonld(request, crumbs):
-    """BreadcrumbList for the crumbs we already render. base.html prints whatever
-    lands in breadcrumb_jsonld, so building it here is all that is needed.
-
-    A crumb with no URL is a section label ("Payment methods") that has no hub
-    page behind it. schema.org requires an "item" on every ListItem except the
-    last, so those are left out of the JSON-LD and the rest renumbered; they stay
-    in the visible trail, which is where they are useful."""
-    listed = [(label, url) for label, url in crumbs[:-1] if url] + list(crumbs[-1:])
-    items = []
-    for i, (label, url) in enumerate(listed, start=1):
-        entry = {"@type": "ListItem", "position": i, "name": str(label)}
-        if url:
-            entry["item"] = _absolute(request, url)
-        items.append(entry)
-    return json.dumps({
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": items,
-    }, ensure_ascii=False)
+    """Kept as a name the views already call; the work is shared now."""
+    return schema.dumps(schema.breadcrumbs(request, crumbs))
 
 
 def _base_ctx(request, *, crumbs, faq=None):

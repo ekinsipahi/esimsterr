@@ -16,6 +16,8 @@ from django.utils import translation
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
+from apps.common import schema
+
 from apps.catalog.models import Plan
 from core.ratelimit import client_ip, rate_limit
 
@@ -56,15 +58,7 @@ def _faq():
 
 
 def _faq_jsonld(items):
-    return json.dumps({
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-            {"@type": "Question", "name": str(q),
-             "acceptedAnswer": {"@type": "Answer", "text": str(a)}}
-            for q, a in items
-        ],
-    }, ensure_ascii=False)
+    return schema.dumps(schema.faq(items))
 
 
 def coupons_page(request):

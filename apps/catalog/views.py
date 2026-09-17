@@ -9,6 +9,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET
 
+from apps.common import schema
+
 from django.utils.translation import ngettext
 
 from apps.blog.models import Post
@@ -366,41 +368,23 @@ def _region_faq(region):
 
 
 def _faq_jsonld(items):
-    return json.dumps({
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-            {"@type": "Question", "name": q,
-             "acceptedAnswer": {"@type": "Answer", "text": a}}
-            for q, a in items
-        ],
-    }, ensure_ascii=False)
+    return schema.dumps(schema.faq(items))
 
 
 def _product_jsonld(request, target, plans):
-    if not plans:
-        return ""
-    offers = [{
-        "@type": "Offer",
-        "name": p.title,
-        "price": f"{p.price:.2f}",
-        "priceCurrency": "USD",
-        "availability": "https://schema.org/InStock",
-        "url": request.build_absolute_uri(p.get_absolute_url()),
-    } for p in plans[:30]]
-    return json.dumps({
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": f"{target.name} travel eSIM",
-        "description": f"Prepaid travel eSIM data plans for {target.name}. Instant QR delivery, no roaming fees.",
-        "brand": {"@type": "Brand", "name": settings.SITE_NAME},
-        "category": "Travel eSIM",
-        "offers": {
-            "@type": "AggregateOffer",
-            "priceCurrency": "USD",
-            "lowPrice": f"{min(p.price for p in plans):.2f}",
-            "highPrice": f"{max(p.price for p in plans):.2f}",
-            "offerCount": len(plans),
-            "offers": offers,
-        },
-    }, ensure_ascii=False)
+    """Product + AggregateOffer for a destination.
+
+    The URLs go through schema.absolute rather than request.build_absolute_uri:
+    a page served on an allowed alias host was otherwise publishing offer URLs
+    on that host while its own canonical link pointed elsewhere, which reads as
+    two pages selling the same thing.
+    """
+    return schema.dumps(schema.product(
+        request,
+        name=f"{target.name} travel eSIM",
+        description=(f"Prepaid travel eSIM data plans for {target.name}. "
+                     f"Instant QR delivery, no roaming fees."),
+        plans=plans,
+        url=target.get_absolute_url(),
+        area=target.name,
+    ))

@@ -53,6 +53,8 @@
   {% if product_jsonld %}<script type="application/ld+json">{{ product_jsonld|safe }}</script>{% endif %}
   {% if article_jsonld %}<script type="application/ld+json">{{ article_jsonld|safe }}</script>{% endif %}
   {% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
+  {# WebSite once, and BreadcrumbList for any page that renders a trail. #}
+  {% schema_blocks %}
   {% block schema %}{% endblock %}
 
   {% if GA_MEASUREMENT_ID %}

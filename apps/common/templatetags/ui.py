@@ -199,6 +199,26 @@ def region_map(slug, size=26, cls=""):
     )
 
 
+# --- Structured data ---------------------------------------------------------
+@register.simple_tag(takes_context=True)
+def schema_blocks(context):
+    """The structured data every page carries, emitted from the head.
+
+    A tag rather than a line in each view, because the two things here are true
+    of every page and "remember to add it" is how half the site ended up with a
+    visible breadcrumb trail and no BreadcrumbList behind it. Any page that sets
+    `breadcrumbs` now publishes them; nothing else has to be done.
+    """
+    from apps.common import schema
+
+    request = context.get("request")
+    payloads = [schema.website(), schema.breadcrumbs(request, context.get("breadcrumbs"))]
+    return mark_safe("".join(  # noqa: S308 - json.dumps output, built by us
+        f'<script type="application/ld+json">{schema.dumps(p)}</script>'
+        for p in payloads if p
+    ))
+
+
 @register.simple_tag
 def item_attrs(plan, list_id="", index=0):
     """data- attributes that let a click on a plan be reported as select_item.
