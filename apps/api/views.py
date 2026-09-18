@@ -290,6 +290,7 @@ def config(request):
     """
     from apps.common.models import RemoteConfig
     from apps.payments.inapp import enabled as in_app_enabled
+    from apps.payments.inapp import plan_payments_enabled
 
     remote = RemoteConfig.current()
     features = remote.features()
@@ -312,7 +313,14 @@ def config(request):
         # replacing it: a switch left on cannot turn payments on when Stripe is
         # not configured, and a switch turned off during an incident cannot be
         # overridden by the server thinking it is fine.
+        #
+        # Two answers because the app asks two questions. `in_app_payments` is
+        # the card flow that adds balance, which is on; `in_app_plan_payments`
+        # is paying for a plan with a card instead of spending that balance,
+        # which is off. A build that read one answer for both showed a card
+        # button the server would refuse, or hid a top-up it would have taken.
         "in_app_payments": in_app_enabled() and features["card_payments"],
+        "in_app_plan_payments": plan_payments_enabled() and features["card_payments"],
         "stripe_publishable_key": (settings.STRIPE_PUBLISHABLE_KEY
                                    if in_app_enabled() and features["card_payments"] else ""),
     })
@@ -360,14 +368,172 @@ def subscription_plans(request):
             "one_off_price": f"{Decimal(str(plan.price)):.2f}",
             "saving_pct": saving_pct(plan),
             "country_count": getattr(target, "country_count", None) or 0,
-            # Subscriptions are set up on the website, in the system browser,
-            # exactly as buying credit is: the app never collects a recurring
-            # mandate itself.
+            # Where to send somebody who has no balance and would rather use a
+            # card. The app subscribes from balance instead -- see
+            # subscription_start -- so this is the fallback, not the route.
             "subscribe_url": request.build_absolute_uri(
                 reverse("subscribe", kwargs={"plan_id": plan.pk})),
             "open_in": "external_browser",
         })
     return Response(rows)
+
+
+# ---- subscriptions, paid out of balance -------------------------------------
+def _subscription_row(sub) -> dict:
+    """One subscription as the app shows it.
+
+    Dates as ISO strings and money as strings, like everywhere else in this API:
+    a float price is a rounding difference waiting to disagree with the figure
+    on the card that sold it.
+    """
+    plan = sub.plan
+    target = getattr(plan, "region", None) or getattr(plan, "country", None)
+    return {
+        "id": str(sub.pk),
+        "plan_id": plan.pk,
+        "title": sub.title,
+        "target_name": sub.target_name,
+        "region_slug": getattr(getattr(plan, "region", None), "slug", ""),
+        "data_label": plan.data_label,
+        "is_unlimited": plan.is_unlimited,
+        "status": sub.status,
+        "funding": sub.funding,
+        "price": f"{sub.price_usd:.2f}",
+        "interval_days": sub.interval_days,
+        "renews_on": sub.current_period_end.isoformat() if sub.current_period_end else None,
+        "cancel_at_period_end": sub.cancel_at_period_end,
+        "renewals_count": sub.renewals_count,
+        "esim_id": sub.esim_id,
+        "country_count": getattr(target, "country_count", None) or 0,
+        # Said by the server rather than worked out on the device, so a change
+        # of policy does not need a store release to be told honestly.
+        "last_error": sub.last_error if sub.status == "past_due" else "",
+    }
+
+
+@api_view(["GET"])
+def subscriptions_mine(request):
+    """This customer's subscriptions, running ones first."""
+    from apps.subscriptions.models import Subscription
+
+    rows = (Subscription.objects
+            .filter(user=request.user)
+            .select_related("plan", "plan__country", "plan__region")
+            .order_by("-created_at"))
+    order = {"active": 0, "past_due": 1, "paused": 2, "incomplete": 3, "canceled": 4}
+    return Response([_subscription_row(s) for s in
+                     sorted(rows, key=lambda s: order.get(s.status, 9))])
+
+
+@api_view(["POST"])
+@throttle_classes([CheckoutThrottle])
+def subscription_start(request):
+    """Start a subscription and pay its first period out of balance.
+
+    No card anywhere in this path. The customer already holds the credit, so a
+    subscription in the app is a standing instruction to spend it -- which is
+    also why it needs no payment sheet, no mandate and no store's permission.
+
+    The interesting failure is a balance that does not cover the first period.
+    It is answered with the shortfall rather than a refusal, because the app can
+    turn that into "add $12.48 and this works" instead of "something went wrong".
+    """
+    from apps.catalog.models import Plan
+    from apps.subscriptions.services import (SubscriptionNotAvailable, start_with_balance,
+                                             subscription_price)
+    from apps.wallet.models import InsufficientBalance, Wallet
+
+    if not settings.SUBSCRIPTIONS_ENABLED:
+        return Response({"detail": "Subscriptions are unavailable.",
+                         "code": "subscriptions_off"},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    if not request.data.get("consent"):
+        # The same statutory waiver as a one-off purchase: the first period is
+        # digital content supplied at once, and an Estonian seller needs the
+        # buyer's express request before delivering inside the withdrawal window.
+        return Response({"detail": "Confirm immediate delivery to continue.",
+                         "code": "consent_required"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    plan = (Plan.objects.live().select_related("country", "region")
+            .filter(pk=request.data.get("plan_id")).first())
+    if plan is None:
+        return Response({"detail": "Plan not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        sub = start_with_balance(request.user, plan)
+    except SubscriptionNotAvailable as e:
+        return Response({"detail": str(e), "code": "not_subscribable"},
+                        status=status.HTTP_409_CONFLICT)
+    except InsufficientBalance:
+        wallet = Wallet.objects.filter(user=request.user).first()
+        balance = wallet.balance_usd if wallet else Decimal("0")
+        price = subscription_price(plan)
+        return Response({
+            "detail": "There is not enough balance for the first period.",
+            "code": "insufficient_balance",
+            "price_usd": f"{price:.2f}",
+            "balance_usd": f"{balance:.2f}",
+            "shortfall_usd": f"{max(price - balance, Decimal('0')):.2f}",
+        }, status=status.HTTP_402_PAYMENT_REQUIRED)
+
+    # The new balance travels back with the subscription so the screen behind
+    # the sheet is right without a second round trip.
+    return Response({"subscription": _subscription_row(sub),
+                     "wallet": _wallet_payload(request, Wallet.for_user(request.user))},
+                    status=status.HTTP_201_CREATED)
+
+
+@api_view(["POST"])
+def subscription_cancel(request, pk):
+    """Stop renewing. The period already paid for keeps running.
+
+    `now=1` ends it immediately, which is only offered for a line that is past
+    due -- there is no paid period left to run out on that one anyway.
+    """
+    from apps.subscriptions.models import Subscription
+    from apps.subscriptions.services import cancel_at_period_end, cancel_now
+
+    sub = (Subscription.objects.select_related("plan", "plan__country", "plan__region")
+           .filter(pk=pk, user=request.user).first())
+    if sub is None:
+        return Response({"detail": "Subscription not found."},
+                        status=status.HTTP_404_NOT_FOUND)
+    if sub.status == Subscription.Status.CANCELED:
+        return Response(_subscription_row(sub))
+
+    if sub.funding != Subscription.Funding.BALANCE:
+        # A card subscription's mandate lives at Stripe; cancelling it here
+        # would stop nothing and tell the customer it had stopped.
+        return Response({"detail": "Manage this subscription on the website.",
+                         "code": "manage_on_web"},
+                        status=status.HTTP_409_CONFLICT)
+
+    if request.data.get("now"):
+        cancel_now(sub, reason="cancelled by the customer")
+    else:
+        cancel_at_period_end(sub)
+    return Response(_subscription_row(sub))
+
+
+@api_view(["POST"])
+def subscription_resume(request, pk):
+    """Undo a cancellation while the period is still running."""
+    from apps.subscriptions.models import Subscription
+    from apps.subscriptions.services import SubscriptionNotAvailable, resume
+
+    sub = (Subscription.objects.select_related("plan", "plan__country", "plan__region")
+           .filter(pk=pk, user=request.user).first())
+    if sub is None:
+        return Response({"detail": "Subscription not found."},
+                        status=status.HTTP_404_NOT_FOUND)
+    try:
+        resume(sub)
+    except SubscriptionNotAvailable as e:
+        return Response({"detail": str(e), "code": "already_ended"},
+                        status=status.HTTP_409_CONFLICT)
+    return Response(_subscription_row(sub))
 
 
 # ---- legal ------------------------------------------------------------------
@@ -965,11 +1131,16 @@ def payment_sheet(request):
     """
     from apps.accounts.models import AppInstall
     from apps.legal.models import LegalAcceptance, record_acceptance
-    from apps.payments.inapp import InAppError, customer_for, enabled, payment_sheet as build_sheet
+    from apps.payments.inapp import (InAppError, customer_for,
+                                     payment_sheet as build_sheet,
+                                     plan_payments_enabled)
     from apps.payments.stripe_client import StripeError
 
-    if not enabled():
-        return Response({"detail": "In-app payments are unavailable.",
+    # Not `enabled()`: adding balance with a card is on and buying a plan with
+    # one is off, and this is the second question. The refusal is the thing that
+    # makes it true -- hiding the button in the app is decoration.
+    if not plan_payments_enabled():
+        return Response({"detail": "Plans are paid for from your balance.",
                          "code": "in_app_unavailable"},
                         status=status.HTTP_503_SERVICE_UNAVAILABLE)
 

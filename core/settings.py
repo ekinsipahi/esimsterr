@@ -450,21 +450,35 @@ STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", "")
 # money from a machine whose database is not the live one.
 STRIPE_ALLOW_LIVE_IN_DEBUG = env_bool("STRIPE_ALLOW_LIVE_IN_DEBUG", False)
 
-# Whether the mobile app may take a card payment itself.
+# Whether the mobile app may take a card payment itself, and what for.
 #
-# Off. The app spends balance and nothing else: a purchase inside it is a
-# deduction from credit the customer already owns, and every payment -- buying
-# that credit included -- happens on the website in the system browser.
+# These are two questions, and the answers differ. The app takes a card for one
+# thing only: adding balance. Everything else it sells is a deduction from
+# credit the customer already owns, which is not a payment transaction at all.
 #
-# That is a product decision before it is a policy one. It leaves exactly one
-# place where money is taken, which is one place to get right, one place to
-# debug and one place a store can have an opinion about. Spending credit you
-# already hold is not a payment transaction, so the app stays out of the
-# argument entirely.
+# WHY THE SPLIT. A single flag forced a bad choice. Off, buying a plan stayed in
+# the app but adding the credit that buys it threw the customer into a browser
+# mid-purchase -- the inconsistency people abandon halfway through. On, the app
+# took a card for a plan as well, which is a second till: a second place to get
+# right, a second place to debug and a second thing a store can have an opinion
+# about. Split, there is one card flow in the app, it is the shortest one, and
+# every plan in the catalogue is bought by the same single tap against balance.
 #
-# Set IN_APP_PAYMENTS=True to put the in-app card sheet back; the code for it is
-# all still here and tested.
-IN_APP_PAYMENTS = env_bool("IN_APP_PAYMENTS", False)
+# A mobile data plan is consumed outside the app, so both of these are permitted
+# non-IAP payments -- see apps.payments.inapp for the citations. This is a
+# product decision, not a policy one.
+#
+# The remote card_payments switch is ANDed on top of both: pulling it during an
+# incident stops the card flow without a release. See apps.common.models.
+IN_APP_PAYMENTS = env_bool("IN_APP_PAYMENTS", True)
+
+# Whether a plan may be bought with a card inside the app, rather than paid for
+# out of balance. Off: the catalogue runs to thousands of plans and every one of
+# them comes off balance, so there is exactly one card flow to reason about. The
+# website still takes a card for a plan; that is a different code path and stays
+# open. Set IN_APP_PLAN_PAYMENTS=True to put the in-app card button back on a
+# plan; the code for it is all still here and tested.
+IN_APP_PLAN_PAYMENTS = env_bool("IN_APP_PLAN_PAYMENTS", False)
 
 # How hard to push for 3-D Secure on card payments.
 #   "challenge"  ask the issuer to authenticate every payment it can

@@ -231,7 +231,12 @@ services:
     plan: free
     schedule: "*/20 * * * *"
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python manage.py sync_usage && python manage.py retry_orders && python manage.py expire_coupon_holds"
+    # renew_subscriptions runs first because it is the only job here that moves
+    # money, and a renewal that waits on a provider sync finishing is a line
+    # that goes dark for a customer who has the balance to keep it. It never
+    # exits non-zero on a single failed subscription, so it cannot hold the
+    # chain up either.
+    startCommand: "python manage.py renew_subscriptions && python manage.py sync_usage && python manage.py retry_orders && python manage.py expire_coupon_holds"
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.3"

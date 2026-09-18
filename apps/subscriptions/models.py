@@ -21,6 +21,22 @@ from django.utils.translation import gettext_lazy as _
 class Subscription(models.Model):
     """One auto-renewing unlimited plan, tied to one eSIM line."""
 
+    class Funding(models.TextChoices):
+        """Where each cycle's money comes from.
+
+        CARD is Stripe Billing: Stripe holds the mandate, decides when to charge
+        and tells us afterwards. BALANCE is ours: the customer's wallet is
+        debited on our own schedule, by the renew_subscriptions command.
+
+        They exist side by side because they answer different questions. On the
+        website a card is the shortest path and Stripe's dunning is better than
+        anything worth writing. In the app there is no card -- balance is the
+        only thing it spends -- and a subscription that could only be started in
+        a browser was a subscription the app could not sell.
+        """
+        CARD = "card", _("Card (Stripe Billing)")
+        BALANCE = "balance", _("Balance")
+
     class Status(models.TextChoices):
         ACTIVE = "active", _("Active")
         PAST_DUE = "past_due", _("Payment failed")
@@ -40,6 +56,9 @@ class Subscription(models.Model):
     # never reinstalls a profile.
     esim = models.ForeignKey("orders.Esim", null=True, blank=True, on_delete=models.SET_NULL,
                              related_name="subscriptions", verbose_name=_("eSIM"))
+
+    funding = models.CharField(max_length=8, choices=Funding.choices, default=Funding.CARD,
+                               db_index=True, verbose_name=_("funded by"))
 
     stripe_customer_id = models.CharField(max_length=64, blank=True, db_index=True)
     # NULL rather than "" while the Checkout session is still open: several
@@ -108,6 +127,19 @@ class Subscription(models.Model):
     @property
     def title(self):
         return self.plan.title if self.plan_id else ""
+
+    @property
+    def from_balance(self):
+        return self.funding == self.Funding.BALANCE
+
+    @property
+    def renews_on(self):
+        """The date the next charge lands, or None while nothing is scheduled.
+
+        Named for what the customer is asking. `current_period_end` is the same
+        moment and reads as jargon on a screen.
+        """
+        return self.current_period_end
 
     @property
     def interval_label(self):

@@ -49,6 +49,18 @@ def enabled() -> bool:
         return True
 
 
+def plan_payments_enabled() -> bool:
+    """Whether a plan may be bought with a card in the app, rather than out of
+    balance.
+
+    Narrower than `enabled()` on purpose, and the narrower gate is the one the
+    plan endpoint asks. Adding balance is the app's only card flow; a plan comes
+    off the balance that flow buys. See core.settings.IN_APP_PLAN_PAYMENTS for
+    why those are two questions.
+    """
+    return enabled() and getattr(settings, "IN_APP_PLAN_PAYMENTS", False)
+
+
 def customer_for(*, user=None, install=None, email: str = "") -> tuple[str, object]:
     """The Stripe customer this purchase belongs to, and the row holding its id.
 
@@ -76,8 +88,8 @@ def customer_for(*, user=None, install=None, email: str = "") -> tuple[str, obje
 
 def payment_sheet(order, *, customer_id: str, api_version: str, save_card: bool) -> dict:
     """Everything the app needs to open PaymentSheet for this order."""
-    if not enabled():
-        raise InAppError("In-app payments are not available.")
+    if not plan_payments_enabled():
+        raise InAppError("Plans are paid for from balance in the app.")
 
     payment = Payment.objects.create(
         order=order, user=order.user, provider=Payment.Provider.STRIPE,
@@ -113,10 +125,11 @@ def topup_payment_sheet(topup, *, customer_id: str, api_version: str,
                         save_card: bool) -> dict:
     """PaymentSheet for adding balance, so topping up never leaves the app.
 
-    Buying a plan in the app and being sent to a browser to add the credit that
-    buys it was the kind of inconsistency that makes people abandon halfway. The
-    same rules apply: card details go to Stripe directly, and the webhook credits
-    the wallet from the amount Stripe reports actually arriving.
+    The app's only card flow, and the reason it is worth having: every plan in
+    the catalogue is bought by spending this balance, so a top-up that threw the
+    customer into a browser stopped every purchase in the app halfway through.
+    Card details go to Stripe directly, and the webhook credits the wallet from
+    the amount Stripe reports actually arriving -- never from what was asked for.
     """
     if not enabled():
         raise InAppError("In-app payments are not available.")

@@ -50,6 +50,12 @@ urlpatterns = [
     path("pay/cards/<str:pm_id>/", views.delete_card, name="api_delete_card"),
     # legal
     path("subscriptions/plans/", views.subscription_plans, name="api_subscription_plans"),
+    path("subscriptions/", views.subscriptions_mine, name="api_subscriptions_mine"),
+    path("subscriptions/start/", views.subscription_start, name="api_subscription_start"),
+    path("subscriptions/<uuid:pk>/cancel/", views.subscription_cancel,
+         name="api_subscription_cancel"),
+    path("subscriptions/<uuid:pk>/resume/", views.subscription_resume,
+         name="api_subscription_resume"),
     path("legal/", views.legal_index, name="api_legal"),
     path("legal/accept/", views.legal_accept, name="api_legal_accept"),
     path("legal/<slug:slug>/", views.legal_document, name="api_legal_document"),

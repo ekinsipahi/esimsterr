@@ -14,6 +14,7 @@ revenue for every subscriber and never reconcile against Stripe.
 from __future__ import annotations
 
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone as dt_timezone
 from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 
@@ -26,6 +27,7 @@ from apps.accounts.emails import notify_admin, send_email_bg
 from apps.catalog.pricing import charm, cost_to_usd
 from apps.orders.models import Esim, Order
 from apps.payments.models import Payment
+from apps.wallet.models import InsufficientBalance, Wallet
 
 from .models import Subscription, SubscriptionCycle
 from .stripe_sub import SubscriptionError, retrieve_subscription
@@ -516,14 +518,28 @@ def _record_payment(order: Order, subscription: Subscription, *,
 
 @transaction.atomic
 def start_cycle(subscription: Subscription, *, stripe_invoice_id: str,
-                period_start, period_end, amount_usd) -> SubscriptionCycle:
+                period_start, period_end, amount_usd,
+                from_balance: bool = False) -> SubscriptionCycle:
     """Record a paid period and provision it. Safe to call twice.
 
-    get_or_create on the Stripe invoice id is the whole defence: Stripe retries
+    get_or_create on the reference is the whole defence: Stripe retries
     webhooks, and the first cycle arrives on both checkout.session.completed and
     invoice.paid. A call for an already-provisioned invoice returns that cycle
     untouched; one for an invoice previously recorded as failed revives it, so a
     successful Stripe retry provisions exactly once.
+
+    `stripe_invoice_id` is the column's name and a card cycle's Stripe invoice.
+    A balance cycle has no invoice, so it carries a locally minted `bal_...`
+    reference instead -- the same uniqueness, the same idempotency, no second
+    column to keep in step.
+
+    `from_balance` decides how the cycle is settled, and the difference is not
+    cosmetic. A card cycle's money arrives from outside and is mirrored into the
+    payments ledger. A balance cycle spends credit that was already recorded as
+    revenue when it was bought, so it is a wallet debit: writing a Payment for
+    it as well would count the same dollar twice. Debiting inside this atomic
+    block is also what makes a short balance safe -- InsufficientBalance rolls
+    the order and the cycle back rather than provisioning something unpaid.
     """
     sub = Subscription.objects.select_for_update().select_related("plan", "user").get(
         pk=subscription.pk)
@@ -593,8 +609,13 @@ def start_cycle(subscription: Subscription, *, stripe_invoice_id: str,
         cost_currency=plan.cost_currency,
         target_esim=esim,
     )
+    if from_balance:
+        # Raises InsufficientBalance, which unwinds everything above it.
+        Wallet.debit(sub.user, amount, order=order,
+                     description=f"{plan.title} — subscription")
     order.mark_paid()
-    _record_payment(order, sub, stripe_invoice_id=stripe_invoice_id, amount=amount)
+    if not from_balance:
+        _record_payment(order, sub, stripe_invoice_id=stripe_invoice_id, amount=amount)
 
     cycle.order = order
     cycle.save(update_fields=["order"])
@@ -679,3 +700,192 @@ def send_payment_failed(sub: Subscription) -> None:
         f"We could not renew your {sub.target_name} subscription",
         "subscription_payment_failed", _email_ctx(sub, sub.esim),
     )
+
+
+# ---- subscriptions paid out of balance --------------------------------------
+#
+# The app's half of the feature. It has no card -- balance is the only thing it
+# spends -- so a subscription it could only start in a browser was a
+# subscription it could not sell. Here the wallet is the mandate: the customer
+# holds credit, we debit it on our own schedule, and there is nothing for a
+# store to have an opinion about because no payment is taken.
+#
+# What Stripe Billing does for a card subscription, renew_subscriptions does for
+# this one. The difference that matters is what happens when the money is not
+# there: a card gets retried by Stripe's dunning for a fortnight, a balance
+# simply is not enough, so the line goes past_due immediately, the customer is
+# told what it costs to fix, and the grace window below decides how long we keep
+# the line reserved before giving up.
+
+# How long a subscription stays past_due before it is cancelled. Long enough to
+# notice an email and top up over a weekend; short enough that a line nobody is
+# paying for is not held open for ever.
+PAST_DUE_GRACE = timedelta(days=5)
+
+
+def _balance_reference() -> str:
+    """The unique reference a balance cycle is keyed on.
+
+    Random rather than sequential: the cycle before this one already exists, and
+    a counter would need a lock to stay unique under two renewals at once.
+    """
+    return f"bal_{uuid.uuid4().hex}"
+
+
+class SubscriptionNotAvailable(Exception):
+    """This plan cannot be subscribed to, or not by this customer right now."""
+
+
+def live_subscription(user, plan) -> Subscription | None:
+    """This customer's running subscription for this plan, if any.
+
+    Never let one customer run two for the same plan: that is two charges and
+    two eSIMs for one line they thought they were renewing.
+    """
+    return (Subscription.objects
+            .filter(user=user, plan=plan,
+                    status__in=[Subscription.Status.ACTIVE,
+                                Subscription.Status.PAST_DUE,
+                                Subscription.Status.PAUSED])
+            .first())
+
+
+@transaction.atomic
+def start_with_balance(user, plan) -> Subscription:
+    """Begin a subscription and pay its first period out of balance.
+
+    Raises SubscriptionNotAvailable for a plan that is not on the menu, or a
+    customer who already has this one running, and InsufficientBalance when the
+    credit is short -- in which case nothing at all is created.
+    """
+    from .catalogue import is_subscribable
+
+    if not is_subscribable(plan):
+        raise SubscriptionNotAvailable("That plan is not sold as a subscription.")
+    if live_subscription(user, plan) is not None:
+        raise SubscriptionNotAvailable("You already have a subscription for this plan.")
+
+    price = subscription_price(plan)
+    now = timezone.now()
+    period_end = now + timedelta(days=plan.days or 30)
+
+    sub = Subscription.objects.create(
+        user=user, plan=plan, price_usd=price, interval_days=plan.days or 30,
+        funding=Subscription.Funding.BALANCE,
+        status=Subscription.Status.ACTIVE,
+        started_at=now, current_period_end=period_end,
+    )
+    # Raises InsufficientBalance, which rolls the subscription back with it.
+    start_cycle(sub, stripe_invoice_id=_balance_reference(), period_start=now,
+                period_end=period_end, amount_usd=price, from_balance=True)
+    transaction.on_commit(lambda: send_started(sub))
+    return sub
+
+
+def due_for_renewal(now=None):
+    """Balance subscriptions whose period has run out.
+
+    past_due is included on purpose: that is a renewal that has already been
+    tried and found the balance short, and the customer topping up should be
+    picked up by the next run rather than needing anybody to do anything.
+    """
+    now = now or timezone.now()
+    return (Subscription.objects
+            .filter(funding=Subscription.Funding.BALANCE,
+                    status__in=[Subscription.Status.ACTIVE, Subscription.Status.PAST_DUE],
+                    current_period_end__lte=now)
+            .select_related("user", "plan", "plan__country", "plan__region")
+            .order_by("current_period_end"))
+
+
+def renew_with_balance(sub: Subscription) -> SubscriptionCycle | None:
+    """Charge one more period to the wallet, or mark the line past due.
+
+    Returns the cycle, or None when the balance was short. Never raises for a
+    short balance: this runs in a loop over every due subscription, and one
+    customer who has not topped up must not stop the rest from renewing.
+    """
+    if sub.cancel_at_period_end:
+        cancel_now(sub, reason="cancelled at period end")
+        return None
+
+    period_start = sub.current_period_end or timezone.now()
+    period_end = period_start + timedelta(days=sub.interval_days or 30)
+    try:
+        cycle = start_cycle(sub, stripe_invoice_id=_balance_reference(),
+                            period_start=period_start, period_end=period_end,
+                            amount_usd=sub.price_usd, from_balance=True)
+    except InsufficientBalance as e:
+        _mark_past_due(sub, str(e))
+        return None
+
+    Subscription.objects.filter(pk=sub.pk).update(
+        status=Subscription.Status.ACTIVE, current_period_end=period_end,
+        last_error="", updated_at=timezone.now(),
+    )
+    sub.refresh_from_db(fields=["status", "current_period_end", "last_error"])
+    transaction.on_commit(lambda: send_renewed(sub, sub.esim))
+    return cycle
+
+
+def _mark_past_due(sub: Subscription, reason: str) -> None:
+    """The balance was short. Tell them once, then give up after the grace.
+
+    Once, because this runs on a schedule and a daily "your subscription failed"
+    email is how a customer learns to filter you. The first failure is the one
+    that carries information; the rest are the same sentence.
+    """
+    first_failure = sub.status != Subscription.Status.PAST_DUE
+    overdue = timezone.now() - (sub.current_period_end or timezone.now())
+
+    if not first_failure and overdue > PAST_DUE_GRACE:
+        cancel_now(sub, reason=f"balance short for more than {PAST_DUE_GRACE.days} days")
+        return
+
+    Subscription.objects.filter(pk=sub.pk).update(
+        status=Subscription.Status.PAST_DUE, last_error=reason[:500],
+        updated_at=timezone.now())
+    sub.status = Subscription.Status.PAST_DUE
+    sub.last_error = reason
+    if first_failure:
+        transaction.on_commit(lambda: send_payment_failed(sub))
+
+
+def cancel_now(sub: Subscription, *, reason: str = "") -> Subscription:
+    """Stop the subscription immediately. The eSIM keeps whatever it has left.
+
+    Nothing is refunded and nothing is taken away: the period they paid for is
+    on the line already. Cancelling stops the next debit, which is what the
+    customer means by it.
+    """
+    Subscription.objects.filter(pk=sub.pk).update(
+        status=Subscription.Status.CANCELED, canceled_at=timezone.now(),
+        cancel_at_period_end=False, last_error=reason[:500], updated_at=timezone.now())
+    sub.status = Subscription.Status.CANCELED
+    sub.canceled_at = timezone.now()
+    return sub
+
+
+def cancel_at_period_end(sub: Subscription) -> Subscription:
+    """Stop renewing, but leave the period they have paid for running.
+
+    The kinder default and the one a customer expects from "cancel": they paid
+    for a month, they keep the month. A line already past due has no paid period
+    left to run out, so that one stops now.
+    """
+    if sub.status == Subscription.Status.PAST_DUE:
+        return cancel_now(sub, reason="cancelled while past due")
+    Subscription.objects.filter(pk=sub.pk).update(
+        cancel_at_period_end=True, updated_at=timezone.now())
+    sub.cancel_at_period_end = True
+    return sub
+
+
+def resume(sub: Subscription) -> Subscription:
+    """Undo a cancel_at_period_end, while the period is still running."""
+    if sub.status == Subscription.Status.CANCELED:
+        raise SubscriptionNotAvailable("That subscription has already ended.")
+    Subscription.objects.filter(pk=sub.pk).update(
+        cancel_at_period_end=False, updated_at=timezone.now())
+    sub.cancel_at_period_end = False
+    return sub
