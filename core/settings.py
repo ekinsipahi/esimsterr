@@ -450,6 +450,22 @@ STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", "")
 # money from a machine whose database is not the live one.
 STRIPE_ALLOW_LIVE_IN_DEBUG = env_bool("STRIPE_ALLOW_LIVE_IN_DEBUG", False)
 
+# Whether the mobile app may take a card payment itself.
+#
+# Off. The app spends balance and nothing else: a purchase inside it is a
+# deduction from credit the customer already owns, and every payment -- buying
+# that credit included -- happens on the website in the system browser.
+#
+# That is a product decision before it is a policy one. It leaves exactly one
+# place where money is taken, which is one place to get right, one place to
+# debug and one place a store can have an opinion about. Spending credit you
+# already hold is not a payment transaction, so the app stays out of the
+# argument entirely.
+#
+# Set IN_APP_PAYMENTS=True to put the in-app card sheet back; the code for it is
+# all still here and tested.
+IN_APP_PAYMENTS = env_bool("IN_APP_PAYMENTS", False)
+
 # How hard to push for 3-D Secure on card payments.
 #   "challenge"  ask the issuer to authenticate every payment it can
 #   "automatic"  leave it to Stripe's own risk rules
@@ -481,9 +497,6 @@ NOWPAYMENTS_API_BASE = env("NOWPAYMENTS_API_BASE", "https://api.nowpayments.io/v
 # sale alert, never to price a plan. Stripe's cut varies by country and card
 # type, so check your own dashboard and correct these rather than trusting the
 # defaults: a wrong rate here silently misreports the profit on every sale.
-# Cards are saved and reused in the app. Off means the app falls back to
-# opening web checkout, so a misconfigured deploy degrades rather than breaks.
-IN_APP_PAYMENTS = env_bool("IN_APP_PAYMENTS", True)
 
 # ---- Admin test tool ---------------------------------------------------------
 # Lets an operator walk the whole purchase flow on a real phone without paying.

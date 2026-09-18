@@ -30,9 +30,23 @@ class InAppError(Exception):
 
 
 def enabled() -> bool:
-    return bool(getattr(settings, "IN_APP_PAYMENTS", True)
-                and stripe_client.configured()
-                and settings.STRIPE_PUBLISHABLE_KEY)
+    """Whether the app may take a card payment right now.
+
+    Reads the remote switch as well as the setting, which it did not before: the
+    app hid the card button when the switch was off and the endpoint carried on
+    accepting payments regardless. A switch you reach for during an incident has
+    to stop something, or it is a light on a dashboard.
+    """
+    if not (getattr(settings, "IN_APP_PAYMENTS", False)
+            and stripe_client.configured()
+            and settings.STRIPE_PUBLISHABLE_KEY):
+        return False
+    try:
+        from apps.common.models import RemoteConfig
+
+        return RemoteConfig.current().card_payments
+    except Exception:  # noqa: BLE001 - a config read must not stop a purchase
+        return True
 
 
 def customer_for(*, user=None, install=None, email: str = "") -> tuple[str, object]:
