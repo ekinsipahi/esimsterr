@@ -20,6 +20,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
@@ -57,6 +58,11 @@ class BalanceSubscriptionBase(TestCase):
                                             email_verified=True)
 
     def setUp(self):
+        # RemoteConfig caches for a minute and the cache outlives the database
+        # rollback between tests, so whatever ran before this class was deciding
+        # what these tests read. Cheap to clear, and it is the only state these
+        # tests did not own.
+        cache.clear()
         self.price = subscription_price(self.plan)
 
     def fund(self, amount, user=None):
