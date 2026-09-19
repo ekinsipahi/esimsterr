@@ -139,7 +139,13 @@ class TheShippedArrangementTests(InAppBase):
 
     def test_the_website_still_takes_payments(self):
         """Closing the app's card path for plans must not close the till. The
-        web checkout is a different code path and stays open."""
+        web checkout is a different code path and stays open.
+
+        Signed in, because buying needs an account everywhere now -- see
+        apps.orders.tests_guest_checkout. The claim being made here is about the
+        card path, not about who may reach it.
+        """
+        self.client.force_login(self.customer)
         self.assertEqual(self.client.get(f"/checkout/{self.plan.pk}/").status_code, 200)
 
     def test_spending_balance_is_not_a_payment_and_still_works(self):

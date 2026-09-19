@@ -27,6 +27,29 @@ from .models import Esim, Order
 log = logging.getLogger(__name__)
 
 
+def guest_checkout_allowed() -> bool:
+    """Whether somebody may buy without an account right now.
+
+    Reads the remote switch as well as the setting, which nothing did before:
+    `guest_checkout` was published to the app and enforced nowhere, so turning
+    it off during an incident hid a button and left the website selling. A
+    switch that stops nothing is worse than no switch -- somebody flips it and
+    believes the problem is contained.
+
+    ANDed rather than either-or, so the switch can only ever close. An operator
+    cannot turn guest buying back on against the setting, and a config or
+    database failure cannot close the till by accident.
+    """
+    if not getattr(settings, "GUEST_CHECKOUT", False):
+        return False
+    try:
+        from apps.common.models import RemoteConfig
+
+        return RemoteConfig.current().guest_checkout
+    except Exception:  # noqa: BLE001 - a config read must not stop a purchase
+        return True
+
+
 def _parse_dt(value):
     """Provider timestamps are 'YYYY-MM-DD HH:MM:SS' in UTC."""
     if not value:

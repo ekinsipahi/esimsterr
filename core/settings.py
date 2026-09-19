@@ -450,6 +450,24 @@ STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", "")
 # money from a machine whose database is not the live one.
 STRIPE_ALLOW_LIVE_IN_DEBUG = env_bool("STRIPE_ALLOW_LIVE_IN_DEBUG", False)
 
+# Whether somebody can buy without an account.
+#
+# Off. Every purchase belongs to a customer now, which is a change of shape
+# rather than a restriction: an order with no account behind it is one nobody
+# can find again. A guest who loses the email has no way back to the QR, no
+# order history to point support at, and no balance -- so the cheapest purchase
+# on the site is also the one most likely to become a support ticket.
+#
+# It also closes the last anonymous write path on the website. Everything else
+# that spends money -- balance, subscriptions, the app -- already needed an
+# account, so this was the one door left where a refund, a chargeback or a
+# fraud pattern had nothing to attach to.
+#
+# The signed-out visitor is sent to sign in with `next` intact, so the coupon,
+# the gift address and the top-up target all survive the round trip and the
+# purchase carries on where it stopped.
+GUEST_CHECKOUT = env_bool("GUEST_CHECKOUT", False)
+
 # Whether the mobile app may take a card payment itself, and what for.
 #
 # These are two questions, and the answers differ. The app takes a card for one

@@ -71,7 +71,11 @@ class RemoteConfig(models.Model):
                     "when Stripe, the payment sheet or 3-D Secure is misbehaving."))
     balance_payments = models.BooleanField(_("paying from balance"), default=True)
     balance_topups = models.BooleanField(_("adding balance"), default=True)
-    guest_checkout = models.BooleanField(_("buying without an account"), default=True)
+    guest_checkout = models.BooleanField(
+        _("buying without an account"), default=True,
+        help_text=_("Closes guest checkout during an incident. It cannot open it: "
+                    "the setting GUEST_CHECKOUT decides whether it is offered at "
+                    "all, and that is off."))
     gifting = models.BooleanField(_("gifting an eSIM"), default=True)
     referrals = models.BooleanField(_("referral codes"), default=True)
     coupons = models.BooleanField(_("discount codes"), default=True)

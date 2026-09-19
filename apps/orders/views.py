@@ -10,6 +10,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, JsonResponse
@@ -30,7 +31,7 @@ from apps.payments import services as payment_services
 from apps.providers.yesim import YesimError
 
 from .models import Esim, Order
-from .services import sync_esim
+from .services import guest_checkout_allowed, sync_esim
 
 log = logging.getLogger(__name__)
 
@@ -121,6 +122,19 @@ def checkout(request, plan_id):
     plan = get_object_or_404(
         Plan.objects.live().select_related("country", "region"), pk=plan_id
     )
+
+    # Buying needs an account. Sent through the login page with the whole path
+    # intact rather than bounced to the plan, so the coupon, the gift address
+    # and the top-up target survive and the purchase resumes where it stopped.
+    # Checked here rather than with @login_required so the switch is one
+    # setting and a missing plan still 404s instead of asking for a password.
+    if not request.user.is_authenticated and not guest_checkout_allowed():
+        messages.info(request, _(
+            "Sign in to buy. Your eSIMs, your order history and your balance all "
+            "live on the account — an order with nothing behind it is one nobody "
+            "can find again."))
+        return redirect_to_login(request.get_full_path(), settings.LOGIN_URL)
+
     topup_esim = None
     esim_pk = request.GET.get("esim") or request.POST.get("esim")
     if esim_pk:

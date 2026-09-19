@@ -52,8 +52,9 @@ def _faq():
            "per customer. If the code still will not apply, contact support with the code and "
            "your email address and we will make it right.")),
         (_("Do I need an account to use a coupon?"),
-         _("No. Guest checkout accepts codes too. We only need an email address to send the "
-           "QR code to, which is also how a one-per-customer code is counted.")),
+         _("You need one to buy at all, and creating it takes an email address and a "
+           "password — nothing else. The account is also how a one-per-customer code "
+           "is counted, so a code that says one use means one.")),
     ]
 
 

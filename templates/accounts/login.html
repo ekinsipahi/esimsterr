@@ -57,9 +57,9 @@
         </form>
       </div>
 
-      {% url 'signup' as signup_url %}{% url 'destinations' as guest_url %}
+      {% url 'signup' as signup_url %}
       <p class="center small muted mt-3">
-        {% blocktrans %}No account yet? <a class="link" href="{{ signup_url }}">Create one</a>, or <a class="link" href="{{ guest_url }}">buy as a guest</a>.{% endblocktrans %}
+        {% blocktrans %}No account yet? <a class="link" href="{{ signup_url }}">Create one</a> — an email address is all it takes.{% endblocktrans %}
       </p>
     </div>
 

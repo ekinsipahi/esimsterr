@@ -166,9 +166,11 @@ CLAUSES = {c.id: c for c in [
     )),
 
     Clause("accounts", _("Accounts"), (
-        P(_("You may buy as a guest or create an account; a subscription requires an "
-            "account. You must be old enough to enter a contract where you live, and at "
-            "least 16. Keep your credentials safe; you are responsible for activity "
+        P(_("Buying requires an account. Creating one takes an email address and a "
+            "password; we ask for no documents and run no identity check. Orders "
+            "placed as a guest before 19 September 2026 remain valid and are still "
+            "supported. You must be old enough to enter a contract where you live, and "
+            "at least 16. Keep your credentials safe; you are responsible for activity "
             "under your account. We may suspend accounts used fraudulently, including "
             "for payment fraud, coupon abuse or chargeback abuse.")),
         P(_("We record the IP address, browser user agent, browser language and "

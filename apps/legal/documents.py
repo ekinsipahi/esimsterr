@@ -43,8 +43,8 @@ DOCUMENTS: tuple = (
         summary=_("What you are buying, how it is delivered, and what happens when something "
                   "goes wrong."),
         seo_title=_("Terms of Service"),
-        version="2026.2",
-        effective=date(2026, 9, 15),
+        version="2026.3",
+        effective=date(2026, 9, 19),
         clauses=(
             "terms-lead", "what-we-sell", "validity", "your-device", "prices-payment",
             "coupons", "delivery", "subscriptions", "refunds-ref", "acceptable-use-ref",

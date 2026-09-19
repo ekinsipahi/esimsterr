@@ -11,6 +11,28 @@ from django.utils.translation import gettext_noop as _
 # Newest first.
 HISTORY = (
     {
+        "date": date(2026, 9, 19),
+        "version": "2026.3",
+        "documents": ("terms",),
+        "material": True,
+        "summary": _("Buying now requires an account. Creating one still takes an email "
+                     "address and a password, and nothing else — no documents, no "
+                     "identity check."),
+        "detail": (
+            _("Guest checkout is closed. An order placed without an account is one "
+              "nobody can find again: lose the email and there is no order history to "
+              "search, no way back to the QR code, and nothing for support to work "
+              "from. Every purchase now belongs to a customer, which is also where "
+              "eSIMs, orders and balance already lived."),
+            _("Nothing changes about what we ask for. An email address and a password "
+              "is the whole signup, as it always was — no passport, no KYC, nothing to "
+              "prove about who you are."),
+            _("Orders placed as a guest before this date remain valid, are still "
+              "delivered and are still supported. The QR codes already issued keep "
+              "working, and the support ticket route for a guest order stays open."),
+        ),
+    },
+    {
         "date": date(2026, 9, 15),
         "version": "2026.2",
         "documents": ("terms",),

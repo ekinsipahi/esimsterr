@@ -23,7 +23,7 @@
       <ul>
         <li>{% blocktrans %}<strong>Local networks.</strong> Your eSIM connects to real carriers at your destination, not to a slow reseller pipe. We publish the partner operators for every country we sell.{% endblocktrans %}</li>
         <li>{% blocktrans %}<strong>Instant delivery.</strong> The QR code appears as soon as the payment clears, day or night, and lands in your inbox as well.{% endblocktrans %}</li>
-        <li>{% blocktrans %}<strong>No identity checks.</strong> An email address is all we need. No passport upload, no KYC, no account required to buy.{% endblocktrans %}</li>
+        <li>{% blocktrans %}<strong>No identity checks.</strong> An email address and a password is the whole signup. No passport upload, no KYC, nothing to prove about who you are.{% endblocktrans %}</li>
         {% if crypto_enabled %}
         <li>{% blocktrans %}<strong>Crypto accepted.</strong> Pay by card if that suits you, or in cryptocurrency if you would rather not hand a card number to another website.{% endblocktrans %}</li>
         {% endif %}
@@ -51,7 +51,7 @@
       <div class="card">
         <span class="icon-tile v-mint">{% icon "shield" size=22 %}</span>
         <h3 class="mt-2">{% trans "An email is the whole signup" %}</h3>
-        <p class="muted small mt-1">{% trans "No identity documents, no KYC, no account needed to check out as a guest." %}</p>
+        <p class="muted small mt-1">{% trans "An email address and a password. No identity documents, no KYC, nothing else asked for." %}</p>
       </div>
       <div class="card">
         <span class="icon-tile v-cyan">{% icon "globe" size=22 %}</span>
