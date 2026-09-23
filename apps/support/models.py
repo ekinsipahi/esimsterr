@@ -227,3 +227,34 @@ class AssistantMessage(models.Model):
 
     def __str__(self):
         return f"{self.role}: {self.content[:50]}"
+
+
+class ArchivedAssistantMessage(models.Model):
+    """Append-only black-box log of assistant chat messages.
+
+    Written by a ``pre_delete`` signal on :class:`AssistantMessage` (see
+    ``apps/support/signals.py``), so it captures every message the instant before
+    it is deleted — by ANY path: an admin deleting a conversation, deleting a user
+    (cascade), an inline single-message delete, or account self-deletion
+    (``delete_account``). It holds NO foreign keys (user/conversation are
+    snapshotted as plain values), so nothing can ever cascade it away. This is the
+    guarantee that pressing "delete" still leaves the customer↔operator
+    conversation preserved. Read-only in the admin, so it cannot be wiped."""
+    id = models.BigAutoField(primary_key=True)
+    conversation_id = models.UUIDField(null=True, blank=True, db_index=True)
+    message_id = models.UUIDField(null=True, blank=True)
+    user_id = models.CharField(max_length=64, blank=True, default="")
+    user_email = models.CharField(max_length=254, blank=True, default="", db_index=True)
+    role = models.CharField(max_length=10, blank=True, default="")
+    content = models.TextField(blank=True, default="")
+    intent = models.CharField(max_length=60, blank=True, default="")
+    message_created_at = models.DateTimeField(null=True, blank=True)
+    archived_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "assistant_message_archive"
+        ordering = ["conversation_id", "message_created_at", "archived_at"]
+        indexes = [models.Index(fields=["user_email", "archived_at"])]
+
+    def __str__(self):
+        return f"[archive] {self.user_email} {self.role}: {self.content[:40]}"

@@ -54,6 +54,17 @@ def stripe_webhook(request):
     event = event.to_dict() if hasattr(event, "to_dict") else dict(event)
     etype = event["type"]
 
+    # A card dispute / chargeback was opened — alarm the operator at once (it has
+    # a hard evidence deadline and is lost by default if ignored). Never let this
+    # 500 the endpoint: it is a side-alert, not part of settlement.
+    if etype == "charge.dispute.created":
+        try:
+            from apps.accounts.notifications import dispute_alert
+            dispute_alert(event["data"]["object"])
+        except Exception:  # noqa: BLE001
+            log.exception("Stripe dispute alert failed")
+        return JsonResponse({"received": True})
+
     # Subscriptions own their whole lifecycle, including the checkout that starts
     # them. Routing on session mode keeps one-off and recurring payments from
     # settling each other's orders.

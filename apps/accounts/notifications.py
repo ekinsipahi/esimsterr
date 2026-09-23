@@ -260,3 +260,73 @@ def underpaid_alert(order, paid_usd) -> None:
          f"Invoiced: {_money(order.amount_usd)}", f"Received: {_money(paid_usd)}"],
         html,
     )
+
+
+def dispute_alert(dispute: dict) -> None:
+    """A card dispute / chargeback was opened. This one has to interrupt you: a
+    dispute carries a hard evidence deadline and is LOST BY DEFAULT if ignored.
+
+    The Stripe account is shared across products, so we alarm ONLY when the
+    disputed PaymentIntent matches one of OUR payments; a dispute on another
+    product is skipped (its own webhook alarms it). Never raises — an alert
+    failure must not turn the webhook into a 500 (that makes Stripe retry and
+    can disable the endpoint, silently breaking settlement)."""
+    try:
+        from datetime import datetime, timezone as _tz
+
+        from apps.payments.models import Payment
+
+        pi = str(dispute.get("payment_intent") or "")
+        payment = (Payment.objects.filter(provider_payment_id=pi)
+                   .select_related("user").first()) if pi else None
+        if payment is None:
+            return  # not one of our charges (shared Stripe account)
+
+        amount = _d(dispute.get("amount", 0)) / 100
+        cur = str(dispute.get("currency") or "").upper()
+        reason = str(dispute.get("reason") or "")
+        status = str(dispute.get("status") or "")
+        due_unix = (dispute.get("evidence_details") or {}).get("due_by")
+        due = ""
+        if due_unix:
+            try:
+                due = datetime.fromtimestamp(int(due_unix), tz=_tz.utc).strftime("%Y-%m-%d %H:%M UTC")
+            except (ValueError, TypeError, OSError):
+                due = ""
+        email = getattr(payment.user, "email", "") if payment.user_id else ""
+        if not email:
+            email = getattr(getattr(payment, "order", None), "email", "") or "guest"
+        did = str(dispute.get("id") or "")
+        stripe_url = f"https://dashboard.stripe.com/disputes/{did}"
+
+        html = admin_card(
+            kicker="🚨 Card dispute",
+            headline=f"{amount:.2f} {cur} disputed",
+            subline="Hard evidence deadline — the dispute is LOST BY DEFAULT if you do not respond in Stripe.",
+            rows=[
+                ("Customer", email),
+                ("Reason", reason or "—"),
+                ("Status", status or "—"),
+                ("Respond by", due or "—"),
+                ("Payment", str(payment.id)),
+            ],
+            accent=ROSE,
+            cta_label="Open dispute in Stripe",
+            cta_url=stripe_url,
+        )
+        notify_admin(
+            f"🚨 DISPUTE {amount:.2f} {cur} — {email}",
+            ["CARD DISPUTE / CHARGEBACK OPENED",
+             f"Customer  : {email}",
+             f"Amount    : {amount:.2f} {cur}",
+             f"Reason    : {reason or '-'}",
+             f"Status    : {status or '-'}",
+             f"Respond by: {due or '-'}",
+             f"Payment   : {payment.id}",
+             "",
+             "Submit evidence before the deadline or it is lost by default.",
+             stripe_url],
+            html,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("dispute alert failed")
