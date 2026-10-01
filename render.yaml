@@ -72,7 +72,7 @@ services:
       - key: EUR_USD_RATE
         value: "1.10"
       - key: PRICING_MARKUP
-        value: "1.65"
+        value: "2.35"
       - key: PRICING_MIN_MARGIN_USD
         value: "0.60"
       - key: PRICING_MIN_PRICE_USD
@@ -132,7 +132,7 @@ services:
       - key: SUBSCRIPTIONS_ENABLED
         value: "True"
       - key: SUBSCRIPTION_DISCOUNT_PCT
-        value: "15"
+        value: "10"
 
       # --- Struck-through list price = wholesale cost x this ---
       - key: PRICING_COMPARE_MULTIPLIER
@@ -288,7 +288,7 @@ services:
       - key: EUR_USD_RATE
         value: "1.10"
       - key: PRICING_MARKUP
-        value: "1.65"
+        value: "2.35"
       - key: PRICING_MIN_MARGIN_USD
         value: "0.60"
       - key: PRICING_MIN_PRICE_USD

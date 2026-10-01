@@ -39,20 +39,33 @@ log = logging.getLogger(__name__)
 
 # (region slug, days, data_gb or None for unlimited) -> price per cycle in USD.
 #
-# Margins against wholesale at the time of writing, which is the number that
-# matters because it is paid again on every renewal:
+# Margins against wholesale, which is the number that matters because it is paid
+# again on every renewal:
 #
-#   Europe          21.46  ->  29.99   1.40x
-#   Balkans         27.34  ->  39.99   1.46x
-#   Southeast Asia  33.64  ->  49.99   1.49x
-#   Latin America   78.10  -> 114.99   1.47x
+#   Europe          21.46  ->   45.49   2.12x   10% off the one-off
+#   Balkans         27.34  ->   57.99   2.12x   10% off
+#   Southeast Asia  33.64  ->   71.49   2.13x   10% off
+#   Latin America   78.10  ->  164.99   2.11x   10% off
+#
+# These used to be 29.99 / 39.99 / 49.99 / 114.99, which ran about 1.45x and was
+# the worst margin in the business. Three things come out of a renewal that do
+# not come out of the sticker: Stripe's 2.9% + 30c, the VAT buried in the price
+# because this project has no tax code, and -- in the app -- Play's commission.
+# Measured against those, Europe at 29.99 netted $1.56 a month on a $21.46 cost.
+# A subscription is the one price paid over and over, so being thin here is
+# worse than being thin anywhere else, not better.
+#
+# Each one is 10% under the computed one-off price rather than a rounder number,
+# so the saving the customer is shown reads the same on all four. The absolute
+# figures still land on .49/.99 endings, which is what the paragraph above about
+# choosing prices was asking for.
 FIXED_PRICES: dict[tuple[str, int, int | None], str] = {
     # Monthly, regional, unlimited. These four are the whole menu: they are the
     # only regions the provider sells an unlimited plan for.
-    ("europe", 30, None): "29.99",
-    ("balkans", 30, None): "39.99",
-    ("southeast-asia", 30, None): "49.99",
-    ("latin-america", 30, None): "114.99",
+    ("europe", 30, None): "45.49",
+    ("balkans", 30, None): "57.99",
+    ("southeast-asia", 30, None): "71.49",
+    ("latin-america", 30, None): "164.99",
 }
 
 # Worldwide gigabyte bundles billed yearly. Kept here rather than deleted

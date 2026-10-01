@@ -110,8 +110,20 @@ PLAY_STORE_URL = env("PLAY_STORE_URL", "")
 # not have to be exhaustive. A setting because it is a marketing lever: the
 # tiers change with a campaign, and a deploy is a more auditable way to change
 # what money is given away than an admin form.
-WALLET_BONUS_TIERS = env("WALLET_BONUS_TIERS", "10:0,25:2,50:6,100:15,200:36")
-WALLET_MIN_TOPUP_USD = env("WALLET_MIN_TOPUP_USD", "10.00")
+#
+# This list is also the buttons. `presets()` builds them straight off these
+# pairs, so both the website and the app offer exactly these amounts and
+# nothing else -- adding a tier adds a button on both.
+#
+# The two smallest carry no bonus on purpose. Somebody adding five dollars is
+# covering one cheap plan, and paying a bonus on that gives away margin on the
+# amount least likely to come back; the reward starts where the basket does.
+# The ladder has to begin low all the same: a first top-up of five dollars is
+# how somebody tries the product without deciding to trust it.
+WALLET_BONUS_TIERS = env("WALLET_BONUS_TIERS", "5:0,10:0,25:2,35:3,50:6,100:15,200:36")
+# Has to be at or under the smallest tier above, or the server would refuse its
+# own cheapest button.
+WALLET_MIN_TOPUP_USD = env("WALLET_MIN_TOPUP_USD", "5.00")
 WALLET_MAX_TOPUP_USD = env("WALLET_MAX_TOPUP_USD", "500.00")
 WALLET_ENABLED = env_bool("WALLET_ENABLED", True)
 
@@ -427,7 +439,23 @@ YESIM_WEBHOOK_SECRET = env("YESIM_WEBHOOK_SECRET", "")  # random path segment fo
 # Wholesale prices come in EUR; we sell in USD. Retail = max(cost*markup, cost+min_margin),
 # rounded to a "charm" ending, then any per-plan admin override wins.
 EUR_USD_RATE = env("EUR_USD_RATE", "1.10")
-PRICING_MARKUP = env("PRICING_MARKUP", "1.65")
+# 2.35x, which is a 135% margin on wholesale, and it is not greed.
+#
+# Measured against the live catalogue, 1.65x left a median 1.674x after charm
+# rounding and a 40.3% gross margin -- which sounds fine and is not, because
+# three things come out of it afterwards. Stripe takes 2.9% + 30c. The price is
+# VAT-inclusive, since there is no tax code anywhere in this project, so an EU
+# sale owes roughly 19.4% of the price the moment the company is registered for
+# OSS. And Play Billing, where the app is headed, takes 15% of what is left.
+#
+# At 1.65x that stack left $1.82 on a $29.99 subscription and lost money on
+# every tier sold through Play at the 30% rate. At 2.35x the same sale nets
+# about 34% through Stripe and 26% through Play at 15%.
+#
+# Changing this does not change any price by itself: `price_usd` is stored, and
+# `sync_plans --reprice-only` is what recomputes the catalogue from the costs
+# already on file.
+PRICING_MARKUP = env("PRICING_MARKUP", "2.35")
 PRICING_MIN_MARGIN_USD = env("PRICING_MIN_MARGIN_USD", "0.60")
 PRICING_MIN_PRICE_USD = env("PRICING_MIN_PRICE_USD", "1.49")
 # The struck-through list price is cost x this. It represents the going retail
@@ -438,7 +466,13 @@ DISPLAY_CURRENCY = "USD"
 
 # Subscriptions: a standing discount is the reason to subscribe rather than
 # re-buy an unlimited plan every month.
-SUBSCRIPTION_DISCOUNT_PCT = env("SUBSCRIPTION_DISCOUNT_PCT", "15")
+#
+# 10% rather than 15%. The discount multiplies against the markup, so at 15% a
+# subscription sold at an effective 1.415x while the rest of the catalogue sold
+# at 1.674x -- the product meant to be the most valuable was the thinnest one
+# we had. 10% keeps a visible reason to commit without making the committed
+# customer the least profitable.
+SUBSCRIPTION_DISCOUNT_PCT = env("SUBSCRIPTION_DISCOUNT_PCT", "10")
 SUBSCRIPTIONS_ENABLED = env_bool("SUBSCRIPTIONS_ENABLED", True)
 
 # ---- Payments ------------------------------------------------------------------
