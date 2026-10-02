@@ -50,6 +50,22 @@ class RegionSerializer(serializers.ModelSerializer):
 class EsimSerializer(serializers.ModelSerializer):
     display_name = serializers.CharField(read_only=True)
     data_used_pct = serializers.IntegerField(read_only=True)
+    # Megabytes as numbers, not as DRF's default string-for-Decimal.
+    #
+    # These three are DecimalField(decimal_places=2) on the model, and DRF
+    # renders a Decimal as a quoted string unless it is told otherwise. So the
+    # API was sending "3072.00" where the app declares a number, and
+    # kotlinx.serialization refused it at that exact byte -- the whole eSIM list
+    # failed to parse and the screen showed "unexpected json token at 468"
+    # instead of anybody's eSIMs.
+    #
+    # Fixed on this side rather than in the app because the builds already on
+    # phones expect a number: sending one makes them work with no update, no
+    # new release and no review. Whole megabytes because every screen reads
+    # these as "3 GB left" and none of them shows two decimal places.
+    data_package_mb = serializers.IntegerField(read_only=True)
+    data_used_mb = serializers.IntegerField(read_only=True)
+    data_left_mb = serializers.IntegerField(read_only=True)
     data_left_gb = serializers.FloatField(read_only=True)
     data_package_gb = serializers.FloatField(read_only=True)
     days_left = serializers.IntegerField(read_only=True)
