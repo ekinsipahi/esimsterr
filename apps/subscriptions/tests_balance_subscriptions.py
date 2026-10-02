@@ -42,13 +42,18 @@ class BalanceSubscriptionBase(TestCase):
     @classmethod
     def setUpTestData(cls):
         # Europe unlimited monthly: one of the four on the menu, priced at
-        # $29.99 in apps.subscriptions.catalogue.
+        # $45.49 in apps.subscriptions.catalogue.
+        #
+        # The one-off has to sit above that or the plan is in the state
+        # `subscription_price` refuses to sell at a loss of face -- $50.49 is
+        # what PRICING_MARKUP of 2.35 makes of this wholesale, so the pair here
+        # is the pair production has.
         cls.region = Region.objects.create(key="europe", name="Europe", slug="europe",
                                            is_active=True, country_names="France,Spain")
         cls.plan = Plan.objects.create(
             region=cls.region, provider_plan_id="eu-unl-30", provider_name="Europe unlimited",
             data_gb=None, is_unlimited=True, days=30, cost_amount=Decimal("21.46"),
-            price_usd=Decimal("34.99"), is_active=True, kind="region")
+            price_usd=Decimal("50.49"), is_active=True, kind="region")
         # A plan that is not on the subscription menu: 5 GB, not unlimited.
         cls.bucket = Plan.objects.create(
             region=cls.region, provider_plan_id="eu-5gb-30", provider_name="Europe 5GB",
@@ -421,3 +426,38 @@ class ApiTests(BalanceSubscriptionBase):
     def test_the_whole_feature_has_a_switch(self):
         self.fund("100.00")
         self.assertEqual(self.start().status_code, 503)
+
+
+class AgreedPriceRailTests(BalanceSubscriptionBase):
+    """A written-down subscription price must never exceed its own one-off.
+
+    FIXED_PRICES does not follow PRICING_MARKUP -- it is chosen, not computed --
+    so raising the markup without repricing the catalogue, or repricing it and
+    having a deploy put the old markup back, leaves the agreed price above the
+    one-off. That shipped once: the API served a $45.49 subscription against a
+    $35.49 one-off and advertised it as a saving of minus 28 percent.
+    """
+
+    def test_the_subscription_never_costs_more_than_buying_it_once(self):
+        self.plan.price_usd = Decimal("35.49")      # the catalogue, not repriced
+        self.plan.save(update_fields=["price_usd"])
+
+        from apps.subscriptions.catalogue import fixed_price
+
+        self.assertGreater(fixed_price(self.plan), self.plan.price,
+                           "the fixture should put the agreed price above the one-off")
+        self.assertEqual(subscription_price(self.plan), Decimal("35.49"))
+
+    def test_and_never_advertises_a_negative_saving(self):
+        self.plan.price_usd = Decimal("35.49")
+        self.plan.save(update_fields=["price_usd"])
+        from apps.subscriptions.services import saving_pct
+
+        self.assertEqual(saving_pct(self.plan), 0)
+
+    def test_a_correctly_priced_catalogue_still_shows_the_discount(self):
+        # $45.49 against a $50.49 one-off is the 10% the menu promises.
+        self.assertEqual(subscription_price(self.plan), Decimal("45.49"))
+        from apps.subscriptions.services import saving_pct
+
+        self.assertEqual(saving_pct(self.plan), 10)

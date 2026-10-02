@@ -98,6 +98,26 @@ def subscription_price(plan) -> Decimal:
 
     agreed = fixed_price(plan)
     if agreed is not None:
+        one_off = Decimal(str(plan.price))
+        if one_off > 0 and agreed >= one_off:
+            # The agreed price has ended up at or above the one-off, which makes
+            # "subscribe and save" cost more than not subscribing and shows the
+            # customer a negative saving. It never means the subscription should
+            # cost this; it means the one-off moved and this did not. The way it
+            # happens is a markup change the catalogue has not been repriced
+            # for, since FIXED_PRICES is written down and does not follow one.
+            #
+            # Sell at the one-off until somebody fixes it. That is the same rail
+            # the computed path below has always had, and the computed path is
+            # the one this branch was added in front of.
+            log.warning(
+                "Subscription price for %s is $%s but its one-off is only $%s, "
+                "so subscribing would cost more than not subscribing. Charging "
+                "the one-off instead. Reprice the catalogue "
+                "(sync_plans --reprice-only) or correct FIXED_PRICES.",
+                plan.title, agreed, one_off,
+            )
+            return one_off.quantize(CENT)
         return agreed
 
     one_off = Decimal(str(plan.price))
