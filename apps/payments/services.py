@@ -46,6 +46,41 @@ def _abs(request, path):
     return f"{settings.SITE_URL}{path}"
 
 
+def _guard_identity(payment) -> tuple[object, str, str]:
+    """Who and where, recovered from the payment row.
+
+    The webhook arrives from Stripe, not from the customer, so there is no
+    address on the request. Both kinds of payment recorded the customer's
+    address when the attempt was made, which is the one worth counting against.
+    """
+    source = payment.balance_topup or payment.order
+    ip = str(getattr(source, "ip", "") or "")
+    user = payment.user or getattr(source, "user", None)
+    email = (getattr(source, "email", "") or getattr(user, "email", "") or "")
+    return user, ip, email
+
+
+def _guard_card_attempt(user, request, email: str = "") -> None:
+    """Refuse an attempt that looks like card testing, before Stripe is called.
+
+    Raised as PaymentError so every existing caller already shows it: these
+    views were written to put a payment refusal in front of the customer, and a
+    block is a refusal. The reason goes to the log, not to the page -- naming
+    the rule that tripped tells an attacker what to vary.
+    """
+    from core.ratelimit import client_ip
+
+    from . import card_guard
+
+    ip = client_ip(request) if request is not None else ""
+    try:
+        card_guard.check(user, ip, email)
+    except card_guard.CardTestingBlocked as e:
+        log.warning("Card guard refused a payment: %s", e.reason)
+        raise PaymentError(e.message) from e
+    card_guard.record_attempt(user, ip, email)
+
+
 def start_balance_payment(topup, method: str, request=None) -> str:
     """Provider checkout for store credit. Mirrors start_payment deliberately:
     one code path proven in production is worth more than a shared abstraction
@@ -62,6 +97,7 @@ def start_balance_payment(topup, method: str, request=None) -> str:
     if method == "stripe":
         if not stripe_client.configured():
             raise PaymentError("Card payments are not available right now. Please pay with crypto.")
+        _guard_card_attempt(topup.user, request, topup.user.email)
         payment = Payment.objects.create(
             balance_topup=topup, user=topup.user, provider=Payment.Provider.STRIPE,
             amount_usd=topup.amount_usd,
@@ -120,6 +156,7 @@ def start_payment(order: Order, method: str, request=None) -> str:
     if method == "stripe":
         if not stripe_client.configured():
             raise PaymentError("Card payments are not available right now. Please pay with crypto.")
+        _guard_card_attempt(order.user, request, order.email)
         payment = Payment.objects.create(
             order=order, user=order.user, provider=Payment.Provider.STRIPE,
             amount_usd=order.amount_usd,
@@ -265,6 +302,15 @@ def settle_stripe_intent(intent: dict, reference: str, *, failed: bool = False) 
         # apps.orders, which imports this module back.
         from apps.coupons.services import release
 
+        from . import card_guard
+
+        user, ip, email = _guard_identity(payment)
+        card_guard.record_failure(
+            user, ip, email,
+            fingerprint=card_guard.fingerprint_of(intent),
+            decline_code=card_guard.decline_code_of(intent),
+        )
+
         error = (intent.get("last_payment_error") or {}).get("message", "")
         payment.status = Payment.Status.FAILED
         payment.raw = {**(payment.raw or {}), "error": error[:300]}
@@ -275,6 +321,12 @@ def settle_stripe_intent(intent: dict, reference: str, *, failed: bool = False) 
             release(payment.order)
         log.info("In-app payment %s failed: %s", payment.id, error[:120])
         return payment
+
+    # A card that works ends the cooldown: somebody whose first card was
+    # declined and whose second one paid is a customer, not an attack.
+    from . import card_guard
+
+    card_guard.record_success(*_guard_identity(payment))
 
     amount = intent.get("amount_received")
     paid = Decimal(str(amount)) / 100 if amount is not None else None

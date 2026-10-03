@@ -1114,6 +1114,29 @@ def _build_order(request, *, plan, email: str, paid_with_balance: bool):
     return order, None
 
 
+def _guard_card(request, email: str = ""):
+    """Card-testing check for the in-app endpoints.
+
+    Returns a 429 Response to hand straight back, or None to carry on. 429
+    rather than 403 because it is a wait and not a verdict, and it carries
+    Retry-After so the app can say when rather than only refusing.
+    """
+    from apps.payments import card_guard
+
+    user = request.user if request.user.is_authenticated else None
+    ip = _client_ip(request) or ""
+    try:
+        card_guard.check(user, ip, email)
+    except card_guard.CardTestingBlocked as e:
+        log.warning("Card guard refused a payment: %s", e.reason)
+        resp = Response({"detail": e.message, "code": "payment_cooldown"},
+                        status=status.HTTP_429_TOO_MANY_REQUESTS)
+        resp["Retry-After"] = str(e.retry_after)
+        return resp
+    card_guard.record_attempt(user, ip, email)
+    return None
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @throttle_classes([CheckoutThrottle])
@@ -1162,6 +1185,10 @@ def payment_sheet(request):
         return Response({"detail": "Enter an email address so we can send the eSIM.",
                          "code": "email_required"},
                         status=status.HTTP_400_BAD_REQUEST)
+
+    blocked = _guard_card(request, email)
+    if blocked is not None:
+        return blocked
 
     install = None
     if not request.user.is_authenticated:
@@ -1399,6 +1426,12 @@ def wallet_topup_sheet(request):
         amount = validate_amount(request.data.get("amount"))
     except ValueError as e:
         return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Before the row is written, so a refused attempt leaves nothing behind for
+    # anyone to reconcile later.
+    blocked = _guard_card(request, request.user.email)
+    if blocked is not None:
+        return blocked
 
     topup = create_topup(request.user, amount,
                          source=legal_surface(request), ip=_client_ip(request))
