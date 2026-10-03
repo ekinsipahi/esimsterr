@@ -7,6 +7,7 @@ and are all idempotent.
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -60,6 +61,29 @@ def _guard_identity(payment) -> tuple[object, str, str]:
     return user, ip, email
 
 
+def open_card_sessions(user, minutes: int = 10) -> int:
+    """How many of this account's card checkouts are still unfinished.
+
+    Counted here rather than in card_guard so that module never has to know what
+    a Payment looks like. WAITING is the state a Stripe session sits in between
+    being created and the money arriving, so a pile of them is a pile of
+    checkouts opened and walked away from.
+    """
+    if user is None or not getattr(user, "pk", None):
+        return 0
+    from django.utils import timezone
+
+    since = timezone.now() - timedelta(minutes=minutes)
+    try:
+        return Payment.objects.filter(
+            user=user, provider=Payment.Provider.STRIPE,
+            status=Payment.Status.WAITING, created_at__gte=since,
+        ).count()
+    except Exception:  # noqa: BLE001 — a counting problem must not block a sale
+        log.exception("open_card_sessions failed")
+        return 0
+
+
 def _guard_card_attempt(user, request, email: str = "") -> None:
     """Refuse an attempt that looks like card testing, before Stripe is called.
 
@@ -75,6 +99,7 @@ def _guard_card_attempt(user, request, email: str = "") -> None:
     ip = client_ip(request) if request is not None else ""
     try:
         card_guard.check(user, ip, email)
+        card_guard.check_open_sessions(open_card_sessions(user))
     except card_guard.CardTestingBlocked as e:
         log.warning("Card guard refused a payment: %s", e.reason)
         raise PaymentError(e.message) from e

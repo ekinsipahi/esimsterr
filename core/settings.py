@@ -579,6 +579,13 @@ CARD_GUARD_FRESH_ACCOUNT_MINUTES = int(env("CARD_GUARD_FRESH_ACCOUNT_MINUTES", "
 CARD_GUARD_BLOCK_DISPOSABLE_EMAIL = env_bool("CARD_GUARD_BLOCK_DISPOSABLE_EMAIL", True)
 # Extra domains, comma separated, added to the built-in list without a deploy.
 CARD_GUARD_DISPOSABLE_DOMAINS = env("CARD_GUARD_DISPOSABLE_DOMAINS", "")
+# Unfinished card checkouts one account may have open at once. The first day of
+# real traffic brought four accounts that each opened three or four $5 sessions
+# within two minutes and completed none; no card had been declined yet, so the
+# ladder had nothing to count and four requests is under any sane rate limit.
+# Nobody buys the same five dollars four times in ninety seconds.
+CARD_GUARD_MAX_OPEN_SESSIONS = int(env("CARD_GUARD_MAX_OPEN_SESSIONS", "3"))
+CARD_GUARD_OPEN_SESSION_WAIT = int(env("CARD_GUARD_OPEN_SESSION_WAIT", "600"))
 
 # ---- Cloudflare Turnstile ----------------------------------------------------
 # Bot check on registration, sign-in and password reset. Both keys or neither:

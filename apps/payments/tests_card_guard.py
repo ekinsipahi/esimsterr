@@ -138,3 +138,61 @@ class CardGuardTests(TestCase):
         for fingerprint in ("fpA", "fpB", "fpC", "fpD"):
             self.fail(fingerprint=fingerprint)
         guard.check(self.user, self.ip, self.user.email)
+
+
+@override_settings(**SETTINGS)
+class EvasionSeenInProductionTests(TestCase):
+    """Three holes the first day of real traffic walked straight through.
+
+    Within a day of the app going live, four accounts signed up and opened
+    several small card checkouts each within minutes. None of them paid, so
+    nothing was lost, and none of them was slowed down either -- these are the
+    reasons why.
+    """
+
+    def setUp(self):
+        cache.clear()
+
+    def test_gmail_dots_and_plus_addressing_are_one_inbox(self):
+        # `d.a.w.di2153azdin@gmail.com` is a real address from the access log.
+        # Gmail ignores dots, so it and its undotted twin reach the same person,
+        # and counted literally each spelling is a fresh identity with a clean
+        # record -- an unbounded supply of them from one mailbox.
+        canonical = guard.canonical_email("dawdi2153azdin@gmail.com")
+        for spelling in ("d.a.w.di2153azdin@gmail.com",
+                         "DAW.DI2153AZDIN@gmail.com",
+                         "dawdi2153azdin+shop@gmail.com",
+                         "d.a.w.di2153azdin@googlemail.com"):
+            with self.subTest(spelling=spelling):
+                self.assertEqual(guard.canonical_email(spelling), canonical)
+
+    def test_a_dot_still_matters_where_the_provider_says_it_does(self):
+        # Only Gmail is dot-blind. Collapsing them everywhere would merge two
+        # strangers at Outlook into one identity and punish both.
+        self.assertNotEqual(guard.canonical_email("first.last@outlook.com"),
+                            guard.canonical_email("firstlast@outlook.com"))
+
+    def test_failures_carry_across_gmail_spellings(self):
+        user = User.objects.create_user(email="dawdi2153azdin@gmail.com", password="x")
+        for _ in range(3):
+            guard.record_failure(user, "", "d.a.w.di2153azdin@gmail.com")
+        # A new account, a new address spelling, the same mailbox.
+        other = User.objects.create_user(email="x@example.com", password="x")
+        with self.assertRaises(guard.CardTestingBlocked):
+            guard.check(other, "", "dawdi2153azdin+again@googlemail.com")
+
+    def test_the_throwaway_domain_from_the_access_log_is_known(self):
+        self.assertTrue(guard.email_is_disposable("bayupart@moimoi.re"))
+
+    def test_several_unfinished_checkouts_are_refused(self):
+        # Four sessions in ninety seconds, none completed. No decline has
+        # happened yet so the ladder has nothing to count, and four requests is
+        # under any sane rate limit -- but nobody buys the same $5 four times in
+        # a minute and a half.
+        guard.check_open_sessions(2)
+        with self.assertRaises(guard.CardTestingBlocked):
+            guard.check_open_sessions(3)
+
+    @override_settings(**{**SETTINGS, "CARD_GUARD_MAX_OPEN_SESSIONS": 0})
+    def test_the_open_session_cap_can_be_switched_off(self):
+        guard.check_open_sessions(99)

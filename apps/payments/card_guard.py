@@ -72,6 +72,10 @@ DISPOSABLE_DOMAINS = frozenset({
     "mailsac.com", "mintemail.com", "mohmal.com", "moakt.com", "mytemp.email",
     "nowmymail.com", "sharklasers.com", "spam4.me", "temp-mail.io",
     "temp-mail.org", "tempail.com", "tempinbox.com", "tempmail.dev",
+    # Seen signing up and attempting $5 card payments within two minutes, the
+    # day the app went live. Added from the access log, not from a public list.
+    "moimoi.re", "mailto.plus", "fexpost.com", "fexbox.org", "rover.info",
+    "chitthi.in", "fextemp.com", "any.pink", "merepost.com",
     "tempmail.ninja", "tempmailo.com", "tempr.email", "throwawaymail.com",
     "trashmail.com", "trashmail.de", "trbvm.com", "yopmail.com", "yopmail.fr",
 })
@@ -149,6 +153,36 @@ def _add_card(key: str, fingerprint: str, window: int) -> int:
     return len(seen)
 
 
+# Providers that ignore dots in the local part, so `d.a.w.di@gmail.com` and
+# `dawdi@gmail.com` are one inbox wearing two faces.
+_DOT_BLIND = {"gmail.com", "googlemail.com"}
+_DOMAIN_ALIASES = {"googlemail.com": "gmail.com"}
+
+
+def canonical_email(email: str) -> str:
+    """The inbox an address actually reaches, as a counting key.
+
+    Plus-addressing and Gmail's dot-blindness mean one mailbox can present an
+    unbounded number of distinct-looking addresses. Counted literally, every one
+    of them is a fresh identity with a clean record -- which is the cheapest
+    evasion there is, and the one that turned up in live traffic within a day of
+    launch as `d.a.w.di2153azdin@gmail.com`.
+
+    Only used as a key. The address the customer typed is what gets stored and
+    emailed; this is only how the guard decides whether two attempts came from
+    the same place.
+    """
+    address = (email or "").strip().lower()
+    if "@" not in address:
+        return address
+    local, _, domain = address.rpartition("@")
+    domain = _DOMAIN_ALIASES.get(domain, domain)
+    local = local.split("+", 1)[0]          # plus-addressing: universal
+    if domain in _DOT_BLIND:
+        local = local.replace(".", "")
+    return f"{local}@{domain}" if local else address
+
+
 def identities(user, ip: str = "", email: str = "") -> list[tuple[str, str]]:
     """What this attempt is counted against, most specific first.
 
@@ -162,7 +196,7 @@ def identities(user, ip: str = "", email: str = "") -> list[tuple[str, str]]:
     address = (ip or "").strip()
     if address and address != "unknown":
         out.append(("ip", address))
-    mail = (email or getattr(user, "email", "") or "").strip().lower()
+    mail = canonical_email(email or getattr(user, "email", ""))
     if mail:
         out.append(("email", mail))
     return out
@@ -251,6 +285,29 @@ def check(user, ip: str = "", email: str = "") -> None:
         attempts = len(_recent(f"{PREFIX}:try:ip:{ip}", window))
         if attempts >= int(_conf("CARD_GUARD_IP_ATTEMPTS", 40)):
             raise CardTestingBlocked(f"ip {ip} made {attempts} attempts in {window}s", window)
+
+
+def check_open_sessions(count: int) -> None:
+    """Refuse a new card attempt while several of this account's are unfinished.
+
+    The count comes from the caller rather than from here, so this module never
+    has to know what a Payment looks like in any particular product.
+
+    It catches the shape the throttles and the ladder both miss: four checkout
+    sessions opened in ninety seconds and none of them completed. No decline has
+    happened yet, so the ladder has nothing to count, and four requests is well
+    under any sane rate limit -- but nobody buys the same five dollars of credit
+    four times in a minute and a half. That is somebody feeding cards into a
+    hosted page until one of them takes.
+    """
+    if not _enabled():
+        return
+    cap = int(_conf("CARD_GUARD_MAX_OPEN_SESSIONS", 3))
+    if cap > 0 and count >= cap:
+        raise CardTestingBlocked(
+            f"{count} unfinished checkouts already open",
+            int(_conf("CARD_GUARD_OPEN_SESSION_WAIT", 600)),
+        )
 
 
 def record_attempt(user, ip: str = "", email: str = "") -> None:

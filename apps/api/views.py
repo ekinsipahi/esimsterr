@@ -1122,11 +1122,13 @@ def _guard_card(request, email: str = ""):
     Retry-After so the app can say when rather than only refusing.
     """
     from apps.payments import card_guard
+    from apps.payments.services import open_card_sessions
 
     user = request.user if request.user.is_authenticated else None
     ip = _client_ip(request) or ""
     try:
         card_guard.check(user, ip, email)
+        card_guard.check_open_sessions(open_card_sessions(user))
     except card_guard.CardTestingBlocked as e:
         log.warning("Card guard refused a payment: %s", e.reason)
         resp = Response({"detail": e.message, "code": "payment_cooldown"},
