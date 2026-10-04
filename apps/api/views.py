@@ -6,6 +6,7 @@ physical connectivity service. Nothing here creates an in-app purchase flow.
 """
 from __future__ import annotations
 
+import logging
 from decimal import Decimal
 
 from django.conf import settings
@@ -19,6 +20,8 @@ from rest_framework.decorators import api_view, permission_classes, throttle_cla
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+
+log = logging.getLogger(__name__)
 
 from apps.accounts.emails import send_welcome
 from apps.accounts.referrals import apply_referral_code
@@ -1121,21 +1124,24 @@ def _guard_card(request, email: str = ""):
     rather than 403 because it is a wait and not a verdict, and it carries
     Retry-After so the app can say when rather than only refusing.
     """
-    from apps.payments import card_guard
+    from payguard import CardBlocked, card_risk_gate
+    from payguard.gates import card_velocity_guard
+
     from apps.payments.services import open_card_sessions
 
     user = request.user if request.user.is_authenticated else None
     ip = _client_ip(request) or ""
     try:
-        card_guard.check(user, ip, email)
-        card_guard.check_open_sessions(open_card_sessions(user))
-    except card_guard.CardTestingBlocked as e:
-        log.warning("Card guard refused a payment: %s", e.reason)
-        resp = Response({"detail": e.message, "code": "payment_cooldown"},
+        card_risk_gate(user, client_ip=ip, email=email)
+        card_velocity_guard(open_card_sessions(user))
+    except CardBlocked as e:
+        log.warning("payguard refused a card attempt for %s from %s: %s",
+                    email or "?", ip or "?", e)
+        resp = Response({"detail": str(e), "code": "payment_cooldown"},
                         status=status.HTTP_429_TOO_MANY_REQUESTS)
-        resp["Retry-After"] = str(e.retry_after)
+        if e.retry_after:
+            resp["Retry-After"] = str(int(e.retry_after))
         return resp
-    card_guard.record_attempt(user, ip, email)
     return None
 
 

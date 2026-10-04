@@ -209,6 +209,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+    # Shared card-testing defence. Owns two small tables; build.sh migrates on
+    # every deploy, so they appear with the release that first needs them.
+    "payguard",
     # local
     "apps.common",
     "apps.accounts",
@@ -544,48 +547,41 @@ STRIPE_3DS_MODE = env("STRIPE_3DS_MODE", "challenge").strip().lower()
 if STRIPE_3DS_MODE not in ("automatic", "challenge", "any"):
     STRIPE_3DS_MODE = "challenge"
 
-# ---- Card testing defence (see apps/payments/card_guard.py) -------------------
-# A throttle counts requests; this counts declines. A customer adding $25 and a
-# bot working through a list of stolen numbers both make requests, and only one
-# of them fails every single time -- so the limits that matter here are on
-# failures, on how many different cards one identity presents, and on how fresh
-# the account is, rather than on how often anybody clicks.
-CARD_GUARD_ENABLED = env_bool("CARD_GUARD_ENABLED", True)
-# The sliding window everything below is counted in.
-CARD_GUARD_WINDOW_SECONDS = int(env("CARD_GUARD_WINDOW_SECONDS", "3600"))
-# Seconds to wait before the next attempt, by declines already in the window.
-# The first costs nothing, because the commonest reason for one decline is a
-# typo. The fifth costs an hour, which is fatal to a method that needs volume.
-CARD_GUARD_COOLDOWN_LADDER = env("CARD_GUARD_COOLDOWN_LADDER", "0,30,120,600,3600")
-# A flat block, used only for the unambiguous signatures: several different
-# cards from one identity, or one card declined over and over.
-CARD_GUARD_BLOCK_SECONDS = int(env("CARD_GUARD_BLOCK_SECONDS", "3600"))
-CARD_GUARD_USER_CARDS = int(env("CARD_GUARD_USER_CARDS", "3"))
-CARD_GUARD_EMAIL_CARDS = int(env("CARD_GUARD_EMAIL_CARDS", "3"))
-CARD_GUARD_CARD_FAILURES = int(env("CARD_GUARD_CARD_FAILURES", "4"))
-# Addresses are treated gently on purpose. This is a travel product: an airport,
-# a hotel and a cruise ship each put every customer behind one NAT address, so a
-# strict per-IP rule turns away exactly the people the app is for. The rule that
-# catches a distributed attempt is the card count, not the request count.
-CARD_GUARD_IP_ATTEMPTS = int(env("CARD_GUARD_IP_ATTEMPTS", "40"))
-CARD_GUARD_IP_CARDS = int(env("CARD_GUARD_IP_CARDS", "8"))
-CARD_GUARD_IP_COOLDOWN_FACTOR = float(env("CARD_GUARD_IP_COOLDOWN_FACTOR", "0.25"))
-# An account that was created minutes ago and is already paying starts one rung
-# up the ladder. Ordinary once; odd in combination with anything else.
-CARD_GUARD_FRESH_ACCOUNT_MINUTES = int(env("CARD_GUARD_FRESH_ACCOUNT_MINUTES", "15"))
-# Throwaway inboxes. Refused outright by default, which is the one rule here
-# that can turn away a real customer -- some people guard their inbox and are
-# entitled to. Set this False to demote it to a rung on the ladder instead.
-CARD_GUARD_BLOCK_DISPOSABLE_EMAIL = env_bool("CARD_GUARD_BLOCK_DISPOSABLE_EMAIL", True)
-# Extra domains, comma separated, added to the built-in list without a deploy.
-CARD_GUARD_DISPOSABLE_DOMAINS = env("CARD_GUARD_DISPOSABLE_DOMAINS", "")
-# Unfinished card checkouts one account may have open at once. The first day of
-# real traffic brought four accounts that each opened three or four $5 sessions
-# within two minutes and completed none; no card had been declined yet, so the
-# ladder had nothing to count and four requests is under any sane rate limit.
-# Nobody buys the same five dollars four times in ninety seconds.
-CARD_GUARD_MAX_OPEN_SESSIONS = int(env("CARD_GUARD_MAX_OPEN_SESSIONS", "3"))
-CARD_GUARD_OPEN_SESSION_WAIT = int(env("CARD_GUARD_OPEN_SESSION_WAIT", "600"))
+# ---- Card testing defence (payguard, shared with proxysterr/linksterr) -------
+# A throttle counts requests; payguard counts declines. A customer adding $25
+# and a bot working through a list of stolen numbers both make requests, and
+# only one of them is refused every single time.
+#
+# This used to be apps/payments/card_guard.py, written here and then found to be
+# the same thing proxysterr had already extracted -- same ladder, same signals,
+# arrived at twice. The shared one wins: a fix now reaches three products, and
+# the two that are not being worked on today stop drifting.
+#
+# Cooldown ladder (fixed in payguard): first decline free, then 30s / 2m / 10m /
+# 1h. The first costs nothing because the commonest reason for one is a mistyped
+# digit, and charging for that is a lost sale rather than a defence.
+
+# Several different cards from one identity. Not a customer having trouble -- a
+# list being worked through, which is the signal no real buyer produces.
+CARD_DISTINCT_FINGERPRINTS = int(env("CARD_DISTINCT_FINGERPRINTS", "3"))
+CARD_DISTINCT_WINDOW_MIN = int(env("CARD_DISTINCT_WINDOW_MIN", "30"))
+CARD_MULTICARD_COOLDOWN_MIN = int(env("CARD_MULTICARD_COOLDOWN_MIN", "30"))
+
+# Unfinished checkouts one account may hold open. Launch day brought four
+# accounts that each opened three or four $5 sessions inside two minutes and
+# completed none; no card had been declined yet, so the ladder had nothing to
+# count and four requests is under any sane rate limit.
+CARD_MAX_OPEN_SESSIONS = int(env("CARD_MAX_OPEN_SESSIONS", "3"))
+CARD_SESSION_WINDOW_MIN = int(env("CARD_SESSION_WINDOW_MIN", "10"))
+
+# An address is not a person, and for this product it is emphatically not: an
+# airport, a hotel and a cruise ship each put every customer behind one NAT
+# address. Blocking one for hours does not stop an attacker, who changes address
+# in seconds -- it stops the travellers the app exists for.
+CARD_IP_COOLDOWN_FACTOR = float(env("CARD_IP_COOLDOWN_FACTOR", "0.25"))
+
+# Throwaway inboxes beyond payguard's built-in list, comma separated.
+DISPOSABLE_EMAIL_DOMAINS = env_list("DISPOSABLE_EMAIL_DOMAINS")
 
 # ---- Cloudflare Turnstile ----------------------------------------------------
 # Bot check on registration, sign-in and password reset. Both keys or neither:

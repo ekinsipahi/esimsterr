@@ -92,18 +92,19 @@ def _guard_card_attempt(user, request, email: str = "") -> None:
     block is a refusal. The reason goes to the log, not to the page -- naming
     the rule that tripped tells an attacker what to vary.
     """
-    from core.ratelimit import client_ip
+    from payguard import CardBlocked, card_risk_gate
+    from payguard.gates import card_velocity_guard
 
-    from . import card_guard
+    from core.ratelimit import client_ip
 
     ip = client_ip(request) if request is not None else ""
     try:
-        card_guard.check(user, ip, email)
-        card_guard.check_open_sessions(open_card_sessions(user))
-    except card_guard.CardTestingBlocked as e:
-        log.warning("Card guard refused a payment: %s", e.reason)
-        raise PaymentError(e.message) from e
-    card_guard.record_attempt(user, ip, email)
+        card_risk_gate(user, client_ip=ip, email=email)
+        card_velocity_guard(open_card_sessions(user))
+    except CardBlocked as e:
+        log.warning("payguard refused a card attempt for %s from %s: %s",
+                    email or getattr(user, "email", "?"), ip or "?", e)
+        raise PaymentError(str(e)) from e
 
 
 def start_balance_payment(topup, method: str, request=None) -> str:
@@ -327,13 +328,12 @@ def settle_stripe_intent(intent: dict, reference: str, *, failed: bool = False) 
         # apps.orders, which imports this module back.
         from apps.coupons.services import release
 
-        from . import card_guard
+        from payguard import fingerprint_from_failed_pi, record_card_failure
 
         user, ip, email = _guard_identity(payment)
-        card_guard.record_failure(
-            user, ip, email,
-            fingerprint=card_guard.fingerprint_of(intent),
-            decline_code=card_guard.decline_code_of(intent),
+        record_card_failure(
+            user=user, ip=ip or None, email=email or None,
+            fingerprint=fingerprint_from_failed_pi(intent) or None,
         )
 
         error = (intent.get("last_payment_error") or {}).get("message", "")
@@ -349,9 +349,10 @@ def settle_stripe_intent(intent: dict, reference: str, *, failed: bool = False) 
 
     # A card that works ends the cooldown: somebody whose first card was
     # declined and whose second one paid is a customer, not an attack.
-    from . import card_guard
+    from payguard import record_card_success
 
-    card_guard.record_success(*_guard_identity(payment))
+    _user, _ip, _email = _guard_identity(payment)
+    record_card_success(user=_user, ip=_ip or None, email=_email or None)
 
     amount = intent.get("amount_received")
     paid = Decimal(str(amount)) / 100 if amount is not None else None
