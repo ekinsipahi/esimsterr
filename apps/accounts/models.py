@@ -32,6 +32,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     stripe_customer_id = models.CharField(max_length=64, blank=True, default="", db_index=True)
 
     signup_ip = models.GenericIPAddressField(null=True, blank=True)
+    # Denormalised from the newest LoginEvent so the admin list can show
+    # "where was this account last used from" without a per-row subquery.
+    last_login_ip = models.GenericIPAddressField(null=True, blank=True)
     marketing_opt_in = models.BooleanField(default=True)
     unsubscribe_token = models.CharField(max_length=48, blank=True, db_index=True)
     referral_code = models.CharField(max_length=16, unique=True, blank=True, null=True)
@@ -122,3 +125,56 @@ class AppInstall(models.Model):
 
     def __str__(self):
         return f"{self.support_id} ({self.platform})"
+
+
+class LoginEvent(models.Model):
+    """One row per sign-up or sign-in: which account, from where, on what.
+
+    Exists because "where did this person sign in from" was unanswerable. The
+    account row kept only ``signup_ip``, and even that was never filled in for
+    anyone who arrived through the mobile app, so the accounts most worth
+    looking at were the ones with the least recorded about them.
+
+    What it is for, in order of how often it gets used: telling a card-testing
+    ring apart from a coincidence (six accounts, six addresses, one subnet),
+    answering a support question about a sign-in somebody doesn't recognise,
+    and giving a chargeback reply something concrete to point at.
+
+    An IP is personal data, so this is erased on account deletion along with
+    the order fingerprints -- see ``deletion.delete_account``. The fraud
+    blocklist keeps its own keys (payguard), so erasing the history here does
+    not un-ban anybody.
+    """
+
+    class Event(models.TextChoices):
+        SIGNUP = "signup", "Sign-up"
+        LOGIN = "login", "Sign-in"
+
+    class Method(models.TextChoices):
+        EMAIL = "email", "Email + password"
+        GOOGLE = "google", "Google"
+        VERIFY = "verify", "Email confirmation link"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                             related_name="login_events")
+    event = models.CharField(max_length=10, choices=Event.choices, default=Event.LOGIN)
+    method = models.CharField(max_length=10, choices=Method.choices, default=Method.EMAIL)
+    # "web" or "app". The app signs in with a JWT and never opens a session, so
+    # it is invisible to Django's own login signal -- which is exactly why the
+    # API views record their own events.
+    surface = models.CharField(max_length=8, default="web")
+    ip = models.GenericIPAddressField(null=True, blank=True, db_index=True)
+    user_agent = models.CharField(max_length=300, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "sign-in / sign-up"
+        verbose_name_plural = "sign-ins & sign-ups"
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+            models.Index(fields=["ip", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.get_event_display()} {self.user_id} from {self.ip or '?'}"

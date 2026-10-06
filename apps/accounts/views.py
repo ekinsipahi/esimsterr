@@ -23,7 +23,8 @@ from .forms import LoginForm, PasswordChangeForm, ProfileForm, SignupForm
 from .google import GoogleAuthError, user_from_google_token
 from .verification import mark_verified, send_verification, verify_token
 from .referrals import apply_referral_code
-from .models import User
+from .login_log import annotate as annotate_login, client_ip, record_login
+from .models import LoginEvent, User
 
 log = logging.getLogger(__name__)
 
@@ -36,9 +37,9 @@ BOT_CHECK_FAILED = _(
 )
 
 
-def _client_ip(request):
-    xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    return (xff.split(",")[0].strip() if xff else request.META.get("REMOTE_ADDR")) or None
+# Kept as the name other modules import. The rule itself lives in login_log
+# so that the sign-in log and everything that reads a client address agree.
+_client_ip = client_ip
 
 
 def _safe_next(request, default="/dashboard/"):
@@ -79,6 +80,8 @@ def signup(request):
         # the link, and an account somebody else opened in your name is worth
         # more friction than one extra tap.
         send_verification(user, request)
+        record_login(user, request, event=LoginEvent.Event.SIGNUP,
+                     method=LoginEvent.Method.EMAIL)
         request.session["pending_analytics"] = [analytics.sign_up("email")]
         request.session["awaiting_verification"] = user.email
         return redirect("verify_sent")
@@ -120,6 +123,7 @@ def verify_email(request, token):
     already = user.email_verified
     mark_verified(user)
     request.session.pop("awaiting_verification", None)
+    annotate_login(request, method=LoginEvent.Method.VERIFY)
     auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     if not already:
         send_welcome(user)
@@ -147,6 +151,7 @@ def login_view(request):
     if request.method == "POST" and not turnstile.check(request):
         form.add_error(None, BOT_CHECK_FAILED)
     if request.method == "POST" and form.is_valid():
+        annotate_login(request, method=LoginEvent.Method.EMAIL)
         auth_login(request, form.user, backend="django.contrib.auth.backends.ModelBackend")
         request.session["pending_analytics"] = [analytics.login("email")]
         return redirect(_safe_next(request))
@@ -212,6 +217,10 @@ def google_finish(request):
     if not user.is_active:
         return fail(_("This account is disabled."), 403)
 
+    annotate_login(
+        request, method=LoginEvent.Method.GOOGLE,
+        event=LoginEvent.Event.SIGNUP if created else LoginEvent.Event.LOGIN,
+    )
     auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     if created:
         send_welcome(user)

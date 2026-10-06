@@ -31,6 +31,7 @@ class DeletionReport:
     subscriptions_cancelled: int = 0
     tickets_deleted: int = 0
     conversations_deleted: int = 0
+    login_events_deleted: int = 0
     orders_unlinked: int = 0
     esims_unlinked: int = 0
     fingerprints_cleared: int = 0
@@ -42,6 +43,7 @@ class DeletionReport:
             f"eSIM lines unlinked: {self.esims_unlinked}",
             f"request fingerprints cleared: {self.fingerprints_cleared}",
             f"support tickets deleted: {self.tickets_deleted}",
+            f"sign-in history deleted: {self.login_events_deleted}",
             f"assistant conversations deleted: {self.conversations_deleted}",
         ]
 
@@ -89,12 +91,18 @@ def delete_account(user) -> DeletionReport:
     from apps.orders.models import Esim, Order
     from apps.support.models import AssistantConversation, Ticket
 
+    from .models import LoginEvent
+
     report = DeletionReport()
     _cancel_subscriptions(user, report)
 
     with transaction.atomic():
         report.conversations_deleted = AssistantConversation.objects.filter(user=user).delete()[0]
         report.tickets_deleted = Ticket.objects.filter(user=user).delete()[0]
+        # An address is personal data, and the orders below have their IPs
+        # cleared on the same grounds. The fraud blocklist is separate and
+        # untouched: deleting an account must not be a way to lift a ban.
+        report.login_events_deleted = LoginEvent.objects.filter(user=user).delete()[0]
 
         orders = Order.objects.filter(user=user)
         report.fingerprints_cleared = orders.exclude(
@@ -108,7 +116,9 @@ def delete_account(user) -> DeletionReport:
         user.is_active = False
         user.email = f"deleted-{user.pk}@deleted.invalid"
         user.set_unusable_password()
-        fields = ["is_active", "email", "password"]
+        user.signup_ip = None
+        user.last_login_ip = None
+        fields = ["is_active", "email", "password", "signup_ip", "last_login_ip"]
         for name, blank in (("display_name", ""), ("google_sub", ""),
                             ("marketing_opt_in", False)):
             if hasattr(user, name):
