@@ -580,6 +580,22 @@ CARD_SESSION_WINDOW_MIN = int(env("CARD_SESSION_WINDOW_MIN", "10"))
 # in seconds -- it stops the travellers the app exists for.
 CARD_IP_COOLDOWN_FACTOR = float(env("CARD_IP_COOLDOWN_FACTOR", "0.25"))
 
+# The point past which the ladder stops being a wait and becomes a verdict. A
+# customer who has had a card declined eight times in one run has long since
+# given up or switched to crypto; something still going is working through a
+# list. Past this the identity is on the blocklist and no amount of waiting
+# brings it back -- lifting one is a deliberate act in the admin.
+#
+# Stripe calling a decline fraudulent, or Radar refusing the charge itself,
+# skips the count entirely: see _is_confirmed_fraud in apps/payments/services.
+CARD_PERMANENT_BLOCK_AFTER = int(env("CARD_PERMANENT_BLOCK_AFTER", "8"))
+
+# Addresses stay off the blocklist, for the reason CARD_IP_COOLDOWN_FACTOR is
+# a quarter rather than one: a forever-ban on an airport's NAT address bans the
+# airport. Accounts, email addresses and card fingerprints are identities an
+# address does not share between strangers; those are what get listed.
+CARD_PERMANENT_BLOCK_IP = env_bool("CARD_PERMANENT_BLOCK_IP", False)
+
 # Throwaway inboxes beyond payguard's built-in list, comma separated.
 DISPOSABLE_EMAIL_DOMAINS = env_list("DISPOSABLE_EMAIL_DOMAINS")
 

@@ -28,7 +28,8 @@ from apps.accounts.referrals import apply_referral_code
 from apps.accounts.verification import send_verification
 from apps.accounts.views import _client_ip
 from apps.accounts.google import GoogleAuthError, user_from_google_token
-from apps.accounts.models import User
+from apps.accounts.login_log import record_login
+from apps.accounts.models import LoginEvent, User
 from apps.catalog.models import Country, Device, Plan, Region
 from apps.coupons.services import CouponError, redeem, release, validate_coupon
 from apps.legal.documents import (BY_SLUG, DOCUMENTS, contract_stamps,
@@ -120,6 +121,7 @@ def login(request):
             "detail": "Confirm your email address first. Check your inbox for the link.",
             "code": "email_unverified",
         }, status=status.HTTP_403_FORBIDDEN)
+    record_login(user, request, method=LoginEvent.Method.EMAIL, surface="app")
     return Response({"user": {"email": user.email}, **_tokens(user)})
 
 
@@ -129,11 +131,17 @@ def login(request):
 @throttle_classes([AuthAnonThrottle])
 def google_login(request):
     try:
-        user, created = user_from_google_token(request.data.get("id_token") or "")
+        user, created = user_from_google_token(
+            request.data.get("id_token") or "", signup_ip=_client_ip(request),
+        )
     except GoogleAuthError as e:
         return Response({"detail": str(e)}, status=400)
     if created:
         send_welcome(user)
+    record_login(
+        user, request, surface="app", method=LoginEvent.Method.GOOGLE,
+        event=LoginEvent.Event.SIGNUP if created else LoginEvent.Event.LOGIN,
+    )
     return Response({"user": {"email": user.email}, "created": created, **_tokens(user)})
 
 
@@ -1120,11 +1128,14 @@ def _build_order(request, *, plan, email: str, paid_with_balance: bool):
 def _guard_card(request, email: str = ""):
     """Card-testing check for the in-app endpoints.
 
-    Returns a 429 Response to hand straight back, or None to carry on. 429
-    rather than 403 because it is a wait and not a verdict, and it carries
-    Retry-After so the app can say when rather than only refusing.
+    Returns a Response to hand straight back, or None to carry on.
+
+    A cooldown is 429 with Retry-After: it is a wait, not a verdict, and the
+    app can say when rather than only refusing. A permanent block is 403 with
+    no Retry-After -- there is no time at which it becomes allowed, and giving
+    the app a retry time would have it promise one.
     """
-    from payguard import CardBlocked, card_risk_gate
+    from payguard import CardBlocked, card_risk_gate, is_permanently_blocked
     from payguard.gates import card_velocity_guard
 
     from apps.payments.services import open_card_sessions
@@ -1135,8 +1146,17 @@ def _guard_card(request, email: str = ""):
         card_risk_gate(user, client_ip=ip, email=email)
         card_velocity_guard(open_card_sessions(user))
     except CardBlocked as e:
-        log.warning("payguard refused a card attempt for %s from %s: %s",
-                    email or "?", ip or "?", e)
+        # Asked rather than inferred. A missing Retry-After does not mean
+        # "forever" -- a brand-new account with a random-looking address is
+        # refused without one too, and that clears by itself in an hour.
+        # Telling the customer they are banned when they are not is worse than
+        # the extra query this costs on a path that only runs when we refuse.
+        permanent = is_permanently_blocked(user=user, ip=ip or None, email=email or None)
+        log.warning("payguard refused a card attempt for %s from %s%s: %s",
+                    email or "?", ip or "?", " (permanent)" if permanent else "", e)
+        if permanent:
+            return Response({"detail": str(e), "code": "payment_blocked"},
+                            status=status.HTTP_403_FORBIDDEN)
         resp = Response({"detail": str(e), "code": "payment_cooldown"},
                         status=status.HTTP_429_TOO_MANY_REQUESTS)
         if e.retry_after:

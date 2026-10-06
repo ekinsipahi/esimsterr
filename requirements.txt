@@ -17,4 +17,4 @@ sentry-sdk>=2.0
 # three cannot drift. Pinned to a commit rather than a branch: this is the layer
 # that decides whether a payment is allowed, and it must not change underneath a
 # deploy because somebody pushed to master.
-payguard @ git+https://github.com/ekinsipahi/payment-core.git@7384c2f14f4a4525d6d071381a57533acab67b14
+payguard @ git+https://github.com/ekinsipahi/payment-core.git@5bc74db8d7318f8a99b0ed39172fe913f4197223

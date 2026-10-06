@@ -92,7 +92,7 @@ def _guard_card_attempt(user, request, email: str = "") -> None:
     block is a refusal. The reason goes to the log, not to the page -- naming
     the rule that tripped tells an attacker what to vary.
     """
-    from payguard import CardBlocked, card_risk_gate
+    from payguard import CardBlocked, card_risk_gate, is_permanently_blocked
     from payguard.gates import card_velocity_guard
 
     from core.ratelimit import client_ip
@@ -102,8 +102,15 @@ def _guard_card_attempt(user, request, email: str = "") -> None:
         card_risk_gate(user, client_ip=ip, email=email)
         card_velocity_guard(open_card_sessions(user))
     except CardBlocked as e:
-        log.warning("payguard refused a card attempt for %s from %s: %s",
-                    email or getattr(user, "email", "?"), ip or "?", e)
+        # A permanent block is logged at error level: a cooldown is routine and
+        # a few a day mean the guard is working, while an identity crossing into
+        # the blocklist is the sort of thing worth being able to find later
+        # without reading through every cooldown it caused on the way there.
+        permanent = is_permanently_blocked(user=user, ip=ip or None, email=email or None)
+        (log.error if permanent else log.warning)(
+            "payguard refused a card attempt for %s from %s%s: %s",
+            email or getattr(user, "email", "?"), ip or "?",
+            " (permanent)" if permanent else "", e)
         raise PaymentError(str(e)) from e
 
 
@@ -312,6 +319,39 @@ def settle_stripe_session(session: dict) -> Payment | None:
     )
 
 
+# Stripe decline codes that mean the card is not the cardholder's, plus the
+# outcome Radar reports when it refuses a charge itself. These are not "the
+# payment failed", they are "this was somebody else's card" -- the one case
+# where waiting out a cooldown is the wrong answer, because there is no later
+# moment at which trying a stolen card becomes acceptable.
+FRAUD_DECLINE_CODES = {
+    "fraudulent", "stolen_card", "lost_card", "pickup_card",
+    "merchant_blacklist", "restricted_card",
+}
+
+
+def _is_confirmed_fraud(intent) -> str:
+    """The reason to ban outright, or "" to let the ladder handle it.
+
+    Returns a short phrase for the blocklist row so that months later the
+    answer to "why is this account blocked" is on the row itself.
+    """
+    from payguard import sf
+
+    code = (sf(intent, "last_payment_error", "decline_code") or "").lower()
+    if code in FRAUD_DECLINE_CODES:
+        return f"stripe decline_code={code}"
+
+    # Radar refusing the charge before the bank ever saw it.
+    outcome_type = (sf(intent, "last_payment_error", "payment_method",
+                       "card", "outcome", "type")
+                    or sf(intent, "charges", "data", 0, "outcome", "type") or "").lower()
+    if outcome_type == "blocked":
+        reason = (sf(intent, "charges", "data", 0, "outcome", "reason") or "radar")
+        return f"stripe radar blocked ({reason})"
+    return ""
+
+
 def settle_stripe_intent(intent: dict, reference: str, *, failed: bool = False) -> Payment | None:
     """Settle an in-app purchase. There is no Checkout session for these.
 
@@ -328,13 +368,28 @@ def settle_stripe_intent(intent: dict, reference: str, *, failed: bool = False) 
         # apps.orders, which imports this module back.
         from apps.coupons.services import release
 
-        from payguard import fingerprint_from_failed_pi, record_card_failure
+        from payguard import (fingerprint_from_failed_pi, permanently_block,
+                              record_card_failure)
 
         user, ip, email = _guard_identity(payment)
+        fingerprint = fingerprint_from_failed_pi(intent) or None
         record_card_failure(
             user=user, ip=ip or None, email=email or None,
-            fingerprint=fingerprint_from_failed_pi(intent) or None,
+            fingerprint=fingerprint,
         )
+
+        # Radar or the issuer calling it fraud is a verdict, not a count. The
+        # ladder's own escalation needs eight failures to reach the same place,
+        # and eight attempts with a stolen card is eight more than there is any
+        # reason to allow. The address is deliberately left out: payguard will
+        # not put an IP on the list anyway (shared addresses), and asking it to
+        # would only be asking for the one thing it is right to refuse.
+        reason = _is_confirmed_fraud(intent)
+        if reason:
+            permanently_block(user=user, email=email or None,
+                              fingerprint=fingerprint, reason=reason[:255])
+            log.error("permanently blocked %s (%s): %s",
+                      email or getattr(user, "pk", "?"), reason, payment.id)
 
         error = (intent.get("last_payment_error") or {}).get("message", "")
         payment.status = Payment.Status.FAILED
