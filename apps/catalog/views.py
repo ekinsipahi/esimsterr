@@ -7,6 +7,8 @@ from django.conf import settings
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.templatetags.static import static
+from django.urls import reverse
 from django.views.decorators.http import require_GET
 
 from apps.common import schema
@@ -16,6 +18,8 @@ from django.utils.translation import ngettext
 from apps.blog.models import Post
 from apps.common import analytics
 from apps.common.templatetags.ui import flag_url
+
+from apps.wallet.services import presets as wallet_presets
 
 from .data import POPULAR_ISO2
 from .models import Country, Device, Plan, Region
@@ -231,6 +235,67 @@ def compatible_devices(request):
             "Check if your iPhone, Samsung, Google Pixel or tablet supports eSIM. Full compatibility "
             "list plus how to check on your device in 10 seconds."
         ),
+    })
+
+
+# The three captures on the app page, in the order the carousel shows them: the
+# screen you land on, what a destination costs, and the thing people actually
+# ask about. Each one is the real app -- recaptured whenever a release changes
+# what they show, which is why the alt text describes the screen rather than
+# repeating the heading.
+APP_SHOTS = [
+    ("img/app/shop.webp", "Browsing destinations in the app",
+     "Search a country, see what it costs"),
+    ("img/app/plans.webp", "The plan list for Australia, with prices per gigabyte",
+     "Every plan, priced per gigabyte"),
+    ("img/app/balance.webp", "The balance screen, showing top-up tiers and their bonuses",
+     "Top up once, spend it over several trips"),
+]
+
+
+def mobile_app(request):
+    """The app's own page.
+
+    Its own page rather than a band on the home page: the Play listing is a
+    public, crawlable page on a very strong domain that points at us, and what
+    it points at should be a page about the app rather than a home page about
+    everything. It is also the only page where linking out to Play is the
+    conversion rather than a leak.
+    """
+    cheapest = (
+        Plan.objects.live()
+        .filter(kind=Plan.Kind.COUNTRY)
+        .order_by("price_usd")
+        .values_list("price_usd", flat=True)
+        .first()
+    )
+    page_url = schema.absolute(request, reverse("mobile_app"))
+    shots = [{"src": src, "alt": alt, "caption": caption} for src, alt, caption in APP_SHOTS]
+    return render(request, "pages/mobile_app.html", {
+        "shots": shots,
+        "country_count": Country.objects.filter(is_active=True).count(),
+        "min_price": f"{cheapest:.2f}" if cheapest is not None else "",
+        # Only the tiers that actually pay something: the page is showing off
+        # the bonus, and a row saying "+0%" argues against it.
+        "bonus_tiers": [t for t in wallet_presets() if t["bonus"]],
+        "breadcrumbs": [("Home", "/"), ("Mobile app", None)],
+        "seo_title": f"eSIM app for Android — buy and install travel data | {settings.SITE_NAME}",
+        "seo_description": (
+            "The free eSIMsterr Android app: buy a travel eSIM in about a minute, install it "
+            f"without a QR code, and manage your data in {Country.objects.filter(is_active=True).count()}+ "
+            "countries. Download it on Google Play."
+        ),
+        "app_jsonld": schema.dumps(schema.mobile_app(
+            request,
+            page_url=page_url,
+            install_url=settings.PLAY_STORE_URL,
+            screenshots=[schema.absolute(request, static(src)) for src, _a, _c in APP_SHOTS],
+            description=(
+                "Buy and install travel eSIM data on Android. Store credit, saved cards "
+                "and every eSIM you own in one place."
+            ),
+            min_price=f"{cheapest:.2f}" if cheapest is not None else "",
+        )),
     })
 
 

@@ -265,6 +265,61 @@
     }, 1200);
   });
 
+  /* ---------- app screenshot carousel ------------------------------------ */
+  /* Cross-fades the phone on the mobile app page. Everything it does is also
+     reachable by clicking a dot, so a browser that never runs this still shows
+     the first screenshot and lets somebody page through the rest. */
+  (function () {
+    var box = document.querySelector("[data-carousel]");
+    if (!box) { return; }
+    var shots = box.querySelectorAll(".phone-shot");
+    var wrap = box.parentElement;
+    var dots = wrap ? wrap.querySelectorAll(".phone-dot") : [];
+    var caption = wrap ? wrap.querySelector("[data-carousel-caption]") : null;
+    if (shots.length < 2) { return; }
+
+    var at = 0, timer = null;
+    var still = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    function show(i) {
+      at = (i + shots.length) % shots.length;
+      for (var n = 0; n < shots.length; n++) {
+        shots[n].classList.toggle("is-active", n === at);
+      }
+      for (var d = 0; d < dots.length; d++) {
+        var on = d === at;
+        dots[d].classList.toggle("is-active", on);
+        dots[d].setAttribute("aria-selected", on ? "true" : "false");
+      }
+      if (caption && dots[at]) { caption.textContent = dots[at].getAttribute("aria-label") || ""; }
+    }
+
+    function stop() { clearInterval(timer); timer = null; }
+    function start() {
+      // Somebody who has asked for less movement gets a carousel they drive.
+      if (timer || still.matches) { return; }
+      timer = setInterval(function () { show(at + 1); }, 4200);
+    }
+
+    for (var d = 0; d < dots.length; d++) {
+      dots[d].addEventListener("click", function (e) {
+        stop();  // A tap is a decision; resuming would take the page back off them.
+        show(parseInt(e.currentTarget.getAttribute("data-slide"), 10) || 0);
+      });
+    }
+
+    // Reading the words next to the phone counts as watching it, so it only
+    // pauses on a pointer that is actually over the phone.
+    box.addEventListener("mouseenter", stop);
+    box.addEventListener("mouseleave", start);
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) { stop(); } else { start(); }
+    });
+    if (still.addEventListener) { still.addEventListener("change", function () { stop(); start(); }); }
+
+    start();
+  })();
+
   /* ---------- Google Identity Services ------------------------------------ */
   window.esimsterrGoogle = function (response) {
     var form = document.getElementById("google-form");

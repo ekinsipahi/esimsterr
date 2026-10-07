@@ -8,6 +8,9 @@ urlpatterns = [
     path("regions/", views.regions_index, name="regions"),
     path("unlimited-esim/", views.unlimited, name="unlimited"),
     path("how-it-works/", views.how_it_works, name="how_it_works"),
+    # "esim-app" rather than "mobile-app": the search people actually run is
+    # "esim app", and the Play listing already owns the brand term.
+    path("esim-app/", views.mobile_app, name="mobile_app"),
     path("esim-compatible-devices/", views.compatible_devices, name="compatible_devices"),
     path("faq/", views.faq, name="faq"),
     path("about/", views.about, name="about"),

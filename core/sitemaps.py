@@ -38,6 +38,10 @@ class StaticSitemap(CanonicalSitemap):
         ("unlimited", "weekly", 0.8),
         ("coupons", "weekly", 0.7),
         ("how_it_works", "monthly", 0.6),
+        # High priority for a page with no products on it: it is the page the
+        # Play listing points back at, and the one that has to be found for
+        # "esim app" rather than for a destination.
+        ("mobile_app", "monthly", 0.8),
         ("compatible_devices", "monthly", 0.6),
         ("faq", "monthly", 0.6),
         ("about", "monthly", 0.4),

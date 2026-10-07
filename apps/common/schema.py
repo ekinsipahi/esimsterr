@@ -194,3 +194,52 @@ def article(request, post) -> dict:
     if image:
         payload["image"] = absolute(request, image)
     return payload
+
+
+def mobile_app(request, *, page_url: str, install_url: str, screenshots=(),
+               description: str = "", min_price: str = "") -> dict | None:
+    """MobileApplication for the app's own page on this site.
+
+    This is the half of the Play listing that Google cannot read from Play. The
+    listing is a page on someone else's domain describing an app; this says the
+    same app belongs to this site, is published by the same organisation named
+    everywhere else in our markup, and is installed from that URL. Without it
+    the two are a page and an unrelated outbound link.
+
+    No aggregateRating. Google shows one if it is there, and the only honest
+    value today is "no ratings yet" -- inventing one is a manual action waiting
+    to happen, and the rich result it would buy is not worth the listing.
+
+    The download is free, so the Offer is price 0. What the app sells is priced
+    on the pages that sell it; ``min_price`` is passed only so the free download
+    is not mistaken for a free product.
+    """
+    if not install_url:
+        return None
+    node = {
+        "@context": "https://schema.org",
+        "@type": "MobileApplication",
+        "name": f"{settings.SITE_NAME} — travel eSIM",
+        "applicationCategory": "TravelApplication",
+        "applicationSubCategory": "eSIM",
+        "operatingSystem": "Android 8.0+",
+        "url": page_url,
+        "installUrl": install_url,
+        "downloadUrl": install_url,
+        "publisher": {"@id": ORG_ID},
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+        },
+    }
+    if description:
+        node["description"] = description
+    if screenshots:
+        node["screenshot"] = list(screenshots)
+    if min_price:
+        # Says what the free app then sells, so "price 0" is not read as the
+        # whole story.
+        node["offers"]["description"] = f"Free download. eSIM data plans from ${min_price}."
+    return node

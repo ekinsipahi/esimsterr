@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load static i18n ui %}
+
+{% block schema %}{% if app_jsonld %}<script type="application/ld+json">{{ app_jsonld|safe }}</script>{% endif %}{% endblock %}
+
+{% block content %}
+
+{% comment %}Hero. Deliberately not the home hero: this page arrives from the
+Play listing, so it opens on the app itself rather than on the catalogue.{% endcomment %}
+<section class="app-hero">
+  <div class="shell">
+    <div class="app-hero-grid">
+      <div class="app-hero-copy">
+        <span class="eyebrow">{% trans "Android app" %}</span>
+        <h1>{% blocktrans %}Your data plan, <span class="grad-text">before you land</span>{% endblocktrans %}</h1>
+        <p class="hero-lead">
+          {% blocktrans with n=country_count %}Buy a travel eSIM in about a minute and install it without hunting for a QR code. {{ n }}+ countries, local networks, and every line you own in one place.{% endblocktrans %}
+        </p>
+
+        <div class="app-cta">
+          {% if play_store_url %}
+          <a class="play-badge" href="{{ play_store_url }}" rel="noopener"
+             aria-label="{% trans 'Get it on Google Play' %}">
+            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false">
+              <path fill="#34a853" d="M3.6 20.9 13.8 12 3.6 3.1A2 2 0 0 0 3 4.5v15a2 2 0 0 0 .6 1.4z" opacity=".001"/>
+              <path fill="#34a853" d="M3.9 21.2 14.5 12 3.9 2.8a1.8 1.8 0 0 0-.7 1.4v15.6c0 .6.3 1.1.7 1.4z"/>
+              <path fill="#fbbc04" d="m14.5 12 3.3-2.9 3.5 2a1.3 1.3 0 0 1 0 2.3l-3.5 2z"/>
+              <path fill="#ea4335" d="M3.9 21.2c.5.4 1.2.4 1.9 0l11.9-6.8-3.2-2.4z"/>
+              <path fill="#4285f4" d="M3.9 2.8c.5-.4 1.2-.4 1.9 0l11.9 6.8-3.2 2.4z"/>
+            </svg>
+            <span>
+              <small>{% trans "Get it on" %}</small>
+              <strong>Google Play</strong>
+            </span>
+          </a>
+          {% endif %}
+          <a class="btn btn-ghost btn-lg" href="{% url 'destinations' %}">
+            {% trans "Or buy on the web" %}{% icon "arrow-right" size=17 %}
+          </a>
+        </div>
+
+        <ul class="app-trust">
+          <li>{% icon "check-circle" size=16 %}{% trans "Free, and no ads" %}</li>
+          <li>{% icon "shield" size=16 %}{% trans "Cards go straight to Stripe" %}</li>
+          <li>{% icon "sim" size=16 %}{% trans "Keeps your own number" %}</li>
+        </ul>
+      </div>
+
+      {% comment %}The phone. The frame is drawn in CSS rather than shipped as a
+      PNG overlay: it has to be sharp on every screen, follow the theme, and not
+      cost 400 KB to say "this is a phone".{% endcomment %}
+      <div class="app-hero-shot">
+        <div class="phone" data-carousel>
+          <div class="phone-frame">
+            <div class="phone-side phone-side-power" aria-hidden="true"></div>
+            <div class="phone-side phone-side-vol" aria-hidden="true"></div>
+            <div class="phone-screen">
+              <div class="phone-island" aria-hidden="true"></div>
+              {% for s in shots %}
+              <img class="phone-shot{% if forloop.first %} is-active{% endif %}"
+                   src="{% static s.src %}" alt="{{ s.alt }}"
+                   width="540" height="1119"
+                   {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
+                   data-slide="{{ forloop.counter0 }}">
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-controls">
+          <p class="phone-caption" data-carousel-caption aria-live="polite">{{ shots.0.caption }}</p>
+          <div class="phone-dots" role="tablist" aria-label="{% trans 'App screenshots' %}">
+            {% for s in shots %}
+            <button type="button" class="phone-dot{% if forloop.first %} is-active{% endif %}"
+                    role="tab" data-slide="{{ forloop.counter0 }}"
+                    aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                    aria-label="{{ s.caption }}"></button>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% comment %}What the app does that the website cannot. Three claims, each one
+a thing somebody would otherwise have to be told.{% endcomment %}
+<section class="section">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">{% trans "Why the app" %}</span>
+      <h2>{% trans "The parts a browser tab cannot do" %}</h2>
+      <p class="h-sub">{% trans "Everything sold here is sold on the website too. These three are easier on a phone, and the first one is only possible there." %}</p>
+    </div>
+
+    <div class="grid g3">
+      <div class="card">
+        <span class="icon-tile v-sky">{% icon "zap" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Install without the QR code" %}</h3>
+        <p class="muted small mt-1">{% trans "The app hands the profile to Android directly, so there is no second screen to photograph and nothing to print. Buying on a laptop means scanning a code with the phone you are holding." %}</p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-gold">{% icon "percent" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Top up once, spend it slowly" %}</h3>
+        <p class="muted small mt-1">{% trans "Store credit buys any plan in one tap, never expires, and the larger top-ups carry a bonus. It is also the cheapest way to pay — no card entry per purchase." %}</p>
+      </div>
+      <div class="card">
+        <span class="icon-tile v-mint">{% icon "list" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Every line in one place" %}</h3>
+        <p class="muted small mt-1">{% trans "How much data is left, which country it works in, when it runs out, and the install instructions again if you need them. Without digging through an email from three trips ago." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if bonus_tiers %}
+{% comment %}Real numbers, read from the same setting the app and the checkout
+read. A marketing page quoting a bonus the product does not pay is the kind of
+thing nobody notices until a customer does.{% endcomment %}
+<section class="section section-alt">
+  <div class="shell">
+    <div class="section-head center">
+      <span class="eyebrow">{% trans "Store credit" %}</span>
+      <h2>{% trans "The more you add, the more we add" %}</h2>
+      <p class="h-sub">{% trans "Bonus credit spends exactly like the rest of your balance and never expires. The same tiers apply on the website." %}</p>
+    </div>
+
+    <div class="bonus-rail">
+      {% for t in bonus_tiers %}
+      <div class="bonus-chip{% if forloop.last %} is-best{% endif %}">
+        <span class="bonus-pct">+{{ t.bonus_pct }}%</span>
+        <span class="bonus-pay">${{ t.amount|floatformat:0 }}</span>
+        <span class="bonus-get">{% blocktrans with total=t.total|floatformat:0 %}you get ${{ total }}{% endblocktrans %}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="center muted small mt-3">
+      {% trans "Smaller amounts carry no bonus, and start at $5 so you can try the product without committing to it." %}
+    </p>
+  </div>
+</section>
+{% endif %}
+
+<section class="section">
+  <div class="shell">
+    <div class="app-split">
+      <div>
+        <span class="eyebrow">{% trans "Getting started" %}</span>
+        <h2 class="mt-2">{% trans "Three taps from here to working data" %}</h2>
+        <ol class="app-steps mt-3">
+          <li>
+            <span class="app-step-n">1</span>
+            <div>
+              <b>{% trans "Install the app and pick where you are going" %}</b>
+              <p class="muted small">{% blocktrans with n=country_count %}{{ n }} destinations, plus regional plans that cover a whole trip on one eSIM.{% endblocktrans %}</p>
+            </div>
+          </li>
+          <li>
+            <span class="app-step-n">2</span>
+            <div>
+              <b>{% trans "Pay by card, or from your balance" %}</b>
+              <p class="muted small">{% trans "Card details go straight to Stripe and never touch our servers. Crypto works too, on the website." %}</p>
+            </div>
+          </li>
+          <li>
+            <span class="app-step-n">3</span>
+            <div>
+              <b>{% trans "Install the eSIM before you fly" %}</b>
+              <p class="muted small">{% trans "Do it at home on Wi-Fi. The plan does not start counting until the line first connects at your destination." %}</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="card card-solid app-aside">
+        <span class="icon-tile v-cyan">{% icon "smartphone" size=22 %}</span>
+        <h3 class="mt-2">{% trans "Will it work on my phone?" %}</h3>
+        <p class="muted small mt-1">{% trans "The app needs Android 8.0 or newer. Installing an eSIM needs a phone with eSIM hardware, which is most Android flagships from 2019 onwards — and it is worth checking before you buy rather than at the airport." %}</p>
+        <a class="btn btn-ghost mt-3" href="{% url 'compatible_devices' %}">
+          {% trans "Check your device" %}{% icon "arrow-right" size=17 %}
+        </a>
+        <p class="xs muted-3 mt-3">
+          {% trans "On an iPhone? The website does everything the app does, apart from installing without the QR code." %}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if play_store_url %}
+<section class="section">
+  <div class="shell">
+    <div class="cta-band">
+      <div class="row-between">
+        <div>
+          <h2>{% trans "Land with data already working." %}</h2>
+          <p>{% trans "Free to install. Nothing to pay until you buy a plan, and nothing to cancel afterwards." %}</p>
+        </div>
+        <div class="row">
+          <a class="play-badge play-badge-light" href="{{ play_store_url }}" rel="noopener"
+             aria-label="{% trans 'Get it on Google Play' %}">
+            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false">
+              <path fill="#34a853" d="M3.9 21.2 14.5 12 3.9 2.8a1.8 1.8 0 0 0-.7 1.4v15.6c0 .6.3 1.1.7 1.4z"/>
+              <path fill="#fbbc04" d="m14.5 12 3.3-2.9 3.5 2a1.3 1.3 0 0 1 0 2.3l-3.5 2z"/>
+              <path fill="#ea4335" d="M3.9 21.2c.5.4 1.2.4 1.9 0l11.9-6.8-3.2-2.4z"/>
+              <path fill="#4285f4" d="M3.9 2.8c.5-.4 1.2-.4 1.9 0l11.9 6.8-3.2 2.4z"/>
+            </svg>
+            <span><small>{% trans "Get it on" %}</small><strong>Google Play</strong></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

@@ -142,6 +142,15 @@ REFERRAL_MIN_TOPUP_USD = env("REFERRAL_MIN_TOPUP_USD", "5.00")
 # none was possible. Set PLAY_INTEGRITY_REQUIRED once it works, and unattested
 # devices stop being able to read purchases back.
 ANDROID_PACKAGE_NAME = env("ANDROID_PACKAGE_NAME", "com.esimsterr.app")
+
+# Derived rather than configured, now that the app is public. An empty
+# PLAY_STORE_URL is read everywhere as "there is no app" -- it is what decides
+# whether the EULA is listed and whether the mobile app page offers a download
+# -- so leaving it unset would have meant shipping the listing and still
+# telling the site there was nothing to link to. The env var still wins, for a
+# preview environment pointing at a different listing.
+if not PLAY_STORE_URL:
+    PLAY_STORE_URL = f"https://play.google.com/store/apps/details?id={ANDROID_PACKAGE_NAME}"
 PLAY_INTEGRITY_SERVICE_ACCOUNT = env("PLAY_INTEGRITY_SERVICE_ACCOUNT", "")
 PLAY_INTEGRITY_REQUIRED = env_bool("PLAY_INTEGRITY_REQUIRED", False)
 
